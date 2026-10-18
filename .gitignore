@@ -1,0 +1,26 @@
+node_modules/
+.build/
+.local/
+.superpowers/
+*.wav
+*.aiff
+*.pcm
+.DS_Store
+firmware/pet/managed_components/
+firmware/pet/sdkconfig
+firmware/pet/sdkconfig.old
+firmware/pet/build/
+__pycache__/
+*.pyc
+
+# Build output and device-specific records stay local.
+firmware/build/
+docs/*backup*.json
+docs/pet-firmware-manifest.json
+docs/pet-*.json
+*.log
+.env
+.env.*
+*.pem
+*.key
+*.p12

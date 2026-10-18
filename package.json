@@ -1,0 +1,24 @@
+{
+  "name": "grok-bot-esp32-bridge",
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "start": "node src/cli.mjs",
+    "doctor": "node src/cli.mjs doctor",
+    "build:audio": "node --input-type=module -e \"import {buildAudio} from './src/mac-audio.mjs';buildAudio();console.log('Mac audio helper built');\""
+  },
+  "description": "Standalone ESP32-S3 companion pet firmware with a native Grok Bot macOS voice bridge",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vliuyt/grok-bot-esp32-bridge.git"
+  },
+  "homepage": "https://github.com/vliuyt/grok-bot-esp32-bridge#readme",
+  "bugs": {
+    "url": "https://github.com/vliuyt/grok-bot-esp32-bridge/issues"
+  }
+}

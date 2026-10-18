@@ -1,0 +1,18 @@
+[
+  {
+    "upstream": "https://github.com/facebookincubator/muse-gadget-sdk",
+    "source": "esp32/tools/muse/chat.py",
+    "destination": "chat.py",
+    "sha256": "3d8610ccf972a065804156a6e502c275985abf7e9986ecd058918f14e21db7a9",
+    "modified": false,
+    "license": "Apache-2.0"
+  },
+  {
+    "upstream": "https://github.com/facebookincubator/muse-gadget-sdk",
+    "source": "esp32/tools/muse/ports.py",
+    "destination": "ports.py",
+    "sha256": "0ffb4849d20c630db8da500d74db5e1bf9b14a5cb2e0e28fb04d1bc1a0445136",
+    "modified": false,
+    "license": "Apache-2.0"
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "source": "muse-gadget-sdk/esp32/components/muse/boards/board_waveshare_s3_143c.c",
+    "destination": "board_waveshare_s3_143c.c",
+    "sha256": "aec634ba6f1a80083612093714bae26908e815dd6f2cac8c47c02337e825d3dd",
+    "license": "Apache-2.0",
+    "originNote": "Local 1.43C board adaptation, not an upstream-tracked board file; original adapted Meta notices retained.",
+    "modified": true
+  },
+  {
+    "source": "muse-gadget-sdk/esp32/components/muse/boards/muse_lcd_bands.c",
+    "destination": "muse_lcd_bands.c",
+    "sha256": "8195b4e1f719a9742671f096885319b331bfed505acfbf4962b6bed269ee5135",
+    "license": "Apache-2.0"
+  },
+  {
+    "source": "muse-gadget-sdk/esp32/components/muse/boards/muse_lcd_bands.h",
+    "destination": "muse_lcd_bands.h",
+    "sha256": "107d5e64b6de424ba863c7f15eb4846c81952eedc4a8e6cf5a9f19c6fb0de5bc",
+    "license": "Apache-2.0"
+  },
+  {
+    "source": "muse-gadget-sdk/esp32/components/muse/muse_board.h",
+    "destination": "muse_board.h",
+    "sha256": "4db6c64cfb64f4d386ba339f5444e0e1cae243d2a29ebc3cf3f74474702581dc",
+    "license": "Apache-2.0"
+  },
+  {
+    "source": "muse-gadget-sdk/esp32/components/muse/muse_audio.h",
+    "destination": "muse_audio.h",
+    "sha256": "5e36248106f66d0f0262b2a2ddfa20b585269ab1847727fd13ef7fe9d5e802b5",
+    "license": "Apache-2.0"
+  },
+  {
+    "source": "muse-gadget-sdk/esp32/components/muse/muse_state.h",
+    "destination": "muse_state.h",
+    "sha256": "d9a0f9e6163936e7252a5d9e84ebf63d52fc228c5d19e948ae81f17a09209d7b",
+    "license": "Apache-2.0"
+  },
+  {
+    "source": "muse-gadget-sdk/esp32/components/muse/muse_mem.h",
+    "destination": "muse_mem.h",
+    "sha256": "05342a24a2a8b97e7efe04fa4ffbadfce62c52d73bac567ae17e69703e05d430",
+    "license": "Apache-2.0"
+  },
+  {
+    "source": "muse-gadget-sdk/esp32/partitions_muse_8mb.csv",
+    "destination": "firmware/pet/partitions.csv",
+    "sha256": "4b4908544a1b3fea01cedb9f36ff49923c6794f9be44835c753d6b7ee907d2e3",
+    "license": "Apache-2.0"
+  }
+]

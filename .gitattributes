@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.png binary
+firmware/pet/components/pet_ui/fonts/*.c linguist-generated=true
+# Preserve upstream license/font text exactly, including original whitespace.
+docs/third-party/* -text -whitespace
+firmware/pet/components/pet_ui/fonts/*.c -whitespace

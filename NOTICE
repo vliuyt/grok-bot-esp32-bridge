@@ -1,0 +1,9 @@
+Grok Bot ESP32 Companion
+Copyright 2026 the project contributors.
+
+This project contains adapted code from the Muse Gadget SDK:
+Copyright (c) Meta Platforms, Inc. and affiliates.
+Licensed under the Apache License, Version 2.0.
+
+The GNU Unifont-derived font is distributed separately under OFL-1.1.
+See THIRD_PARTY_NOTICES.md and docs/third-party/ for preserved notices.

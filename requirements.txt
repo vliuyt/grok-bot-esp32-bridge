@@ -1,0 +1,6 @@
+# USB backup/install and screenshot tooling; ESP-IDF has its own Python environment.
+esptool==5.6.0
+pyserial==3.5
+Pillow>=11.0,<13
+# Optional: Bluetooth advertisement bench only
+bleak>=1.0,<3

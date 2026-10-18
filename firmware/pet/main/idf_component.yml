@@ -1,0 +1,8 @@
+dependencies:
+  idf: "==6.0.1"
+  lvgl/lvgl: "==9.5.0"
+  espressif/esp_codec_dev: "==1.5.11"
+  espressif/esp_lvgl_adapter: "==0.6.4"
+  espressif/esp_lcd_co5300: "==2.2.0"
+  espressif/cjson: "==1.7.19~2"
+  espressif/mdns: "==1.8.2"
