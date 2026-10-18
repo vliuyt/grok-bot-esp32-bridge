@@ -41,6 +41,8 @@ This initial release is **source-only**. It does not include a precompiled `.bin
 
 A reference device completed ten recognized Chinese acoustic rounds, a 37.1-second continuous response, Wi-Fi rollback, USB provisioning, BLE service advertisement, silent task-result recovery with and without SSE, and a real two-hour quiet soak. Native first audio reached the Mac in 737–1097 ms (median 862.5 ms); actual device-audible latency was not independently measured.
 
+The proactive-behavior clock is currently fixed to Shanghai time (UTC+8), with no timezone setting.
+
 Full acoustic interruption/reconnection, physical touch feel, authenticated BLE provisioning and battery behavior still require acceptance. Public packaging changes were host-tested; a second-device clean install has not been tested. See [validation and limitations](docs/VALIDATION.md) for precise boundaries.
 
 `npm test` uses mocks and local compiler checks, with no account access, flashing or acoustic playback. Three target-dependent tests are explicitly skipped until the firmware is built. Optional hardware benches are separate and can make sound.
