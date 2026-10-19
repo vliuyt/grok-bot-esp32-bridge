@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-- Add a visible on-screen hold-to-talk button alongside BOOT, release-to-submit and slide-out cancellation.
-- Arbitrate simultaneous touch and BOOT holds, with BOOT taking ownership and no residual-finger replay.
+- Keep voice on the physical BOOT button: hold to record, release to submit, hold again to interrupt.
+- Remove the experimental touch voice button after real-device feedback; touchscreen remains for petting and settings.
 - Display connection/listening/interruption instructions independently of conversation captions.
 - Accept CRC-validated, confirmed ota_0 boot records for application-only upgrades; never rewrite boot metadata. Reject erased OTA records, whose first-boot initialization would otherwise invalidate safe recovery checks.
 

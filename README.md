@@ -1,6 +1,6 @@
 # Grok Bot ESP32 Companion · 小糖 AI 陪伴宠物
 
-[English](README.en.md) · [快速开始](docs/GETTING_STARTED.zh-CN.md) · [触屏／按键语音入口](docs/VOICE_INPUT.md) · [架构](docs/宠物固件架构.md) · [验收与限制](docs/VALIDATION.md) · [贡献指南](CONTRIBUTING.md)
+[English](README.en.md) · [快速开始](docs/GETTING_STARTED.zh-CN.md) · [实体按键语音入口](docs/VOICE_INPUT.md) · [架构](docs/宠物固件架构.md) · [验收与限制](docs/VALIDATION.md) · [贡献指南](CONTRIBUTING.md)
 
 把 **微雪 ESP32-S3-Touch-AMOLED-1.43C** 变成一个会眨眼、会回应抚摸、可以按住说话的桌面 AI 小宠物。设备运行独立宠物固件，Mac 负责桥接你已有的 Grok Bot；保留 Bot 的原生声音、上下文和任务能力。
 
@@ -19,7 +19,7 @@
 | 能力 | 当前实现 |
 |---|---|
 | 陪伴互动 | 本地呼吸、眨眼、抚摸反馈；断网时仍能互动和调整设置 |
-| 原生对话 | 触屏「按住说话」或 BOOT 录音、松开提交；触屏滑出取消，播放时再按住清除旧音频并开始新问题 |
+| 原生对话 | 按住实体 BOOT 录音、松开提交；播放时再次按住清除旧音频并开始新问题；屏幕仅显示操作提示 |
 | 界面 | 程序绘制粉色圆脸、听说状态、短字幕、音量／亮度／安静模式与连接页 |
 | 联网 | 2.4 GHz Wi-Fi；配对 Mac 的局域网发现与保存地址回退 |
 | 配置 | USB 配网；限时、带六位码认证的 BLE 配网，蓝牙不承担日常语音 |

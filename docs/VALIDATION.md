@@ -2,7 +2,7 @@
 
 日期：2026-10-19。参考板型：Waveshare ESP32-S3-Touch-AMOLED-1.43C。
 
-本轮触屏入口见 [语音入口说明](VOICE_INPUT.md) 与 [台架记录](touch-entry-validation.json)：83/83 主机测试、参考设备更新及真实 LVGL 回调检查通过，物理手指和出声确认以该记录为准。
+最终版82项主机测试通过、零跳过，目标固件构建与独立审查通过。本轮按键入口见 [语音入口说明](VOICE_INPUT.md) 与 [当前记录](boot-entry-validation.json)。已确认实验版触屏和 BOOT 均能对话；用户随后选择移除小屏触摸录音按钮，仅保留实体 BOOT。历史触屏记录不代表最终版验收。
 
 ## 首次公开前的参考基线
 

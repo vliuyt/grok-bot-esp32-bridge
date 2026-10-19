@@ -10,9 +10,7 @@ typedef enum { PET_EXPR_IDLE, PET_EXPR_HAPPY, PET_EXPR_GREET, PET_EXPR_LISTEN, P
 typedef enum { PET_EV_TICK, PET_EV_PET, PET_EV_PRESS, PET_EV_RELEASE, PET_EV_CANCEL,
                PET_EV_LINK, PET_EV_BUFFERED, PET_EV_PLAYING, PET_EV_RESPONSE_DONE, PET_EV_DRAIN,
                PET_EV_CLOCK, PET_EV_USB, PET_EV_QUIET, PET_EV_MUTED, PET_EV_SETUP,
-               PET_EV_TASK_CHANNEL, PET_EV_TOUCH_PRESS, PET_EV_TOUCH_RELEASE,
-               PET_EV_TOUCH_CANCEL } pet_event_kind_t;
-#define PET_TOUCH_INPUT_VERSION 1
+               PET_EV_TASK_CHANNEL } pet_event_kind_t;
 enum { PET_FX_NONE=0, PET_FX_START=1, PET_FX_STOP=2, PET_FX_SUBMIT=4, PET_FX_CANCEL=8,
        PET_FX_CONNECT=16, PET_FX_WAKE=32, PET_FX_SAVE_QUOTA=64 };
 typedef struct {
@@ -32,7 +30,6 @@ typedef struct {
     int minute, level;
     bool usb, quiet, muted, setup, held, expired, clock_valid, response_done, playback_empty;
     bool task_channel;
-    bool boot_held,touch_held,touch_blocked;
 } pet_state_t;
 typedef struct {
     pet_expression_t expression;

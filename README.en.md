@@ -2,7 +2,7 @@
 
 [简体中文](README.md) · [Setup guide](docs/GETTING_STARTED.zh-CN.md) · [Validation](docs/VALIDATION.md)
 
-A standalone companion-pet firmware for the **Waveshare ESP32-S3-Touch-AMOLED-1.43C** and a macOS bridge to an existing Grok Bot. The round-screen pet blinks, breathes and responds locally to touch. Hold the on-screen voice button or BOOT to talk; release to receive the Bot's native voice, with its conversation context and task capabilities.
+A standalone companion-pet firmware for the **Waveshare ESP32-S3-Touch-AMOLED-1.43C** and a macOS bridge to an existing Grok Bot. The round-screen pet blinks, breathes and responds locally to touch. Hold the physical BOOT button to talk; release to receive the Bot's native voice, with its conversation context and task capabilities.
 
 ![Actual device screen](docs/pet-device-screen.png)
 

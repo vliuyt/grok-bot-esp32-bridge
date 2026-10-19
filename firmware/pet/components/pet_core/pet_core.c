@@ -41,32 +41,6 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
     if(e.now_ms<s->now_ms)e.now_ms=s->now_ms;
     s->now_ms=e.now_ms;
     if(voice_event(e.kind) && (e.generation!=s->generation || e.turn!=s->turn)) return PET_FX_NONE;
-    /* BOOT owns a shared hold. Releasing it must not let a finger silently
-     * restart capture; that finger has to lift before starting another turn. */
-    switch(e.kind) {
-    case PET_EV_PRESS:
-        if(s->boot_held)return PET_FX_NONE;
-        s->boot_held=true;if(s->touch_held)s->touch_blocked=true;
-        break;
-    case PET_EV_RELEASE:
-        if(!s->boot_held)return PET_FX_NONE;
-        s->boot_held=false;if(s->touch_held)s->touch_blocked=true;
-        break;
-    case PET_EV_TOUCH_PRESS:
-        if(s->touch_held)return PET_FX_NONE;
-        s->touch_held=true;
-        if(s->boot_held||s->touch_blocked){s->touch_blocked=true;return PET_FX_NONE;}
-        e.kind=PET_EV_PRESS;break;
-    case PET_EV_TOUCH_RELEASE:
-    case PET_EV_TOUCH_CANCEL: {
-        bool owned=s->touch_held&&!s->boot_held&&!s->touch_blocked;
-        s->touch_held=false;s->touch_blocked=false;
-        if(!owned)return PET_FX_NONE;
-        e.kind=e.kind==PET_EV_TOUCH_RELEASE?PET_EV_RELEASE:PET_EV_CANCEL;
-        break;
-    }
-    default:break;
-    }
     uint32_t fx=PET_FX_NONE;
     switch(e.kind) {
     case PET_EV_PRESS:
@@ -89,10 +63,8 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         fx=PET_FX_CANCEL;
         if(s->dialogue==PET_DIALOGUE_LISTEN) fx|=PET_FX_STOP;
         s->held=false; s->expired=false; s->dialogue=PET_DIALOGUE_IDLE;
-        s->touch_blocked=s->touch_held;
         s->playback_empty=true; s->response_done=false;
         break;
-    case PET_EV_TOUCH_PRESS:case PET_EV_TOUCH_RELEASE:case PET_EV_TOUCH_CANCEL:break;
     case PET_EV_LINK:
         if(e.generation<s->generation || e.value<PET_CONN_OFFLINE || e.value>PET_CONN_UNAVAILABLE) break;
         if(e.generation!=s->generation || e.value!=PET_CONN_READY) {
@@ -215,8 +187,7 @@ pet_gesture_t pet_gesture(int x0,int y0,int x1,int y1) {
 }
 bool pet_event_urgent(pet_event_kind_t kind){
     /* Audio buffer/done/drain events share a FIFO: promoting only done would reorder the stream. */
-    return kind==PET_EV_PRESS||kind==PET_EV_RELEASE||kind==PET_EV_CANCEL||kind==PET_EV_LINK||
-           kind==PET_EV_TOUCH_PRESS||kind==PET_EV_TOUCH_RELEASE||kind==PET_EV_TOUCH_CANCEL;
+    return kind==PET_EV_PRESS||kind==PET_EV_RELEASE||kind==PET_EV_CANCEL||kind==PET_EV_LINK;
 }
 
 bool pet_network_should_sleep(const pet_state_t *state){return state->life==PET_LIFE_SLEEP&&!state->usb;}

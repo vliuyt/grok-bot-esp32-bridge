@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-19T11:33:00.415087+00:00",
+  "firmwareSha256": "73e22442ca7b53b875d9eeda3990ba005fca38e5872a25111ce5586db9937ff3",
+  "hostTests": {
+    "passed": 82,
+    "failed": 0,
+    "skipped": 0
+  },
+  "touchVoiceButtonRemoved": true,
+  "bootCaptureLogicUnchangedFromUserVerifiedBaseline": true,
+  "referenceDeviceApplicationVerified": true,
+  "nativeVoiceReady": true,
+  "volumePreservedDuringCheck": true,
+  "deviceVolume": 100,
+  "audioFault": false,
+  "quietBench": true,
+  "audiblePlaybackTestedOnThisBuild": false,
+  "priorBuildUserConfirmedTouchAndBootConversation": true,
+  "manualVoiceRetestOnFinalBuild": false
+}

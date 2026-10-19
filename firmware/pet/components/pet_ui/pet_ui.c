@@ -18,18 +18,15 @@ static pet_ui_view_t view;
 static pet_ui_callback_t callback;
 static void *callback_context;
 static lv_obj_t *root,*body,*eyes[2],*smiles[2],*caption,*handle,*drawer,*connection_page;
-static lv_obj_t *talk_button,*talk_label,*talk_hint;
 static lv_obj_t *volume_slider,*brightness_slider,*quiet_switch,*captions_switch,*speaker_switch;
 static lv_obj_t *network_label,*bridge_label,*voice_label,*setup_label,*passkey_label,*power_label;
 static bool initialized,screen_on=true,syncing;
 static int page,requested_page=-1;
 static bool snapshot_requested;
-static bool talk_touching;
-static int requested_talk=-1;
 static int touch_x,touch_y;
 static bool touching;
-static char last_caption[321];
-static char last_entry[64],last_hint[64];
+static char last_caption[321],last_hint[64];
+static lv_obj_t *voice_hint;
 static void action(pet_ui_action_kind_t kind,int value){if(callback)callback((pet_ui_action_t){kind,value},callback_context);}
 static lv_obj_t *label(lv_obj_t *parent,const char *text,int width){
     lv_obj_t *o=lv_label_create(parent);lv_obj_set_style_text_font(o,&font,0);
@@ -38,16 +35,7 @@ static lv_obj_t *label(lv_obj_t *parent,const char *text,int width){
     lv_label_set_text(o,text);return o;
 }
 static void show_page(int next){
-    if(next&&talk_touching){talk_touching=false;action(PET_UI_TALK_CANCEL,0);}
     page=next;lv_obj_set_flag(drawer,LV_OBJ_FLAG_HIDDEN,next!=1);lv_obj_set_flag(connection_page,LV_OBJ_FLAG_HIDDEN,next!=2);
-}
-static void talk(lv_event_t *event){
-    lv_event_code_t code=lv_event_get_code(event);
-    if(code==LV_EVENT_PRESSED&&!talk_touching){talk_touching=true;action(PET_UI_TALK_PRESS,0);}
-    else if((code==LV_EVENT_RELEASED||code==LV_EVENT_PRESS_LOST)&&talk_touching){
-        talk_touching=false;
-        action(code==LV_EVENT_RELEASED?PET_UI_TALK_RELEASE:PET_UI_TALK_CANCEL,0);
-    }
 }
 static void touch(lv_event_t *event){
     lv_event_code_t code=lv_event_get_code(event);lv_point_t point;
@@ -123,13 +111,8 @@ static void draw(lv_timer_t *timer){
     (void)timer;pet_ui_view_t current;
     xSemaphoreTake(view_lock,portMAX_DELAY);current=view;
     int next=requested_page;requested_page=-1;bool snap=snapshot_requested;snapshot_requested=false;
-    int talk_edge=requested_talk;requested_talk=-1;
     xSemaphoreGive(view_lock);
     if(next>=0)show_page(next);
-    if(talk_edge>=0&&page==0){
-        lv_event_code_t code=talk_edge==0?LV_EVENT_PRESSED:talk_edge==1?LV_EVENT_RELEASED:LV_EVENT_PRESS_LOST;
-        lv_obj_send_event(talk_button,code,NULL);
-    }
     pet_pose_t p=current.pose;
     if(p.screen_on!=screen_on){
         screen_on=p.screen_on;pet_board()->panel_sleep(!screen_on);
@@ -139,7 +122,7 @@ static void draw(lv_timer_t *timer){
     int brightness=p.dim?current.brightness/4:current.brightness;
     pet_board()->set_brightness(brightness<5?5:brightness);
     int w=(int)(224*p.scale_x),h=(int)(224*p.scale_y);
-    lv_obj_set_size(body,w,h);lv_obj_set_pos(body,(466-w)/2,200-h/2+(int)p.offset_y);
+    lv_obj_set_size(body,w,h);lv_obj_set_pos(body,(466-w)/2,210-h/2+(int)p.offset_y);
     lv_obj_set_style_transform_pivot_x(body,w/2,0);lv_obj_set_style_transform_pivot_y(body,h/2,0);
     lv_obj_set_style_transform_rotation(body,(int)(p.rotation*10),0);
     bool happy=p.expression==PET_EXPR_HAPPY||p.expression==PET_EXPR_SLEEP;
@@ -157,22 +140,10 @@ static void draw(lv_timer_t *timer){
     else if(current.dialogue==PET_DIALOGUE_IDLE)text="";
     if(strcmp(last_caption,text)){snprintf(last_caption,sizeof(last_caption),"%s",text);lv_label_set_text(caption,last_caption);}
     lv_obj_set_flag(caption,LV_OBJ_FLAG_HIDDEN,!text[0]);
-    bool available=current.connection==PET_CONN_READY;
-    bool listening=current.dialogue==PET_DIALOGUE_LISTEN;
-    const char *entry=available?"按住说话":"连接后按住说话";
-    if(listening)entry="松开提交";
-    else if(current.held&&!available)entry="连接中，松开取消";
-    else if(available&&current.dialogue!=PET_DIALOGUE_IDLE)entry="按住打断";
-    if(strcmp(last_entry,entry)){
-        snprintf(last_entry,sizeof(last_entry),"%s",entry);lv_label_set_text(talk_label,last_entry);
-        uint32_t background=listening?0xfa2c99:available?0x32272e:0x242124;
-        lv_obj_set_style_bg_color(talk_button,lv_color_hex(background),0);
-        lv_obj_set_style_bg_color(talk_button,lv_color_hex(background),LV_STATE_PRESSED);
-        lv_obj_set_style_border_color(talk_button,lv_color_hex(available?0xfa2c99:0x494146),0);
-        lv_obj_set_style_text_color(talk_label,lv_color_hex(listening?0x101010:0xeee4eb),0);
-    }
-    const char *hint=listening?(current.touch_recording?"滑出按钮可取消":"松开 BOOT 后提交"):"也可按住 BOOT";
-    if(strcmp(last_hint,hint)){snprintf(last_hint,sizeof(last_hint),"%s",hint);lv_label_set_text(talk_hint,last_hint);}
+    const char *hint=current.connection==PET_CONN_READY?"按住 BOOT 说话":"语音连接中";
+    if(current.dialogue==PET_DIALOGUE_LISTEN)hint="松开 BOOT 后提交";
+    else if(current.connection==PET_CONN_READY&&current.dialogue!=PET_DIALOGUE_IDLE)hint="按住 BOOT 打断";
+    if(strcmp(last_hint,hint)){snprintf(last_hint,sizeof(last_hint),"%s",hint);lv_label_set_text(voice_hint,last_hint);}
     if(page==1){
         syncing=true;lv_slider_set_value(volume_slider,current.volume,LV_ANIM_OFF);
         lv_slider_set_value(brightness_slider,current.brightness,LV_ANIM_OFF);
@@ -192,7 +163,7 @@ static void build(void){
     root=lv_screen_active();lv_obj_remove_style_all(root);lv_obj_set_style_bg_color(root,lv_color_hex(0x101010),0);
     lv_obj_set_style_bg_opa(root,LV_OPA_COVER,0);lv_obj_remove_flag(root,LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_event_cb(root,touch,LV_EVENT_ALL,NULL);
-    body=lv_obj_create(root);lv_obj_remove_style_all(body);lv_obj_set_size(body,224,224);lv_obj_set_pos(body,121,88);
+    body=lv_obj_create(root);lv_obj_remove_style_all(body);lv_obj_set_size(body,224,224);lv_obj_set_pos(body,121,98);
     lv_obj_set_style_radius(body,LV_RADIUS_CIRCLE,0);lv_obj_set_style_bg_color(body,lv_color_hex(0xfa2c99),0);
     lv_obj_set_style_bg_opa(body,LV_OPA_COVER,0);lv_obj_add_flag(body,LV_OBJ_FLAG_EVENT_BUBBLE);lv_obj_remove_flag(body,LV_OBJ_FLAG_SCROLLABLE);
     for(unsigned i=0;i<2;i++){
@@ -205,16 +176,11 @@ static void build(void){
         lv_obj_set_style_arc_rounded(smiles[i],true,LV_PART_MAIN);lv_obj_set_style_arc_opa(smiles[i],LV_OPA_TRANSP,LV_PART_INDICATOR);
         lv_obj_set_style_bg_opa(smiles[i],LV_OPA_TRANSP,LV_PART_KNOB);lv_obj_remove_flag(smiles[i],LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE);lv_obj_add_flag(smiles[i],LV_OBJ_FLAG_HIDDEN);
     }
-    caption=label(root,"",300);lv_obj_set_pos(caption,83,324);lv_obj_set_height(caption,38);lv_label_set_long_mode(caption,LV_LABEL_LONG_WRAP);
-    talk_button=lv_button_create(root);lv_obj_set_size(talk_button,220,48);lv_obj_set_pos(talk_button,123,370);
-    lv_obj_set_style_radius(talk_button,24,0);lv_obj_set_style_shadow_width(talk_button,0,0);
-    lv_obj_set_style_bg_color(talk_button,lv_color_hex(0x242124),0);lv_obj_set_style_border_width(talk_button,1,0);
-    lv_obj_remove_flag(talk_button,LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_EVENT_BUBBLE|LV_OBJ_FLAG_PRESS_LOCK);
-    talk_label=label(talk_button,"连接后按住说话",0);lv_obj_center(talk_label);
-    lv_obj_add_event_cb(talk_button,talk,LV_EVENT_ALL,NULL);
-    talk_hint=label(root,"也可按住 BOOT",220);lv_obj_set_pos(talk_hint,123,423);
-    lv_obj_set_style_text_color(talk_hint,lv_color_hex(0x8b7f87),0);
-    handle=lv_button_create(root);lv_obj_remove_style_all(handle);lv_obj_set_size(handle,60,20);lv_obj_align(handle,LV_ALIGN_BOTTOM_MID,0,-3);
+    caption=label(root,"",300);lv_obj_set_pos(caption,83,334);lv_obj_set_height(caption,38);lv_label_set_long_mode(caption,LV_LABEL_LONG_WRAP);
+    voice_hint=label(root,"语音连接中",260);lv_obj_set_pos(voice_hint,103,391);
+    lv_obj_remove_flag(voice_hint,LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_text_color(voice_hint,lv_color_hex(0x8b7f87),0);
+    handle=lv_button_create(root);lv_obj_remove_style_all(handle);lv_obj_set_size(handle,72,42);lv_obj_align(handle,LV_ALIGN_BOTTOM_MID,0,-8);
     lv_obj_t *bar=lv_obj_create(handle);lv_obj_remove_style_all(bar);lv_obj_set_size(bar,34,3);lv_obj_center(bar);
     lv_obj_set_style_bg_color(bar,lv_color_hex(0x494146),0);lv_obj_set_style_bg_opa(bar,LV_OPA_COVER,0);lv_obj_set_style_radius(bar,2,0);lv_obj_remove_flag(bar,LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(handle,open_drawer,LV_EVENT_CLICKED,NULL);
@@ -256,9 +222,3 @@ void pet_ui_update(const pet_ui_view_t *next){if(view_lock){xSemaphoreTake(view_
 void pet_ui_home(void){pet_ui_bench_page(0);}
 void pet_ui_bench_page(int next){if(view_lock&&next>=0&&next<=2){xSemaphoreTake(view_lock,portMAX_DELAY);requested_page=next;xSemaphoreGive(view_lock);}}
 void pet_ui_request_snapshot(void){if(view_lock){xSemaphoreTake(view_lock,portMAX_DELAY);snapshot_requested=true;xSemaphoreGive(view_lock);}}
-bool pet_ui_bench_talk(int edge){
-    if(!view_lock||edge<0||edge>2)return false;
-    xSemaphoreTake(view_lock,portMAX_DELAY);bool accepted=requested_talk<0;
-    if(accepted)requested_talk=edge;
-    xSemaphoreGive(view_lock);return accepted;
-}
