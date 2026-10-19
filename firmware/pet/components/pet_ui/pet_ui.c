@@ -25,7 +25,8 @@ static int page,requested_page=-1;
 static bool snapshot_requested;
 static int touch_x,touch_y;
 static bool touching;
-static char last_caption[321];
+static char last_caption[321],last_hint[64];
+static lv_obj_t *voice_hint;
 static void action(pet_ui_action_kind_t kind,int value){if(callback)callback((pet_ui_action_t){kind,value},callback_context);}
 static lv_obj_t *label(lv_obj_t *parent,const char *text,int width){
     lv_obj_t *o=lv_label_create(parent);lv_obj_set_style_text_font(o,&font,0);
@@ -121,7 +122,7 @@ static void draw(lv_timer_t *timer){
     int brightness=p.dim?current.brightness/4:current.brightness;
     pet_board()->set_brightness(brightness<5?5:brightness);
     int w=(int)(224*p.scale_x),h=(int)(224*p.scale_y);
-    lv_obj_set_size(body,w,h);lv_obj_set_pos(body,(466-w)/2,228-h/2+(int)p.offset_y);
+    lv_obj_set_size(body,w,h);lv_obj_set_pos(body,(466-w)/2,210-h/2+(int)p.offset_y);
     lv_obj_set_style_transform_pivot_x(body,w/2,0);lv_obj_set_style_transform_pivot_y(body,h/2,0);
     lv_obj_set_style_transform_rotation(body,(int)(p.rotation*10),0);
     bool happy=p.expression==PET_EXPR_HAPPY||p.expression==PET_EXPR_SLEEP;
@@ -139,6 +140,10 @@ static void draw(lv_timer_t *timer){
     else if(current.dialogue==PET_DIALOGUE_IDLE)text="";
     if(strcmp(last_caption,text)){snprintf(last_caption,sizeof(last_caption),"%s",text);lv_label_set_text(caption,last_caption);}
     lv_obj_set_flag(caption,LV_OBJ_FLAG_HIDDEN,!text[0]);
+    const char *hint=current.connection==PET_CONN_READY?"按住 BOOT 说话":"语音连接中";
+    if(current.dialogue==PET_DIALOGUE_LISTEN)hint="松开 BOOT 后提交";
+    else if(current.connection==PET_CONN_READY&&current.dialogue!=PET_DIALOGUE_IDLE)hint="按住 BOOT 打断";
+    if(strcmp(last_hint,hint)){snprintf(last_hint,sizeof(last_hint),"%s",hint);lv_label_set_text(voice_hint,last_hint);}
     if(page==1){
         syncing=true;lv_slider_set_value(volume_slider,current.volume,LV_ANIM_OFF);
         lv_slider_set_value(brightness_slider,current.brightness,LV_ANIM_OFF);
@@ -158,7 +163,7 @@ static void build(void){
     root=lv_screen_active();lv_obj_remove_style_all(root);lv_obj_set_style_bg_color(root,lv_color_hex(0x101010),0);
     lv_obj_set_style_bg_opa(root,LV_OPA_COVER,0);lv_obj_remove_flag(root,LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_event_cb(root,touch,LV_EVENT_ALL,NULL);
-    body=lv_obj_create(root);lv_obj_remove_style_all(body);lv_obj_set_size(body,224,224);lv_obj_set_pos(body,121,116);
+    body=lv_obj_create(root);lv_obj_remove_style_all(body);lv_obj_set_size(body,224,224);lv_obj_set_pos(body,121,98);
     lv_obj_set_style_radius(body,LV_RADIUS_CIRCLE,0);lv_obj_set_style_bg_color(body,lv_color_hex(0xfa2c99),0);
     lv_obj_set_style_bg_opa(body,LV_OPA_COVER,0);lv_obj_add_flag(body,LV_OBJ_FLAG_EVENT_BUBBLE);lv_obj_remove_flag(body,LV_OBJ_FLAG_SCROLLABLE);
     for(unsigned i=0;i<2;i++){
@@ -171,7 +176,10 @@ static void build(void){
         lv_obj_set_style_arc_rounded(smiles[i],true,LV_PART_MAIN);lv_obj_set_style_arc_opa(smiles[i],LV_OPA_TRANSP,LV_PART_INDICATOR);
         lv_obj_set_style_bg_opa(smiles[i],LV_OPA_TRANSP,LV_PART_KNOB);lv_obj_remove_flag(smiles[i],LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE);lv_obj_add_flag(smiles[i],LV_OBJ_FLAG_HIDDEN);
     }
-    caption=label(root,"",300);lv_obj_align(caption,LV_ALIGN_BOTTOM_MID,0,-59);lv_label_set_long_mode(caption,LV_LABEL_LONG_WRAP);
+    caption=label(root,"",300);lv_obj_set_pos(caption,83,334);lv_obj_set_height(caption,38);lv_label_set_long_mode(caption,LV_LABEL_LONG_WRAP);
+    voice_hint=label(root,"语音连接中",260);lv_obj_set_pos(voice_hint,103,391);
+    lv_obj_remove_flag(voice_hint,LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_text_color(voice_hint,lv_color_hex(0x8b7f87),0);
     handle=lv_button_create(root);lv_obj_remove_style_all(handle);lv_obj_set_size(handle,72,42);lv_obj_align(handle,LV_ALIGN_BOTTOM_MID,0,-8);
     lv_obj_t *bar=lv_obj_create(handle);lv_obj_remove_style_all(bar);lv_obj_set_size(bar,34,3);lv_obj_center(bar);
     lv_obj_set_style_bg_color(bar,lv_color_hex(0x494146),0);lv_obj_set_style_bg_opa(bar,LV_OPA_COVER,0);lv_obj_set_style_radius(bar,2,0);lv_obj_remove_flag(bar,LV_OBJ_FLAG_CLICKABLE);

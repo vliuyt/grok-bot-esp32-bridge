@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-19T11:19:46.326089+00:00",
+  "firmwareSha256": "a2bf91b76cc0b9adbfb7beaac79760500a743e849b71abfd765ee254172ded35",
+  "physicalFingerVerified": true,
+  "audiblePlayback": false,
+  "releaseSubmission": "host regression; no speech submitted during quiet device bench",
+  "touchPressRecords": true,
+  "touchLossCancels": true,
+  "duplicateReleaseDoesNotStart": true,
+  "newGestureRecords": true,
+  "noAudioFault": true,
+  "noReset": true,
+  "volumePreserved": true,
+  "passed": true,
+  "manualAcceptance": {
+    "touchConversation": true,
+    "bootConversation": true,
+    "source": "user confirmation",
+    "feedback": "Both voice entries worked; touch target too small. User chose BOOT-only voice."
+  },
+  "supersededBy": "BOOT-only voice UI per user feedback"
+}

@@ -2,7 +2,7 @@
 
 [简体中文](README.md) · [Setup guide](docs/GETTING_STARTED.zh-CN.md) · [Validation](docs/VALIDATION.md)
 
-A standalone companion-pet firmware for the **Waveshare ESP32-S3-Touch-AMOLED-1.43C** and a macOS bridge to an existing Grok Bot. The round-screen pet blinks, breathes and responds locally to touch. Hold BOOT to talk; release to receive the Bot's native voice, with its conversation context and task capabilities.
+A standalone companion-pet firmware for the **Waveshare ESP32-S3-Touch-AMOLED-1.43C** and a macOS bridge to an existing Grok Bot. The round-screen pet blinks, breathes and responds locally to touch. Hold the physical BOOT button to talk; release to receive the Bot's native voice, with its conversation context and task capabilities.
 
 ![Actual device screen](docs/pet-device-screen.png)
 
@@ -35,7 +35,7 @@ Open <http://127.0.0.1:8788>, connect, allow microphone access, and hold the on-
 
 Proceed to firmware only after this works. The [step-by-step guide](docs/GETTING_STARTED.zh-CN.md) covers a private verified full-flash backup, target build, guarded application-only install, USB/BLE provisioning, foreground operation, optional login service and recovery.
 
-This initial release is **source-only**. It does not include a precompiled `.bin`. Installation requires the documented Muse-compatible partition layout and default OTA selection. The installer refuses unsupported layouts and does not repartition a board. USB utilities are bundled; an adjacent private SDK checkout is not required.
+This release is **source-only**. It does not include a precompiled `.bin`. Installation requires the documented Muse-compatible partition layout and confirmed ota_0 selection. The installer refuses unsupported layouts and does not repartition a board. USB utilities are bundled; an adjacent private SDK checkout is not required.
 
 ## Evidence and current limits
 
