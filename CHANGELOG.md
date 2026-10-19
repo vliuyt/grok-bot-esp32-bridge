@@ -1,11 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.1.1 — 2026-10-19
 
 - Keep voice on the physical BOOT button: hold to record, release to submit, hold again to interrupt.
 - Remove the experimental touch voice button after real-device feedback; touchscreen remains for petting and settings.
 - Display connection/listening/interruption instructions independently of conversation captions.
 - Accept CRC-validated, confirmed ota_0 boot records for application-only upgrades; never rewrite boot metadata. Reject erased OTA records, whose first-boot initialization would otherwise invalidate safe recovery checks.
+
+- Reference-device update, sanitized final-screen capture and 82 host tests passed. The user verified voice on the earlier touch/BOOT build; the final BOOT-only UI build was checked silently.
 
 ## 0.1.0 — 2026-10-19
 
