@@ -1,6 +1,6 @@
 # Grok Bot ESP32 Companion · 小糖 AI 陪伴宠物
 
-[English](README.en.md) · [快速开始](docs/GETTING_STARTED.zh-CN.md) · [架构](docs/宠物固件架构.md) · [验收与限制](docs/VALIDATION.md) · [贡献指南](CONTRIBUTING.md)
+[English](README.en.md) · [快速开始](docs/GETTING_STARTED.zh-CN.md) · [触屏／按键语音入口](docs/VOICE_INPUT.md) · [架构](docs/宠物固件架构.md) · [验收与限制](docs/VALIDATION.md) · [贡献指南](CONTRIBUTING.md)
 
 把 **微雪 ESP32-S3-Touch-AMOLED-1.43C** 变成一个会眨眼、会回应抚摸、可以按住说话的桌面 AI 小宠物。设备运行独立宠物固件，Mac 负责桥接你已有的 Grok Bot；保留 Bot 的原生声音、上下文和任务能力。
 
@@ -19,7 +19,7 @@
 | 能力 | 当前实现 |
 |---|---|
 | 陪伴互动 | 本地呼吸、眨眼、抚摸反馈；断网时仍能互动和调整设置 |
-| 原生对话 | 按住 BOOT 录音、松开提交；播放时再按下清除旧音频并开始新问题 |
+| 原生对话 | 触屏「按住说话」或 BOOT 录音、松开提交；触屏滑出取消，播放时再按住清除旧音频并开始新问题 |
 | 界面 | 程序绘制粉色圆脸、听说状态、短字幕、音量／亮度／安静模式与连接页 |
 | 联网 | 2.4 GHz Wi-Fi；配对 Mac 的局域网发现与保存地址回退 |
 | 配置 | USB 配网；限时、带六位码认证的 BLE 配网，蓝牙不承担日常语音 |
@@ -46,7 +46,7 @@ flowchart LR
 - **局域网**：Mac 和设备在互通的私人局域网，路由器允许设备访问 Mac；无需端口映射。Mac 多个有效网卡时程序会拒绝猜测地址，请见排错指南。
 - **固件开发**：Python ≥3.11、ESP-IDF **6.0.1**，其余组件版本由 `dependencies.lock` 固定。
 
-首版是 **源码发布**，没有附带固件 `.bin`。公开版安装工具只支持本文明确的 Muse 兼容分区和默认 OTA 引导状态；它会拒绝其他布局，不负责给任意出厂固件改分区。请先阅读[完整安装与恢复说明](docs/GETTING_STARTED.zh-CN.md)。
+首版是 **源码发布**，没有附带固件 `.bin`。公开版安装工具只支持本文明确的 Muse 兼容分区和已确认的 ota_0 引导状态；它会拒绝其他布局，不负责给任意出厂固件改分区。请先阅读[完整安装与恢复说明](docs/GETTING_STARTED.zh-CN.md)。
 
 ## 先验证 Mac 语音
 

@@ -1,6 +1,7 @@
 """Verified private backup and application-only installation for the supported board."""
 from pathlib import Path
 import argparse
+import binascii
 import contextlib
 import hashlib
 import json
@@ -39,8 +40,22 @@ def require_safe_layout(data):
         if magic!=0x50aa or flags:raise ValueError('PARTITION_TABLE_UNSUPPORTED')
         found.append((label.split(b'\0',1)[0].decode('ascii'),kind,sub,offset,size))
     if found!=PARTITIONS:raise ValueError('PARTITION_LAYOUT_UNSUPPORTED')
-    # A non-default OTA selection might boot ota_1 after writing ota_0. Never rewrite it.
-    if data[0x1d000:0x1f000]!=b'\xff'*0x2000:raise ValueError('OTA_SELECTION_UNSUPPORTED')
+    metadata=data[0x1d000:0x1f000]
+    if metadata==b'\xff'*0x2000:raise ValueError('OTA_RECORD_NOT_CONFIRMED')
+    # Follow ESP-IDF 6.0.1's confirmed-record CRC and maximum-sequence rule.
+    # Pending, aborted/corrupt records and active ota_1 remain unsupported.
+    sequences=[]
+    for offset in (0,0x1000):
+        record=metadata[offset:offset+32]
+        if record==b'\xff'*32:continue
+        seq=struct.unpack_from('<I',record,0)[0]
+        state,crc=struct.unpack_from('<II',record,24)
+        expected=binascii.crc32(record[:4],0xffffffff)&0xffffffff
+        if not 1<=seq<0xffffffff or state!=2 or crc!=expected:
+            raise ValueError('OTA_RECORD_NOT_CONFIRMED')
+        sequences.append(seq)
+    if not sequences or (max(sequences)-1)%2!=0:
+        raise ValueError('OTA_SELECTION_UNSUPPORTED')
 
 
 def verified_backup(root,manifest,device):

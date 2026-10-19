@@ -70,7 +70,7 @@ static void effects(uint32_t fx,pet_event_kind_t kind){
     }
 }
 static void reduce(pet_event_t event){
-    if(event.kind==PET_EV_PRESS&&pet_app_state().setup)pet_provision_open(false);
+    if((event.kind==PET_EV_PRESS||event.kind==PET_EV_TOUCH_PRESS)&&pet_app_state().setup)pet_provision_open(false);
     xSemaphoreTake(model_lock,portMAX_DELAY);uint32_t fx=pet_step(&model,event);xSemaphoreGive(model_lock);
     effects(fx,event.kind);atomic_store(&phase,13);
 }
@@ -87,7 +87,14 @@ static void credit(uint32_t g,uint32_t t,void *ctx){
 }
 static void audio_fault(void *ctx){(void)ctx;atomic_store(&emergency,true);}
 static void ui_action(pet_ui_action_t action,void *ctx){
-    (void)ctx;if(xQueueSend(actions,&action,0)!=pdTRUE){atomic_store(&emergency,true);}
+    (void)ctx;
+    /* Capture edges cannot wait behind a slider/animation queue. */
+    if(action.kind==PET_UI_TALK_PRESS||action.kind==PET_UI_TALK_RELEASE||action.kind==PET_UI_TALK_CANCEL){
+        pet_event_kind_t kind=action.kind==PET_UI_TALK_PRESS?PET_EV_TOUCH_PRESS:
+                              action.kind==PET_UI_TALK_RELEASE?PET_EV_TOUCH_RELEASE:PET_EV_TOUCH_CANCEL;
+        pet_app_post((pet_event_t){.kind=kind});return;
+    }
+    if(xQueueSend(actions,&action,0)!=pdTRUE){atomic_store(&emergency,true);}
 }
 void pet_app_caption(uint32_t g,uint32_t t,const char *text){
     xSemaphoreTake(metadata_lock,portMAX_DELAY);
@@ -147,6 +154,8 @@ static void refresh(void){
     ui.pose=pet_pose(&s,now);ui.dialogue=s.dialogue;ui.connection=s.connection;
     ui.volume=c.volume;ui.brightness=c.brightness;ui.quiet=c.quiet;ui.captions=c.captions;ui.speaker=c.speaker;
     ui.task_channel=s.task_channel;ui.waiting_long=s.dialogue==PET_DIALOGUE_WAIT&&now-s.entered_ms>=20000;
+    ui.held=s.held;
+    ui.touch_recording=s.dialogue==PET_DIALOGUE_LISTEN&&s.touch_held&&!s.boot_held&&!s.touch_blocked;
     snprintf(ui.mac,sizeof(ui.mac),"%s",mac_connected?"Mac 桥接已连接":network_connected?"正在寻找已配对 Mac":"等待网络连接");
     snprintf(ui.voice,sizeof(ui.voice),"%s",s.connection==PET_CONN_READY?(s.task_channel?"小糖原生语音就绪":"语音可用，任务通道恢复中"):"小糖原生语音尚未就绪");
     pet_ui_view_t current=ui;xSemaphoreGive(metadata_lock);

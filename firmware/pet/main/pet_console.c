@@ -24,6 +24,10 @@ static void command(const char *line){
     else if(!strcmp(line,"pet.page settings")){pet_ui_bench_page(1);}
     else if(!strcmp(line,"pet.page connection")){pet_ui_bench_page(2);}
     else if(!strcmp(line,"pet.pet")){pet_app_post((pet_event_t){.kind=PET_EV_PET});printf("@pet.pet ok\n");}
+    else if(!strcmp(line,"pet.touch down")||!strcmp(line,"pet.touch up")||!strcmp(line,"pet.touch lost")){
+        int edge=!strcmp(line,"pet.touch down")?0:!strcmp(line,"pet.touch up")?1:2;
+        printf("@pet.touch %s\n",pet_ui_bench_talk(edge)?"queued":"busy");
+    }
     else if(!strcmp(line,"pet.setup open")){pet_provision_open(true);printf("@pet.setup ok\n");}
     else if(!strcmp(line,"pet.setup close")){pet_provision_open(false);printf("@pet.setup ok\n");}
     else if(!strcmp(line,"pet.setup status")){pet_provision_status(status,sizeof(status));printf("@pet.setup %s\n",status);}
