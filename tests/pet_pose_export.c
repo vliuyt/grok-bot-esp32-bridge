@@ -1,5 +1,6 @@
 #include "pet_core.h"
 #include "pet_face.h"
+#include "pet_caption.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -24,6 +25,15 @@ static uint64_t prepare(pet_state_t *s,const char *name) {
     }
     return 1000;
 }
+static void json_string(const char *text){
+    putchar('"');
+    for(const unsigned char *p=(const unsigned char *)text;*p;p++){
+        if(*p=='"'||*p=='\\'){putchar('\\');putchar(*p);}
+        else if(*p<32)printf("\\u%04x",*p);
+        else putchar(*p);
+    }
+    putchar('"');
+}
 int main(void) {
     const char *names[]={"idle","happy","greet","listen","think","speak","sleep","curious","confused"};
     printf("{\"schema\":1,\"stepMs\":33,\"width\":466,\"height\":466,\"states\":{");
@@ -46,5 +56,24 @@ int main(void) {
         }
         printf("]");
     }
-    puts("}}");
+    printf("},\"captionCases\":[");
+    const char *ids[]={"chinese","english","mixed","empty","long"};
+    const char *labels[]={"中文长句","English","中英与 emoji","空文本","长文本边界"};
+    const char *texts[]={
+        "今天一起出门散步吧。路上可以看看小花，再聊聊你今天的心情。用一个慢慢的下午，把忙碌放在一边。",
+        "Let's take a little walk. We can talk about your day and watch the clouds drift by.",
+        "今天状态很好🙂！Let's make a tiny plan: 喝杯水，再看看窗外。",
+        "",
+        "这是一段用于检查圆屏字幕边界的固定示例。这里不会出现私人聊天内容。长一些的文字可以在完整模式中上下滚动，底部仍然保留实体按键提示和设置入口，切换为简洁时只显示第一句，关闭后隐藏对话正文。"
+    };
+    for(unsigned c=0;c<5;c++){
+        printf("%s{\"id\":",c?",":"");json_string(ids[c]);printf(",\"label\":");json_string(labels[c]);
+        printf(",\"modes\":[");
+        for(unsigned m=0;m<3;m++){
+            char text[321];pet_caption_text((pet_caption_mode_t)m,texts[c],text,sizeof(text));
+            if(m)putchar(',');json_string(text);
+        }
+        printf("]}");
+    }
+    puts("]}");
 }

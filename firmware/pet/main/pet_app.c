@@ -28,7 +28,9 @@ static atomic_bool emergency;
 static atomic_uint phase,emergency_reasons,event_drops;
 static bool dirty,network_connected,mac_connected;
 static uint64_t dirty_at,last_power;
-static struct {char text[321];uint32_t generation,turn;bool pending;} pending_caption;
+static pet_caption_buffer_t captions;
+static pet_caption_mode_t caption_mode=PET_CAPTION_COMPACT;
+static bool caption_save_failed;
 static uint64_t now_ms(void){return (uint64_t)esp_timer_get_time()/1000;}
 pet_state_t pet_app_state(void){pet_state_t s;xSemaphoreTake(model_lock,portMAX_DELAY);s=model;xSemaphoreGive(model_lock);return s;}
 pet_config_t pet_app_config(void){pet_config_t c;xSemaphoreTake(config_lock,portMAX_DELAY);c=config;xSemaphoreGive(config_lock);return c;}
@@ -49,8 +51,10 @@ static bool control(const char *name,uint32_t g,uint32_t t){
 }
 static void effects(uint32_t fx,pet_event_kind_t kind){
     pet_state_t s=pet_app_state();atomic_store(&phase,10);
+    if(fx&(PET_FX_START|PET_FX_CANCEL)){
+        xSemaphoreTake(metadata_lock,portMAX_DELAY);pet_caption_reset(&captions);ui.caption[0]=0;xSemaphoreGive(metadata_lock);
+    }
     if(fx&PET_FX_START){
-        xSemaphoreTake(metadata_lock,portMAX_DELAY);ui.caption[0]=0;xSemaphoreGive(metadata_lock);
         pet_ui_home();pet_audio_clear(s.generation,s.turn);
         if(control("press",s.generation,s.turn))pet_audio_begin(s.generation,s.turn);
     }else if(fx&PET_FX_SUBMIT){pet_audio_finish();}
@@ -90,9 +94,9 @@ static void ui_action(pet_ui_action_t action,void *ctx){
     (void)ctx;if(xQueueSend(actions,&action,0)!=pdTRUE){atomic_store(&emergency,true);}
 }
 void pet_app_caption(uint32_t g,uint32_t t,const char *text){
+    pet_state_t state=pet_app_state();
     xSemaphoreTake(metadata_lock,portMAX_DELAY);
-    snprintf(pending_caption.text,sizeof(pending_caption.text),"%s",text);
-    pending_caption.generation=g;pending_caption.turn=t;pending_caption.pending=true;
+    pet_caption_receive(&captions,&state,g,t,text);
     xSemaphoreGive(metadata_lock);
 }
 void pet_app_network(bool connected,const char *detail){
@@ -122,12 +126,18 @@ static void handle_action(pet_ui_action_t action){
         pet_provision_open(open);
         return;
     }
+    if(action.kind==PET_UI_CAPTIONS){
+        pet_caption_mode_t next=(pet_caption_mode_t)action.value;
+        if(pet_caption_mode_valid(next)&&pet_store_caption_mode_save(next)){
+            caption_mode=next;caption_save_failed=false;
+        }else caption_save_failed=true;
+        return;
+    }
     xSemaphoreTake(config_lock,portMAX_DELAY);
     switch(action.kind){
     case PET_UI_VOLUME:if(action.value>=0&&action.value<=100){config.volume=(uint8_t)action.value;}break;
     case PET_UI_BRIGHTNESS:if(action.value>=10&&action.value<=100){config.brightness=(uint8_t)action.value;}break;
     case PET_UI_QUIET:config.quiet=action.value!=0;break;
-    case PET_UI_CAPTIONS:config.captions=action.value!=0;break;
     case PET_UI_SPEAKER:config.speaker=action.value!=0;break;
     default:break;
     }
@@ -140,14 +150,10 @@ static void handle_action(pet_ui_action_t action){
 static void refresh(void){
     uint64_t now=now_ms();pet_state_t s=pet_app_state();pet_config_t c=pet_app_config();
     xSemaphoreTake(metadata_lock,portMAX_DELAY);
-    if(pending_caption.pending){
-        if(pending_caption.generation==s.generation&&pending_caption.turn==s.turn&&s.dialogue!=PET_DIALOGUE_LISTEN){
-            snprintf(ui.caption,sizeof(ui.caption),"%s",pending_caption.text);
-        }
-        pending_caption.pending=false;
-    }
+    pet_caption_current(&captions,&s,PET_CAPTION_FULL,ui.caption,sizeof(ui.caption));
+    ui.caption_mode=caption_mode;ui.caption_save_failed=caption_save_failed;
     ui.pose=pet_pose(&s,now);ui.dialogue=s.dialogue;ui.connection=s.connection;
-    ui.volume=c.volume;ui.brightness=c.brightness;ui.quiet=c.quiet;ui.captions=c.captions;ui.speaker=c.speaker;
+    ui.volume=c.volume;ui.brightness=c.brightness;ui.quiet=c.quiet;ui.speaker=c.speaker;
     ui.task_channel=s.task_channel;ui.waiting_long=s.dialogue==PET_DIALOGUE_WAIT&&now-s.entered_ms>=20000;
     snprintf(ui.mac,sizeof(ui.mac),"%s",mac_connected?"Mac 桥接已连接":network_connected?"正在寻找已配对 Mac":"等待网络连接");
     snprintf(ui.voice,sizeof(ui.voice),"%s",s.connection==PET_CONN_READY?(s.task_channel?"小糖原生语音就绪":"语音可用，任务通道恢复中"):"小糖原生语音尚未就绪");
@@ -193,6 +199,8 @@ void app_main(void){
     urgent=xQueueCreate(16,sizeof(pet_event_t));events=xQueueCreate(32,sizeof(pet_event_t));actions=xQueueCreate(24,sizeof(pet_ui_action_t));
     if(!model_lock||!config_lock||!metadata_lock||!urgent||!events||!actions){ESP_LOGE("pet","QUEUE_START_FAILED");return;}
     if(!pet_store_load(&config)){ESP_LOGE("pet","CONFIGURATION_RECOVERY_REQUIRED");return;}
+    caption_mode=config.captions?PET_CAPTION_COMPACT:PET_CAPTION_OFF;
+    caption_save_failed=!pet_store_caption_mode_load(&caption_mode);
     if(pet_board_init()!=ESP_OK){ESP_LOGE("pet","BOARD_START_FAILED");return;}
     pet_init(&model,now_ms());model.seed=esp_random()|1u;model.quiet=config.quiet;model.muted=!config.speaker;
     model.day=config.quota_day;model.greetings_today=config.quota_count;

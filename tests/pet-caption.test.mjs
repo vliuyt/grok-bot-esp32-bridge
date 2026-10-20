@@ -10,7 +10,7 @@ test('caption modes preserve UTF-8 and first-sentence boundaries in a bounded wi
   try{
     execFileSync('cc',['-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined',
       '-Ifirmware/pet/components/pet_core','tests/pet_caption_harness.c',
-      'firmware/pet/components/pet_core/pet_caption.c','-o',join(dir,'test')]);
+      'firmware/pet/components/pet_core/pet_caption.c','firmware/pet/components/pet_core/pet_core.c','-lm','-o',join(dir,'test')]);
     assert.match(execFileSync(join(dir,'test'),{encoding:'utf8'}),/PET_CAPTION_OK/);
   }finally{rmSync(dir,{recursive:true,force:true});}
 });

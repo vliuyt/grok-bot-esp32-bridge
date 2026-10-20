@@ -21,7 +21,7 @@ test('real store rejects malformed legacy JSON and failed commits without modify
     execFileSync('/usr/bin/cc',['-std=c11','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations','-fsanitize=address,undefined',
       '-Itests/pet_store_fakes','-Ifirmware/pet/components/pet_store','-Ifirmware/pet/components/pet_core','-I'+jsonSource,
       'tests/pet_nvs_harness.c','firmware/pet/components/pet_store/pet_config.c',
-      'firmware/pet/components/pet_store/pet_store.c','firmware/pet/components/pet_core/pet_caption.c',join(jsonSource,'cJSON.c'),'-o',join(dir,'test')]);
+      'firmware/pet/components/pet_store/pet_store.c','firmware/pet/components/pet_core/pet_caption.c','firmware/pet/components/pet_core/pet_core.c',join(jsonSource,'cJSON.c'),'-lm','-o',join(dir,'test')]);
     for(const mode of ['0','1','2','3'])assert.match(execFileSync(join(dir,'test'),[mode],{encoding:'utf8'}),/PET_NVS_OK/);
   }finally{rmSync(dir,{recursive:true,force:true});}
 });

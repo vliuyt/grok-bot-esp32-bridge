@@ -34,3 +34,14 @@ size_t pet_caption_text(pet_caption_mode_t mode,const char *input,char *out,size
     }
     out[used]=0;return used;
 }
+
+void pet_caption_reset(pet_caption_buffer_t *b){memset(b,0,sizeof(*b));}
+bool pet_caption_receive(pet_caption_buffer_t *b,const pet_state_t *s,uint32_t generation,uint32_t turn,const char *text){
+    if(!pet_response_audio_allowed(s,generation,turn))return false;
+    pet_caption_text(PET_CAPTION_FULL,text,b->text,sizeof(b->text));
+    b->generation=generation;b->turn=turn;b->valid=true;return true;
+}
+size_t pet_caption_current(pet_caption_buffer_t *b,const pet_state_t *s,pet_caption_mode_t mode,char *out,size_t capacity){
+    if(b->valid&&!pet_response_audio_allowed(s,b->generation,b->turn))pet_caption_reset(b);
+    return pet_caption_text(mode,b->valid?b->text:"",out,capacity);
+}

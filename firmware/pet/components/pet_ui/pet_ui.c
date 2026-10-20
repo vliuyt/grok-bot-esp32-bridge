@@ -18,8 +18,8 @@ static SemaphoreHandle_t view_lock,ready_signal;
 static pet_ui_view_t view;
 static pet_ui_callback_t callback;
 static void *callback_context;
-static lv_obj_t *root,*body,*eyes[2],*smiles[2],*caption,*handle,*drawer,*connection_page;
-static lv_obj_t *volume_slider,*brightness_slider,*quiet_switch,*captions_switch,*speaker_switch;
+static lv_obj_t *root,*body,*eyes[2],*smiles[2],*caption,*caption_box,*handle,*drawer,*connection_page;
+static lv_obj_t *volume_slider,*brightness_slider,*quiet_switch,*caption_dropdown,*caption_status,*speaker_switch;
 static lv_obj_t *network_label,*bridge_label,*voice_label,*setup_label,*passkey_label,*power_label;
 static bool initialized,screen_on=true,syncing;
 static int page,requested_page=-1;
@@ -28,6 +28,7 @@ static int touch_x,touch_y;
 static bool touching;
 static char last_caption[321],last_hint[64];
 static lv_obj_t *voice_hint;
+static int last_caption_mode=-1;
 static void action(pet_ui_action_kind_t kind,int value){if(callback)callback((pet_ui_action_t){kind,value},callback_context);}
 static lv_obj_t *label(lv_obj_t *parent,const char *text,int width){
     lv_obj_t *o=lv_label_create(parent);lv_obj_set_style_text_font(o,&font,0);
@@ -75,8 +76,11 @@ static lv_obj_t *slider(lv_obj_t *parent,const char *text,int y,int min,int max)
 static void switch_changed(lv_event_t *event){
     if(syncing)return;
     lv_obj_t *o=lv_event_get_target(event);
-    pet_ui_action_kind_t kind=o==quiet_switch?PET_UI_QUIET:o==captions_switch?PET_UI_CAPTIONS:PET_UI_SPEAKER;
+    pet_ui_action_kind_t kind=o==quiet_switch?PET_UI_QUIET:PET_UI_SPEAKER;
     action(kind,lv_obj_has_state(o,LV_STATE_CHECKED));
+}
+static void caption_changed(lv_event_t *event){
+    if(!syncing)action(PET_UI_CAPTIONS,(int)lv_dropdown_get_selected(lv_event_get_target(event)));
 }
 static lv_obj_t *toggle(lv_obj_t *parent,const char *text,int y){
     lv_obj_t *txt=label(parent,text,120);lv_obj_set_pos(txt,115,y+4);
@@ -93,11 +97,11 @@ static void set_checked(lv_obj_t *o,bool on){lv_obj_set_state(o,LV_STATE_CHECKED
 static void snapshot(void){
 #if LV_USE_SNAPSHOT
     /* A single UI-task operation: no caption or pairing code may enter exported pixels. */
-    bool caption_hidden=lv_obj_has_flag(caption,LV_OBJ_FLAG_HIDDEN);
+    bool caption_hidden=lv_obj_has_flag(caption_box,LV_OBJ_FLAG_HIDDEN);
     bool code_hidden=lv_obj_has_flag(passkey_label,LV_OBJ_FLAG_HIDDEN);
-    lv_obj_add_flag(caption,LV_OBJ_FLAG_HIDDEN);lv_obj_add_flag(passkey_label,LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(caption_box,LV_OBJ_FLAG_HIDDEN);lv_obj_add_flag(passkey_label,LV_OBJ_FLAG_HIDDEN);
     lv_draw_buf_t *buf=lv_snapshot_take(root,LV_COLOR_FORMAT_RGB565);
-    lv_obj_set_flag(caption,LV_OBJ_FLAG_HIDDEN,caption_hidden);lv_obj_set_flag(passkey_label,LV_OBJ_FLAG_HIDDEN,code_hidden);
+    lv_obj_set_flag(caption_box,LV_OBJ_FLAG_HIDDEN,caption_hidden);lv_obj_set_flag(passkey_label,LV_OBJ_FLAG_HIDDEN,code_hidden);
     if(!buf)return;
     char line[48];int count=snprintf(line,sizeof(line),"\nSNAP BEGIN %u %u 144\n",(unsigned)buf->header.w,(unsigned)buf->header.h);
     usb_serial_jtag_write_bytes(line,count,portMAX_DELAY);
@@ -123,7 +127,8 @@ static void draw(lv_timer_t *timer){
     if(!screen_on){if(snap)snapshot();return;}
     int brightness=p.dim?current.brightness/4:current.brightness;
     pet_board()->set_brightness(brightness<5?5:brightness);
-    pet_face_t face=pet_face_geometry(p);
+    bool full=current.caption_mode==PET_CAPTION_FULL;
+    pet_face_t face=pet_face_geometry(p);if(full)face.y-=22;
     lv_obj_set_size(body,face.width,face.height);lv_obj_set_pos(body,face.x,face.y);
     lv_obj_set_style_transform_pivot_x(body,face.width/2,0);lv_obj_set_style_transform_pivot_y(body,face.height/2,0);
     lv_obj_set_style_transform_rotation(body,face.rotation,0);
@@ -136,16 +141,29 @@ static void draw(lv_timer_t *timer){
         lv_arc_set_bg_angles(smiles[i],eye.arc_start,eye.arc_end);
         lv_obj_set_flag(smiles[i],LV_OBJ_FLAG_HIDDEN,!eye.arc);
     }
-    const char *text=current.captions?current.caption:"";
+    char caption_text[321];
+    pet_caption_text(current.caption_mode,current.caption,caption_text,sizeof(caption_text));
+    const char *text=caption_text;
     if(current.dialogue==PET_DIALOGUE_LISTEN)text="嗯，我在听";
     else if(current.dialogue==PET_DIALOGUE_WAIT)text=current.waiting_long?"稍等一下，还在准备回答":"让我想想";
     else if(p.expression==PET_EXPR_HAPPY)text="再摸一下嘛";
     else if(p.expression==PET_EXPR_CURIOUS)text="嗯？我在呢";
     else if(p.expression==PET_EXPR_CONFUSED)text="等一下，再试试吧";
     else if(p.expression==PET_EXPR_GREET&&p.invitation)text="嘿，我在这里";
-    else if(current.dialogue==PET_DIALOGUE_IDLE)text="";
-    if(strcmp(last_caption,text)){snprintf(last_caption,sizeof(last_caption),"%s",text);lv_label_set_text(caption,last_caption);}
-    lv_obj_set_flag(caption,LV_OBJ_FLAG_HIDDEN,!text[0]);
+    if(last_caption_mode!=(int)current.caption_mode){
+        last_caption_mode=(int)current.caption_mode;
+        lv_obj_set_pos(caption_box,full?93:83,full?305:334);
+        lv_obj_set_size(caption_box,full?280:300,full?78:38);
+        lv_obj_set_width(caption,full?280:300);
+        lv_obj_set_flag(caption_box,LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_CLICKABLE,full);
+        lv_obj_set_scrollbar_mode(caption_box,full?LV_SCROLLBAR_MODE_AUTO:LV_SCROLLBAR_MODE_OFF);
+        lv_obj_scroll_to_y(caption_box,0,LV_ANIM_OFF);
+    }
+    if(strcmp(last_caption,text)){
+        snprintf(last_caption,sizeof(last_caption),"%s",text);lv_label_set_text(caption,last_caption);
+        lv_obj_scroll_to_y(caption_box,0,LV_ANIM_OFF);
+    }
+    lv_obj_set_flag(caption_box,LV_OBJ_FLAG_HIDDEN,!text[0]);
     const char *hint=current.connection==PET_CONN_READY?"按住 BOOT 说话":"语音连接中";
     if(current.dialogue==PET_DIALOGUE_LISTEN)hint="松开 BOOT 后提交";
     else if(current.connection==PET_CONN_READY&&current.dialogue!=PET_DIALOGUE_IDLE)hint="按住 BOOT 打断";
@@ -153,7 +171,9 @@ static void draw(lv_timer_t *timer){
     if(page==1){
         syncing=true;lv_slider_set_value(volume_slider,current.volume,LV_ANIM_OFF);
         lv_slider_set_value(brightness_slider,current.brightness,LV_ANIM_OFF);
-        set_checked(quiet_switch,current.quiet);set_checked(captions_switch,current.captions);set_checked(speaker_switch,current.speaker);syncing=false;
+        set_checked(quiet_switch,current.quiet);lv_dropdown_set_selected(caption_dropdown,(uint32_t)current.caption_mode);
+        set_checked(speaker_switch,current.speaker);syncing=false;
+        lv_label_set_text(caption_status,current.caption_save_failed?"字幕设置未保存，请重试":"");
     }
     if(page==2){
         lv_label_set_text(network_label,current.wifi);lv_label_set_text(bridge_label,current.mac);lv_label_set_text(voice_label,current.voice);
@@ -182,7 +202,14 @@ static void build(void){
         lv_obj_set_style_arc_rounded(smiles[i],true,LV_PART_MAIN);lv_obj_set_style_arc_opa(smiles[i],LV_OPA_TRANSP,LV_PART_INDICATOR);
         lv_obj_set_style_bg_opa(smiles[i],LV_OPA_TRANSP,LV_PART_KNOB);lv_obj_remove_flag(smiles[i],LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE);lv_obj_add_flag(smiles[i],LV_OBJ_FLAG_HIDDEN);
     }
-    caption=label(root,"",300);lv_obj_set_pos(caption,83,334);lv_obj_set_height(caption,38);lv_label_set_long_mode(caption,LV_LABEL_LONG_WRAP);
+    caption_box=lv_obj_create(root);lv_obj_remove_style_all(caption_box);
+    lv_obj_set_pos(caption_box,83,334);lv_obj_set_size(caption_box,300,38);
+    lv_obj_remove_flag(caption_box,LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_EVENT_BUBBLE);
+    lv_obj_set_scroll_dir(caption_box,LV_DIR_VER);lv_obj_set_scrollbar_mode(caption_box,LV_SCROLLBAR_MODE_OFF);
+    caption=label(caption_box,"",300);lv_obj_set_pos(caption,0,0);
+    lv_obj_set_height(caption,LV_SIZE_CONTENT);lv_obj_set_style_text_line_space(caption,2,0);
+    lv_obj_remove_flag(caption,LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE);
+    lv_label_set_long_mode(caption,LV_LABEL_LONG_WRAP);
     voice_hint=label(root,"语音连接中",260);lv_obj_set_pos(voice_hint,103,391);
     lv_obj_remove_flag(voice_hint,LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_text_color(voice_hint,lv_color_hex(0x8b7f87),0);
@@ -192,7 +219,15 @@ static void build(void){
     lv_obj_add_event_cb(handle,open_drawer,LV_EVENT_CLICKED,NULL);
     drawer=overlay();lv_obj_t *title=label(drawer,"舒服一点",200);lv_obj_set_pos(title,133,63);
     volume_slider=slider(drawer,"音量",102,0,100);brightness_slider=slider(drawer,"亮度",164,10,100);
-    quiet_switch=toggle(drawer,"安静陪伴",225);captions_switch=toggle(drawer,"通话字幕",265);speaker_switch=toggle(drawer,"扬声器",305);
+    quiet_switch=toggle(drawer,"安静陪伴",225);speaker_switch=toggle(drawer,"扬声器",305);
+    lv_obj_t *caption_title=label(drawer,"通话字幕",120);lv_obj_set_pos(caption_title,115,269);
+    caption_dropdown=lv_dropdown_create(drawer);lv_obj_set_size(caption_dropdown,110,34);lv_obj_set_pos(caption_dropdown,250,261);
+    lv_dropdown_set_options(caption_dropdown,"完整\n简洁\n关闭");lv_dropdown_set_selected(caption_dropdown,PET_CAPTION_COMPACT);
+    lv_obj_set_style_text_font(caption_dropdown,&font,0);
+    lv_obj_set_style_text_font(lv_dropdown_get_list(caption_dropdown),&font,0);
+    lv_dropdown_set_dir(caption_dropdown,LV_DIR_TOP);lv_obj_add_event_cb(caption_dropdown,caption_changed,LV_EVENT_VALUE_CHANGED,NULL);
+    caption_status=label(drawer,"",260);lv_obj_set_pos(caption_status,103,84);
+    lv_obj_set_style_text_color(caption_status,lv_color_hex(0xf29ec9),0);
     lv_obj_t *connection=button(drawer,"连接与配网",150,connections);lv_obj_set_pos(connection,158,350);
     lv_obj_t *back=button(drawer,"返回",70,home);lv_obj_set_pos(back,198,402);
     connection_page=overlay();title=label(connection_page,"连接与配网",240);lv_obj_set_pos(title,113,58);
@@ -219,7 +254,7 @@ esp_err_t pet_ui_start(pet_ui_callback_t cb,void *context){
     if(view_lock)return ESP_ERR_INVALID_STATE;
     callback=cb;callback_context=context;view_lock=xSemaphoreCreateMutex();ready_signal=xSemaphoreCreateBinary();
     if(!view_lock||!ready_signal)return ESP_ERR_NO_MEM;
-    view.pose=(pet_pose_t){.scale_x=1,.scale_y=1,.eye_open=1,.screen_on=true};view.brightness=80;view.battery=-1;
+    view.pose=(pet_pose_t){.scale_x=1,.scale_y=1,.eye_open=1,.screen_on=true};view.brightness=80;view.battery=-1;view.caption_mode=PET_CAPTION_COMPACT;
     if(xTaskCreatePinnedToCore(ui_task,"pet_ui_init",8192,NULL,5,NULL,1)!=pdPASS)return ESP_ERR_NO_MEM;
     if(xSemaphoreTake(ready_signal,pdMS_TO_TICKS(10000))!=pdTRUE)return ESP_ERR_TIMEOUT;
     return initialized?ESP_OK:ESP_FAIL;

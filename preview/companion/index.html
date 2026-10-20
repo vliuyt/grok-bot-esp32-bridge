@@ -24,12 +24,14 @@
       <div class="device-shadow"></div>
       <div class="device-shell">
         <canvas id="screen" width="932" height="932" role="img" aria-label="小糖待机圆屏，点击好奇，横向拖动抚摸" tabindex="0"></canvas>
+        <div class="screen-overlay"><div id="caption-window" class="caption-window" data-mode="compact" hidden><p id="caption-text" aria-live="polite"></p></div></div>
         <button id="boot" aria-label="按住 BOOT 模拟说话">BOOT</button>
         <div id="settings" class="settings" hidden>
           <p class="settings-title">舒服一点</p>
           <label class="setting-row">模拟连接 <input id="setting-online" type="checkbox" checked></label>
           <label class="setting-row">安静陪伴 <input type="checkbox" checked disabled></label>
-          <p class="settings-note">字幕模式将在下一步加入。<br>这里的 BOOT 只模拟听说状态。</p>
+          <label class="setting-row">通话字幕 <select id="caption-mode" aria-label="通话字幕"><option value="0">完整</option><option value="1" selected>简洁</option><option value="2">关闭</option></select></label>
+          <p class="settings-note">完整模式可滚动查看当前片段。<br>这里的 BOOT 只模拟听说状态。</p>
           <button id="close-settings">回到小糖</button>
         </div>
       </div>
@@ -50,6 +52,8 @@
         <button data-mode="sleep" aria-pressed="false"><span class="state-num">09</span><strong>困倦</strong><small>眯一小会儿</small></button>
       </div>
       <div class="interaction-row"><button id="pet">摸摸小糖</button><button id="connection">模拟断网</button></div>
+      <div class="caption-trial"><label for="caption-case">试读字幕</label><select id="caption-case"><option value="chinese">中文长句</option><option value="english">English</option><option value="mixed">中英与 emoji</option><option value="empty">空文本</option><option value="long">长文本边界</option></select><small>切换示例即可试读 · 字幕模式在圆屏设置中选择</small></div>
+      <p id="caption-error" class="error" role="alert" hidden></p>
       <p id="status" class="status" role="status" aria-live="polite">安静地陪你。</p>
       <p id="error" class="error" role="alert" hidden></p>
     </section>

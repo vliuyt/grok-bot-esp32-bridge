@@ -10,7 +10,7 @@ test('round face geometry distinguishes feedback without colliding with captions
   try {
     execFileSync('cc',['-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined',
       '-Ifirmware/pet/components/pet_core','tests/pet_face_harness.c',
-      'firmware/pet/components/pet_core/pet_core.c','firmware/pet/components/pet_core/pet_face.c',
+      'firmware/pet/components/pet_core/pet_core.c','firmware/pet/components/pet_core/pet_face.c','firmware/pet/components/pet_core/pet_caption.c',
       '-lm','-o',join(dir,'test')]);
     assert.match(execFileSync(join(dir,'test'),{encoding:'utf8'}),/PET_FACE_OK/);
   } finally {rmSync(dir,{recursive:true,force:true});}
@@ -57,7 +57,7 @@ test('committed preview frames match the real core and renderer geometry',()=>{
   try {
     execFileSync('cc',['-std=c11','-Wall','-Wextra','-Werror',
       '-Ifirmware/pet/components/pet_core','tests/pet_pose_export.c',
-      'firmware/pet/components/pet_core/pet_core.c','firmware/pet/components/pet_core/pet_face.c',
+      'firmware/pet/components/pet_core/pet_core.c','firmware/pet/components/pet_core/pet_face.c','firmware/pet/components/pet_core/pet_caption.c',
       '-lm','-o',join(dir,'export')]);
     const frames=JSON.parse(execFileSync(join(dir,'export'),{encoding:'utf8',maxBuffer:4*1024*1024}));
     const published=JSON.parse(readFileSync('preview/companion/states.json','utf8'));

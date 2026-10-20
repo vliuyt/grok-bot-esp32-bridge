@@ -9,7 +9,7 @@ const dir=mkdtempSync(join(tmpdir(),'pet-preview-'));
 try {
   execFileSync('cc',['-std=c11','-Wall','-Wextra','-Werror','-Ifirmware/pet/components/pet_core',
     'tests/pet_pose_export.c','firmware/pet/components/pet_core/pet_core.c',
-    'firmware/pet/components/pet_core/pet_face.c','-lm','-o',join(dir,'export')],{cwd:root});
+    'firmware/pet/components/pet_core/pet_face.c','firmware/pet/components/pet_core/pet_caption.c','-lm','-o',join(dir,'export')],{cwd:root});
   const frames=execFileSync(join(dir,'export'),{encoding:'utf8',maxBuffer:4*1024*1024});
   JSON.parse(frames);
   writeFileSync(join(root,'preview/companion/states.json'),frames);
