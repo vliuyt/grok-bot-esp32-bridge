@@ -9,7 +9,9 @@
     "test": "node --test tests/*.test.mjs",
     "start": "node src/cli.mjs",
     "doctor": "node src/cli.mjs doctor",
-    "build:audio": "node --input-type=module -e \"import {buildAudio} from './src/mac-audio.mjs';buildAudio();console.log('Mac audio helper built');\""
+    "build:audio": "node --input-type=module -e \"import {buildAudio} from './src/mac-audio.mjs';buildAudio();console.log('Mac audio helper built');\"",
+    "preview": "python3 -m http.server 8877 --bind 127.0.0.1 --directory preview/companion",
+    "preview:export": "node scripts/export-preview.mjs"
   },
   "description": "Standalone ESP32-S3 companion pet firmware with a native Grok Bot macOS voice bridge",
   "license": "Apache-2.0",

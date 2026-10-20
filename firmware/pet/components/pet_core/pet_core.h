@@ -46,6 +46,7 @@ pet_pose_t pet_pose(const pet_state_t *state, uint64_t now_ms);
 typedef enum { PET_GESTURE_NONE, PET_GESTURE_TAP, PET_GESTURE_STROKE, PET_GESTURE_SETTINGS } pet_gesture_t;
 pet_gesture_t pet_gesture(int x0,int y0,int x1,int y1);
 bool pet_event_urgent(pet_event_kind_t kind);
+bool pet_response_audio_allowed(const pet_state_t *state,uint32_t generation,uint32_t turn);
 
 bool pet_network_should_sleep(const pet_state_t *state);
 

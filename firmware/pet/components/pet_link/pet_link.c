@@ -90,7 +90,7 @@ static bool receive(uint8_t type,uint32_t turn,const void *bytes,size_t n,void *
  if(type==3){
   if(turn!=current||!hello)return true;
   pet_state_t state=cb.state(cb.context);
-  if(state.dialogue==PET_DIALOGUE_LISTEN){return enqueue(2,g,turn,"credit",6);}
+  if(!pet_response_audio_allowed(&state,g,turn)){return enqueue(2,g,turn,"credit",6);}
   int result=pet_audio_push(g,turn,bytes,n);return result>=0;
  }
  if(n&&((const char *)bytes)[0]=='{')return metadata(bytes,n);

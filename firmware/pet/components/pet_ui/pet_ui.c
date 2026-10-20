@@ -1,4 +1,5 @@
 #include "pet_ui.h"
+#include "pet_face.h"
 #include "board_port.h"
 #include "lvgl.h"
 #include "esp_timer.h"
@@ -44,7 +45,8 @@ static void touch(lv_event_t *event){
     else if(code==LV_EVENT_RELEASED&&touching){
         touching=false;pet_gesture_t g=pet_gesture(touch_x,touch_y,point.x,point.y);
         if(g==PET_GESTURE_SETTINGS)show_page(1);
-        else if(g==PET_GESTURE_TAP||g==PET_GESTURE_STROKE)action(PET_UI_PET,0);
+        else if(g==PET_GESTURE_TAP)action(PET_UI_TOUCH_TAP,0);
+        else if(g==PET_GESTURE_STROKE)action(PET_UI_PET,0);
     }else if(code==LV_EVENT_PRESS_LOST)touching=false;
 }
 static void open_drawer(lv_event_t *event){(void)event;show_page(1);action(PET_UI_WAKE,0);}
@@ -121,21 +123,25 @@ static void draw(lv_timer_t *timer){
     if(!screen_on){if(snap)snapshot();return;}
     int brightness=p.dim?current.brightness/4:current.brightness;
     pet_board()->set_brightness(brightness<5?5:brightness);
-    int w=(int)(224*p.scale_x),h=(int)(224*p.scale_y);
-    lv_obj_set_size(body,w,h);lv_obj_set_pos(body,(466-w)/2,210-h/2+(int)p.offset_y);
-    lv_obj_set_style_transform_pivot_x(body,w/2,0);lv_obj_set_style_transform_pivot_y(body,h/2,0);
-    lv_obj_set_style_transform_rotation(body,(int)(p.rotation*10),0);
-    bool happy=p.expression==PET_EXPR_HAPPY||p.expression==PET_EXPR_SLEEP;
+    pet_face_t face=pet_face_geometry(p);
+    lv_obj_set_size(body,face.width,face.height);lv_obj_set_pos(body,face.x,face.y);
+    lv_obj_set_style_transform_pivot_x(body,face.width/2,0);lv_obj_set_style_transform_pivot_y(body,face.height/2,0);
+    lv_obj_set_style_transform_rotation(body,face.rotation,0);
     for(unsigned i=0;i<2;i++){
-        int x=(int)(w*(i?.5223f:.2411f))+(int)p.look_x;
-        lv_obj_set_pos(eyes[i],x,(int)(h*.29f));lv_obj_set_height(eyes[i],(int)fmaxf(5,60*p.eye_open));
-        lv_obj_set_flag(eyes[i],LV_OBJ_FLAG_HIDDEN,happy);
-        lv_obj_set_pos(smiles[i],x-6,(int)(h*.29f));lv_obj_set_flag(smiles[i],LV_OBJ_FLAG_HIDDEN,!happy);
+        pet_eye_t eye=face.eyes[i];
+        lv_obj_set_pos(eyes[i],eye.x,eye.y);lv_obj_set_height(eyes[i],eye.height);
+        lv_obj_set_style_transform_rotation(eyes[i],eye.rotation,0);
+        lv_obj_set_flag(eyes[i],LV_OBJ_FLAG_HIDDEN,eye.arc);
+        lv_obj_set_pos(smiles[i],eye.x-6,eye.y);
+        lv_arc_set_bg_angles(smiles[i],eye.arc_start,eye.arc_end);
+        lv_obj_set_flag(smiles[i],LV_OBJ_FLAG_HIDDEN,!eye.arc);
     }
     const char *text=current.captions?current.caption:"";
     if(current.dialogue==PET_DIALOGUE_LISTEN)text="嗯，我在听";
     else if(current.dialogue==PET_DIALOGUE_WAIT)text=current.waiting_long?"稍等一下，还在准备回答":"让我想想";
     else if(p.expression==PET_EXPR_HAPPY)text="再摸一下嘛";
+    else if(p.expression==PET_EXPR_CURIOUS)text="嗯？我在呢";
+    else if(p.expression==PET_EXPR_CONFUSED)text="等一下，再试试吧";
     else if(p.expression==PET_EXPR_GREET&&p.invitation)text="嘿，我在这里";
     else if(current.dialogue==PET_DIALOGUE_IDLE)text="";
     if(strcmp(last_caption,text)){snprintf(last_caption,sizeof(last_caption),"%s",text);lv_label_set_text(caption,last_caption);}

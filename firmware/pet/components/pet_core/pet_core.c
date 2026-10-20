@@ -220,3 +220,8 @@ bool pet_event_urgent(pet_event_kind_t kind){
 bool pet_network_should_sleep(const pet_state_t *state){return state->life==PET_LIFE_SLEEP&&!state->usb;}
 
 uint32_t pet_delay_ticks(uint32_t ms,uint32_t rate){uint64_t ticks=((uint64_t)ms*rate+999)/1000;return ticks>UINT32_MAX?UINT32_MAX:ticks?(uint32_t)ticks:1;}
+
+bool pet_response_audio_allowed(const pet_state_t *s,uint32_t generation,uint32_t turn) {
+    return s->connection==PET_CONN_READY && !s->response_cancelled &&
+           s->dialogue!=PET_DIALOGUE_LISTEN && generation==s->generation && turn==s->turn;
+}

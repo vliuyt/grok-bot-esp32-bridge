@@ -41,6 +41,8 @@ static void companion_feedback(void) {
     assert(pet_pose(&s,27200).expression==PET_EXPR_SPEAK);
     event(&s,PET_EV_RESPONSE_DONE,27300,0);
     assert(pet_pose(&s,27300).expression==PET_EXPR_SPEAK);
+    assert(pet_response_audio_allowed(&s,s.generation,s.turn));
+    assert(!pet_response_audio_allowed(&s,s.generation-1,s.turn));
     event(&s,PET_EV_DRAIN,27400,0);
     assert(pet_pose(&s,27400).expression==PET_EXPR_IDLE);
 
@@ -53,6 +55,7 @@ static void companion_feedback(void) {
     assert(event(&s,PET_EV_BUFFERED,90300,0)==PET_FX_NONE);
     assert(event(&s,PET_EV_PLAYING,90400,800)==PET_FX_NONE);
     assert(s.dialogue==PET_DIALOGUE_IDLE);
+    assert(!pet_response_audio_allowed(&s,s.generation,s.turn));
     event(&s,PET_EV_PRESS,91000,0);assert(pet_pose(&s,91000).expression==PET_EXPR_LISTEN);
     event(&s,PET_EV_CANCEL,91500,0);
     assert(event(&s,PET_EV_BUFFERED,91600,0)==PET_FX_NONE);

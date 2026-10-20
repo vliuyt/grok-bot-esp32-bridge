@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — v0.2.0 work in progress
+
+- Add curious tap and confused connection/timeout feedback while preserving classic pink appearance and BOOT voice priority.
+- Keep thinking visible throughout waiting; cancelled or timed-out turns reject late audio.
+- Add a silent interactive expression preview with frames exported from the firmware core and shared face geometry.
+- Captions modes, installable release packaging and new-device acceptance remain planned. No new firmware release or automatic flash.
+
 ## 0.1.1 — 2026-10-19
 
 - Keep voice on the physical BOOT button: hold to record, release to submit, hold again to interrupt.

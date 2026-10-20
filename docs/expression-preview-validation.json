@@ -1,0 +1,34 @@
+{
+  "stage": "expression-preview",
+  "implementedStates": 9,
+  "firmwareBuild": {
+    "passed": true,
+    "sha256": "c85c1dfd947d432c011229d90d919fc8f3059c39514cf3c41c5d2e2c357f4578",
+    "bytes": 2288736
+  },
+  "hostTests": {
+    "passed": 86,
+    "failed": 0,
+    "skipped": 0
+  },
+  "browser": {
+    "viewportWidth": 502,
+    "allNineStateSelectors": true,
+    "tapCurious": true,
+    "strokeHappy": true,
+    "swipeSettingsAndReturn": true,
+    "bootSpaceHoldRelease": true,
+    "offlineInteraction": true,
+    "screenshot": "docs/companion-preview.png"
+  },
+  "deviceFlashed": false,
+  "audibleTestsRun": false,
+  "deviceLatencyMeasured": false,
+  "deviceAudioDropMeasured": false,
+  "deviceScreenMeasured": false,
+  "remaining": [
+    "physical-device interaction and audio regression",
+    "three caption modes",
+    "installable release packaging"
+  ]
+}

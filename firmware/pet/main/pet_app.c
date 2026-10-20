@@ -104,8 +104,10 @@ void pet_app_setup_status(const char *detail,int passkey){
 }
 static void handle_action(pet_ui_action_t action){
     uint64_t now=now_ms();
-    if(action.kind==PET_UI_PET||action.kind==PET_UI_WAKE){
-        if(action.kind==PET_UI_PET){reduce((pet_event_t){.kind=PET_EV_PET,.now_ms=now});}
+    if(action.kind==PET_UI_PET||action.kind==PET_UI_TOUCH_TAP||action.kind==PET_UI_WAKE){
+        if(action.kind==PET_UI_PET||action.kind==PET_UI_TOUCH_TAP){
+            reduce((pet_event_t){.kind=action.kind==PET_UI_PET?PET_EV_PET:PET_EV_TOUCH_TAP,.now_ms=now});
+        }
         else {
             xSemaphoreTake(model_lock,portMAX_DELAY);model.last_input_ms=now;model.life=PET_LIFE_AWAKE;xSemaphoreGive(model_lock);
             pet_network_sleep(false);
