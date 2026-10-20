@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-20",
+  "stage": "firmware-readability-host-validation",
+  "deviceFlashed": false,
+  "audibleTestsRun": false,
+  "published": false,
+  "logicalScreen": [
+    466,
+    466
+  ],
+  "fonts": {
+    "hint": 22,
+    "body": 28,
+    "reading": 30,
+    "grayscaleBpp": 2,
+    "bodyHan": 6763,
+    "readingHan": 3755,
+    "readingFallback": "28px gray for remaining GB2312 Han; rare16 preserves original extra coverage",
+    "large32_34": "browser comparison only"
+  },
+  "rendering": {
+    "engine": "actual staged LVGL; production pet_ui.c",
+    "fakes": [
+      "board hardware",
+      "RTOS scheduling/locks (single-thread host)",
+      "USB and base64 boundary (captures real RGB565 snapshot pixels)"
+    ],
+    "hostDrawUnits": 1,
+    "targetDrawUnits": 2,
+    "compressedDecoder": "enabled from production defaults; compile-time guard rejects disabled decoder",
+    "screenshots": "fixed artificial sample, not physical device screenshots"
+  },
+  "tests": {
+    "command": "npm test",
+    "passed": 107,
+    "failed": 0,
+    "skipped": 0,
+    "behaviors": [
+      "actual gray glyph pixels",
+      "original font character coverage via both body and reader fallbacks",
+      "reader level2 Han resolves to28px",
+      "home summary two-line bounds",
+      "real pointer stroke survives rendering frames",
+      "large setting rows and all existing action callbacks",
+      "caption save error keeps prior mode",
+      "all nested pages close through queued home route",
+      "OFF, empty, listening, waiting, disconnect leave reader and clear body",
+      "reading scroll survives unchanged frames",
+      "different private home/reader bodies and pairing codes alter raw rendering but yield identical redacted exported pixels",
+      "pure C first-sentence/UTF8 and animated face safe-area checks"
+    ]
+  },
+  "build": {
+    "bytes": 3693936,
+    "sha256": "de963244364fb03a5c10800f7839da26b06018b8410eecfdd472b455f54e038a",
+    "sourceSha256": "26a651a2c5dd986aa25a56451b3e61f222ae44610e04e8daa0cb0cb0f89250f2",
+    "dependenciesSha256": "0133de3853f8ce1dd8ef3937b73bf0bb357782c96e83423b14e4ab7cbd8f6499",
+    "sdkconfigSha256": "9d32856332ca14f465810721883ce1aa51db4b8f64f6d251d168248b27047cbe"
+  },
+  "applicationSlotBytes": 4063232,
+  "headroomBytes": 369296,
+  "verify_application": "passed",
+  "evidence": [
+    "firmware-readable-home.png",
+    "firmware-readable-reading.png",
+    "firmware-readable-settings.png"
+  ],
+  "physicalAcceptance": "pending: readability at normal viewing distance, actual touch/scroll, reboot persistence, audio/display concurrency, interruption/reconnect, device memory/performance",
+  "independentReview": "pending",
+  "decisions": [
+    "clear28/30 only;32/34 remains preview and would need a later font build",
+    "first all6763-at30px target image was4163040 bytes and exceeded slot by99808; level1-at30 with28px fallback preserves coverage and partition"
+  ]
+}

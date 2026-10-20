@@ -154,6 +154,7 @@ static void refresh(void){
     ui.caption_mode=caption_mode;ui.caption_save_failed=caption_save_failed;
     ui.pose=pet_pose(&s,now);ui.dialogue=s.dialogue;ui.connection=s.connection;
     ui.volume=c.volume;ui.brightness=c.brightness;ui.quiet=c.quiet;ui.speaker=c.speaker;
+    ui.wifi_online=network_connected;ui.mac_online=mac_connected;ui.setup_open=s.setup;
     ui.task_channel=s.task_channel;ui.waiting_long=s.dialogue==PET_DIALOGUE_WAIT&&now-s.entered_ms>=20000;
     snprintf(ui.mac,sizeof(ui.mac),"%s",mac_connected?"Mac 桥接已连接":network_connected?"正在寻找已配对 Mac":"等待网络连接");
     snprintf(ui.voice,sizeof(ui.voice),"%s",s.connection==PET_CONN_READY?(s.task_channel?"小糖原生语音就绪":"语音可用，任务通道恢复中"):"小糖原生语音尚未就绪");

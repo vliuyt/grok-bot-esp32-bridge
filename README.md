@@ -14,6 +14,8 @@
 
 上图为真实设备屏幕导出。界面、中文字形和板型当前针对这一块 466×466 圆屏设计。
 
+开发分支已加入28px大字主屏、30px独立阅读页和三项大设置入口，采用Noto Sans SC灰度字形。实际LVGL主机画面与验收边界见[大字圆屏说明](docs/UI_READABILITY.md)；尚未刷入设备或发布新版本。
+
 ## 它能做什么
 
 | 能力 | 当前实现 |
@@ -99,6 +101,6 @@ docs/                    从零使用、架构、协议、排错和验收边界
 
 ## 开源许可与来源
 
-项目原创代码采用 [Apache-2.0](LICENSE)。复用的 Muse 板级代码、USB 工具保留 Meta 的原版权与 Apache 许可；Unifont 字体转换文件单独按 **OFL-1.1** 分发。完整来源、例外和许可文本见 [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md)。品牌名称及商标不由本项目授权。
+项目原创代码采用 [Apache-2.0](LICENSE)。复用的 Muse 板级代码、USB 工具保留 Meta 的原版权与 Apache 许可；Noto Sans SC与Unifont字体转换文件单独按 **OFL-1.1** 分发。完整来源、例外和许可文本见 [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md)。品牌名称及商标不由本项目授权。
 
 不提交账户凭证、局域网配对密钥、Wi-Fi 密码、个人设备备份或录音。提交问题前请按 [SECURITY](SECURITY.md) 清理日志。

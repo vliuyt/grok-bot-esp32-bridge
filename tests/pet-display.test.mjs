@@ -26,10 +26,12 @@ test('real LVGL renders readable gray glyphs and preserves the original characte
       if(existsSync(cache))cmake=readFileSync(cache,'utf8').match(/^CMAKE_COMMAND:INTERNAL=(.+)$/m)?.[1];
     }
     cmake??='cmake';
+    const compressed=/^CONFIG_LV_USE_FONT_COMPRESSED=y$/m.test(readFileSync('firmware/pet/sdkconfig.defaults','utf8'));
     const build=resolve('.local/display-host');
     execFileSync(cmake,['-S','tests/display_host','-B',build,'-G','Unix Makefiles',
-      '-DLVGL_SOURCE='+lvgl,'-DPET_ROOT='+process.cwd(),'-DCMAKE_BUILD_TYPE=Release',
+      '-DLVGL_SOURCE='+lvgl,'-DPET_ROOT='+process.cwd(),'-DPET_FONT_COMPRESSED='+(compressed?1:0),'-DCMAKE_BUILD_TYPE=Release',
       '-DCMAKE_C_COMPILER=/usr/bin/cc','-DCMAKE_CXX_COMPILER=/usr/bin/c++'],{stdio:'pipe'});
     execFileSync(cmake,['--build',build,'--parallel','4'],{stdio:'pipe',maxBuffer:8*1024*1024});
     assert.match(execFileSync(join(build,'pet-font-test'),{encoding:'utf8'}),/PET_FONT_RENDER_OK/);
+    assert.match(execFileSync(join(build,'pet-ui-test'),[build],{encoding:'utf8',stdio:['ignore','pipe','pipe']}),/PET_UI_RENDER_OK/);
   });

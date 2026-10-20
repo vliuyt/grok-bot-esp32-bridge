@@ -15,6 +15,8 @@ static void coverage(uint32_t start,uint32_t end){
         if(!muse_font_cjk_16.get_glyph_dsc(&muse_font_cjk_16,&original,cp,0))continue;
         assert(lv_font_get_glyph_dsc(pet_font(PET_FONT_BODY),&current,cp,0));
         assert(!current.is_placeholder);
+        assert(lv_font_get_glyph_dsc(pet_font(PET_FONT_READER),&current,cp,0));
+        assert(!current.is_placeholder);
     }
 }
 int main(void){
@@ -25,6 +27,9 @@ int main(void){
     assert(glyph.box_h>=23&&body->line_height<=40);
     assert(lv_font_get_glyph_dsc(reader,&glyph,0x4e2d,0)&&!glyph.is_placeholder);
     assert(glyph.box_h>=25&&reader->line_height<=42);
+    /* GB2312 level 2 stays gray at28px through the reader's fallback. */
+    assert(lv_font_get_glyph_dsc(reader,&glyph,0x4e0c,0)&&!glyph.is_placeholder);
+    assert(glyph.resolved_font==body);
     coverage(0x3000,0x30ff);coverage(0x4e00,0x9fff);coverage(0xff00,0xffef);
     for(uint32_t cp=32;cp<127;cp++){
         assert(lv_font_get_glyph_dsc(body,&glyph,cp,0)&&!glyph.is_placeholder);

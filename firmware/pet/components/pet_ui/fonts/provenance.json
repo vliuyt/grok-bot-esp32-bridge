@@ -5,6 +5,7 @@
     "unifont": "0e3981ab552231b5a2a870f2b61741903a4bf25c23ef5aeb05fdced1b3c7af4d"
   },
   "chatCharacters": 6763,
+  "readingCharacters": 3755,
   "fonts": [
     {
       "file": "pet_font_rare16.c",
@@ -14,7 +15,7 @@
       "lineHeight": 17,
       "glyphs": 14593,
       "characterSetSha256": "ad0ca848ed8cfcfa1553e011a10014599536e4ecc57ec53642bd318d2b0505bf",
-      "sha256": "154979e8b361539d793e67d26f3e517b6342c3cd91edf78d04d5960fb805f3ac",
+      "sha256": "d388dab7efac9c2667e7ea8637efc79bfbf9d81010192c0dd8ac87fbea488819",
       "fallback": null
     },
     {
@@ -25,29 +26,29 @@
       "lineHeight": 35,
       "glyphs": 7020,
       "characterSetSha256": "86b3d015343fd54be42f2555f84643019fc07ac18f423030a535f3d011fe5bb3",
-      "sha256": "9e9fb2f8249ded971565a20d671b891e4f2052a13ffa0b12501965a3bc5cb089",
+      "sha256": "c89bda606cdf5a8ac2ccd948bc8e91cb73c7dc416bf064087740c942b16f97ed",
       "fallback": "pet_font_rare16"
     },
     {
       "file": "pet_font_30.c",
       "size": 30,
       "bpp": 2,
-      "bitmapBytes": 977585,
+      "bitmapBytes": 537483,
       "lineHeight": 37,
-      "glyphs": 7020,
-      "characterSetSha256": "86b3d015343fd54be42f2555f84643019fc07ac18f423030a535f3d011fe5bb3",
-      "sha256": "922cf70a881f76b2f0dfcdf57ace88902c1245224408ed4c503ad79e45010c8f",
+      "glyphs": 4012,
+      "characterSetSha256": "4373a85f7e49f791e1f2f7df64e4a19987215d3a5141a82b312823ba337ab5be",
+      "sha256": "e89c4d73c93d8eda64f480641f8eab8283c2ef455c2ff4278f3f244b8a734b1b",
       "fallback": "pet_font_28"
     },
     {
       "file": "pet_font_22.c",
       "size": 22,
       "bpp": 2,
-      "bitmapBytes": 26589,
+      "bitmapBytes": 27166,
       "lineHeight": 27,
-      "glyphs": 381,
-      "characterSetSha256": "b3329601010cf1f860f63485276ee1ae06f1a6a767aca614c4b4e6b4cd311214",
-      "sha256": "e37668cbc8d18ca3851a75085762869908c06753066ccd45decc912865c50eac",
+      "glyphs": 388,
+      "characterSetSha256": "6eac45c100f560f79082febfda108c0a60f0d633c37864642bcbf00a351650ca",
+      "sha256": "bd4e8d3889aac75490bda4aa5c7e10c0806d3d507d0aac109b887ad680f8f2d9",
       "fallback": "pet_font_28"
     }
   ]

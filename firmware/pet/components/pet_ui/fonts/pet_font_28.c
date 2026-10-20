@@ -4,11 +4,6 @@
  * Source SHA-256: 7633f5a016d4dd95e685a69633d818aabc4644c4b08e26bd35b1b30c45ed5dda
  */
 #include "pet_fonts.h"
-#ifdef LV_LVGL_H_INCLUDE_SIMPLE
-#include "lvgl.h"
-#else
-#include "lvgl/lvgl.h"
-#endif
 
 #ifndef PET_FONT_28
 #define PET_FONT_28 1

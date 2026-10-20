@@ -21,20 +21,23 @@ try{
   if(!converter||execFileSync(process.execPath,[converter,'--version'],{encoding:'utf8'}).trim()!=='1.5.3')throw new Error('FONT_CONVERTER_VERSION_UNSUPPORTED');
   const chat=readFileSync(join(fontDirectory,'chat-characters.txt'),'utf8').trim();
   const ui=readFileSync(join(fontDirectory,'ui-characters.txt'),'utf8').trim();
+  const reading=new Set(readFileSync(join(fontDirectory,'reading-characters.txt'),'utf8').trim());
   if([...new Set(chat)].length!==6763)throw new Error('FONT_CHAT_CHARSET_INVALID');
+  if(reading.size!==3755||[...reading].some(c=>!chat.includes(c)))throw new Error('FONT_READING_CHARSET_INVALID');
   const primary=new Set(chat);
   for(const [a,b]of[[32,126],[0x3000,0x301f],[0xff01,0xff65],[0x2010,0x203f]])for(let cp=a;cp<=b;cp++)primary.add(String.fromCodePoint(cp));
   primary.add('□');
+  const readerPrimary=[...primary].filter(c=>!chat.includes(c)||reading.has(c));
   const rare=[];
   for(const [a,b]of[[0x3000,0x30ff],[0x4e00,0x9fff],[0xff00,0xffef]])for(let cp=a;cp<=b;cp++)if(!primary.has(String.fromCodePoint(cp)))rare.push(String.fromCodePoint(cp));
   const definitions=[
     {name:'pet_font_rare16',size:16,bpp:1,source:'unifont',symbols:rare.join(''),fallback:null},
     {name:'pet_font_28',size:28,bpp:2,source:'noto',symbols:[...primary].sort().join(''),fallback:'pet_font_rare16'},
-    {name:'pet_font_30',size:30,bpp:2,source:'noto',symbols:[...primary].sort().join(''),fallback:'pet_font_28'},
+    {name:'pet_font_30',size:30,bpp:2,source:'noto',symbols:readerPrimary.sort().join(''),fallback:'pet_font_28'},
     {name:'pet_font_22',size:22,bpp:2,source:'noto',symbols:[...new Set([...ui,...Array.from({length:95},(_,i)=>String.fromCharCode(i+32))])].sort().join(''),fallback:'pet_font_28'},
   ];
   temporary=mkdtempSync(join(tmpdir(),'pet-font-generation-'));
-  const manifest={converter:'lv_font_conv@1.5.3',sources:hashes,chatCharacters:6763,fonts:[]};
+  const manifest={converter:'lv_font_conv@1.5.3',sources:hashes,chatCharacters:6763,readingCharacters:3755,fonts:[]};
   for(const d of definitions){
     const output=join(temporary,d.name+'.c');
     const args=[converter,'--font',options['--'+d.source],'--symbols',d.symbols,'--size',String(d.size),'--bpp',String(d.bpp),'--format','lvgl','--no-kerning','--lv-font-name',d.name,'-o',output];
@@ -50,6 +53,8 @@ try{
     const copyright=d.source==='noto'?'Copyright 2014-2021 Adobe.':'GNU Unifont 16.0.04; original copyright and OFL in README.md.';
     const header=`/* Xiaotang ${d.size}px / ${d.bpp}bpp font; lv_font_conv 1.5.3.\n * ${copyright}\n * SIL Open Font License 1.1; see README.md and preserved full license.\n * Source SHA-256: ${hashes[d.source]}\n */\n#include "pet_fonts.h"\n`;
     source=source.replace(/^\/\*\*+[\s\S]*?\*\/\s*/,header);
+    // pet_fonts.h already includes the public LVGL header on both IDF and host.
+    source=source.replace(/#ifdef LV_LVGL_H_INCLUDE_SIMPLE\n#include "lvgl.h"\n#else\n#include "lvgl\/lvgl.h"\n#endif\n/,'');
     writeFileSync(output,source);
     manifest.fonts.push({file:d.name+'.c',size:d.size,bpp:d.bpp,bitmapBytes:bytes,lineHeight,glyphs:(source.match(/\.bitmap_index =/g)||[]).length,characterSetSha256:sha(d.symbols),sha256:sha(source),fallback:d.fallback});
   }

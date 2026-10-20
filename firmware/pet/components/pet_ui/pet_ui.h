@@ -13,6 +13,7 @@ typedef struct {
     int volume,brightness,battery,passkey;
     pet_caption_mode_t caption_mode;
     bool quiet,speaker,task_channel,waiting_long,caption_save_failed;
+    bool wifi_online,mac_online,setup_open;
 } pet_ui_view_t;
 typedef void (*pet_ui_callback_t)(pet_ui_action_t action,void *context);
 esp_err_t pet_ui_start(pet_ui_callback_t callback,void *context);
