@@ -69,6 +69,10 @@ test('server shutdown waits for saving a disconnected call', async () => {
   await delay(10); assert.equal(stopped, false); finish(); await stopping; assert.equal(stopped, true);
 });
 test('ready state follows drain and response completion in either order', async () => {
+  const until=async predicate=>{
+    const deadline=performance.now()+2000;
+    while(!predicate()){assert(performance.now()<deadline,'server did not reach the expected state');await delay(5);}
+  };
   for (const creditFirst of [true, false]) {
     let session;
     class Session extends EventEmitter {
@@ -77,10 +81,10 @@ test('ready state follows drain and response completion in either order', async 
     }
     const server = await startDeviceServer({ bot: { name: 'fixture' }, key, host: '127.0.0.1', port: 0, sessionFactory: () => (session = new Session()) });
     try {
-      const socket = await client(server.port); await delay(10);
-      socket.write(encodeFrame(2, 1, Buffer.from('press'))); socket.write(encodeFrame(2, 1, Buffer.from('release'))); await delay(10);
+      const socket = await client(server.port); await until(()=>server.snapshot().state==='ready');
+      socket.write(encodeFrame(2, 1, Buffer.from('press'))); socket.write(encodeFrame(2, 1, Buffer.from('release'))); await until(()=>server.snapshot().state==='waiting');
       session.emit('audio', Buffer.alloc(6));
-      const credit = async () => { socket.write(encodeFrame(2, 1, Buffer.from('credit'))); await delay(10); };
+      const credit = async () => { socket.write(encodeFrame(2, 1, Buffer.from('credit'))); await until(()=>server.snapshot().playback?.credits===20); };
       const done = () => { session.voice.responseActive = false; session.emit('responseDone'); };
       if (creditFirst) { await credit(); done(); } else { done(); await credit(); }
       assert.equal(server.snapshot().state, 'ready'); socket.destroy();
