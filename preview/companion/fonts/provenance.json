@@ -1,0 +1,16 @@
+{
+  "upstream": "https://github.com/notofonts/noto-cjk",
+  "commit": "f8d157532fbfaeda587e826d4cd5b21a49186f7c",
+  "path": "Sans/SubsetOTF/SC/NotoSansSC-Medium.otf",
+  "sourceSha256": "7633f5a016d4dd95e685a69633d818aabc4644c4b08e26bd35b1b30c45ed5dda",
+  "derivedFamily": "Xiaotang UI Preview",
+  "license": "OFL-1.1",
+  "changes": "Subset for fixed prototype text, renamed family and CFF names, WOFF container. Original copyright and license name records retained.",
+  "assetSha256": "022746e0ec8141e61317e9b8094fad4c073be00ee26f25f93b5f4a1022a8aafe",
+  "bytes": 64664,
+  "glyphs": 400,
+  "missingPrototypeCharacters": [
+    "🙂"
+  ],
+  "scope": "Browser design prototype only; not embedded in device firmware."
+}

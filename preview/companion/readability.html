@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>小糖 · 看清每一句</title>
+  <link rel="icon" href="data:,">
+  <link rel="preload" href="./fonts/xiaotang-ui-preview.woff" as="font" type="font/woff" crossorigin>
+  <link rel="stylesheet" href="./readability.css">
+  <script type="module" src="./readability.mjs"></script>
+</head>
+<body data-layout="clear" data-size="normal">
+  <header><a class="brand" href="./"><span aria-hidden="true"></span>小糖 <small>COMPANION</small></a><a class="previous" href="./">表情预览 ↗</a></header>
+  <main>
+    <section class="introduction">
+      <p class="eyebrow">1.43″ · 圆屏可读性设计稿</p>
+      <h1>一眼，<br>就看清。</h1>
+      <p class="lead">圆脸继续陪着你。<br>每一句话，也值得看得轻松。</p>
+      <div class="comparison" role="group" aria-label="布局对比"><button data-layout="current" aria-pressed="false">现有小字</button><button data-layout="clear" aria-pressed="true">新版清晰</button></div>
+      <label class="size-option" for="type-size">新版字号 <select id="type-size"><option value="normal">清晰 · 正文28 / 阅读30</option><option value="large">大字 · 正文32 / 阅读34</option></select></label>
+      <p class="comparison-note">现有小字复现网页字号与空间比例；<br>设计稿使用本地 Noto Sans SC 字体子集。</p>
+    </section>
+
+    <section class="device-area" aria-label="圆屏可读性互动稿">
+      <div class="device-shell"><div class="glass"><div class="display">
+        <section class="screen home-screen" data-screen="home" aria-label="陪伴主屏">
+          <p id="pet-status" class="pet-status">小糖 · 陪着你</p>
+          <button id="pet-face" class="face" aria-label="摸摸小糖"><span class="eye left"></span><span class="eye right"></span></button>
+          <button id="read-caption" class="home-caption" aria-label="打开当前字幕阅读页"><span id="home-text"></span></button>
+          <p class="boot-hint">按住 BOOT 说话</p>
+          <button class="settings-handle" data-open="settings" aria-label="打开设置"><span></span></button>
+        </section>
+        <section class="screen reading-screen" data-screen="reading" aria-label="字幕阅读页" hidden>
+          <button class="screen-back reading-back" data-open="home">‹ 回到小糖</button>
+          <div class="reading-author"><span class="mini-face" aria-hidden="true"><i></i><i></i></span><span>小糖说</span></div>
+          <div id="reading-text" class="reading-text" role="region" aria-label="当前收到的字幕，可上下滚动" tabindex="0"></div>
+          <p class="boot-hint">按住 BOOT 说话</p>
+        </section>
+        <section class="screen settings-screen" data-screen="settings" aria-label="常用设置" hidden>
+          <h2 class="screen-title">舒服一点</h2>
+          <div class="settings-rows">
+            <button class="setting-item" data-open="volume"><span>音量</span><strong id="volume-value">20%</strong><span aria-hidden="true">›</span></button>
+            <button class="setting-item" data-open="brightness"><span>亮度</span><strong id="brightness-value">70%</strong><span aria-hidden="true">›</span></button>
+            <button class="setting-item" data-open="captions"><span>字幕</span><strong id="caption-value">简洁</strong><span aria-hidden="true">›</span></button>
+          </div>
+          <button class="screen-back bottom-back" data-open="home">回到小糖</button>
+        </section>
+        <section class="screen adjust-screen" data-screen="volume" aria-label="音量预览" hidden>
+          <h2 class="screen-title">音量</h2><p class="adjust-value" id="volume-number">20<span>%</span></p>
+          <label class="slider-label" for="volume">拖动调整</label><input class="screen-slider" id="volume" type="range" min="0" max="100" value="20" aria-label="模拟设备音量">
+          <p class="adjust-note">无声预览</p><button class="screen-back bottom-back" data-open="settings">返回设置</button>
+        </section>
+        <section class="screen adjust-screen" data-screen="brightness" aria-label="亮度预览" hidden>
+          <h2 class="screen-title">亮度</h2><p class="adjust-value" id="brightness-number">70<span>%</span></p>
+          <label class="slider-label" for="brightness">拖动调整</label><input class="screen-slider" id="brightness" type="range" min="10" max="100" value="70" aria-label="模拟设备亮度">
+          <p class="adjust-note">数值仅在本页演示</p><button class="screen-back bottom-back" data-open="settings">返回设置</button>
+        </section>
+        <section class="screen caption-screen" data-screen="captions" aria-label="字幕模式选择" hidden>
+          <h2 class="screen-title">通话字幕</h2>
+          <div class="settings-rows caption-options"><button data-caption="0" aria-pressed="false">完整 <span>当前片段</span></button><button data-caption="1" aria-pressed="true">简洁 <span>首句两行</span></button><button data-caption="2" aria-pressed="false">关闭 <span>保留提示</span></button></div>
+          <button class="screen-back bottom-back" data-open="settings">返回设置</button>
+        </section>
+      </div></div><button id="readability-boot" class="physical-boot" aria-label="按住实体 BOOT 模拟说话">BOOT</button></div>
+      <p id="screen-description" class="device-description" role="status">轻点字幕展开阅读 · 底部短横打开设置</p>
+      <div class="scene-tabs" role="group" aria-label="查看不同界面"><button data-scene="home" aria-pressed="true">陪伴</button><button data-scene="reading" aria-pressed="false">阅读</button><button data-scene="settings" aria-pressed="false">设置</button></div>
+      <p class="scale-note">网页比例不等同于实物大小，最终以设备观看为准。</p>
+    </section>
+
+    <section class="design-notes" aria-labelledby="notes-title">
+      <p class="eyebrow">少一点挤，多一点清楚。</p><h2 id="notes-title">把空间，<br>留给正在看的事。</h2>
+      <ol><li><span>01</span><div><h3>黑体与更实的笔画</h3><p>Noto Sans SC Medium，配合明亮正文。字形、字号和对比度一起调整。</p></div></li><li><span>02</span><div><h3>陪伴与阅读各有空间</h3><p>主屏保留两行重点。点字幕，进入更大的阅读区；长片段手动滚动。</p></div></li><li><span>03</span><div><h3>少一些同屏选项</h3><p>常用设置每页三项，整行可点。连接、配对等功能后续保留在二级页面。</p></div></li></ol>
+      <label class="sample-label" for="readability-sample">试读一段话</label><select id="readability-sample" disabled><option value="chinese">中文长句</option><option value="english">English</option><option value="mixed">中英与 emoji</option><option value="empty">空文本</option><option value="long">长文本边界</option></select>
+      <p class="scope-note">无声设计稿 · 不录音 · 不连接 Bot<br>完整模式仍指当前最多320字节片段。设置只在本页演示，尚未写入固件。</p>
+      <p id="readability-error" class="error" role="alert" hidden></p>
+    </section>
+  </main>
+  <footer><span>经典圆脸，清楚一点。</span><span>字体来源：<a href="./fonts/README.md">Noto Sans SC · OFL-1.1</a></span></footer>
+</body>
+</html>

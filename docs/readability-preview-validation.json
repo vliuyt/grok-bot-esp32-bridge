@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-20",
+  "stage": "readability-design-prototype",
+  "firmwareChanged": false,
+  "deviceFlashed": false,
+  "audibleTestsRun": false,
+  "typography": {
+    "body": [
+      28,
+      32
+    ],
+    "reading": [
+      30,
+      34
+    ],
+    "status": 22,
+    "settings": 28,
+    "logicalScreenPixels": 466,
+    "font": "Xiaotang UI Preview, derived from Noto Sans SC Medium",
+    "fontGlyphs": 400,
+    "fontBytes": 64664
+  },
+  "hostTests": {
+    "passed": 105,
+    "failed": 0,
+    "skipped": 0
+  },
+  "browser": {
+    "width1280": "initial clear home layout and font load",
+    "width502": [
+      "old/new layout comparison at original contrast",
+      "normal and large typography",
+      "home and independent reading views",
+      "long caption scrolling to the final line",
+      "three large settings rows and return",
+      "volume slider updates its large numeric label",
+      "caption off preserves BOOT instructions",
+      "BOOT Enter hold returns reading to simulated dialogue"
+    ],
+    "screenshots": [
+      "docs/readability-before.png",
+      "docs/readability-home.png",
+      "docs/readability-reading.png",
+      "docs/readability-settings.png"
+    ]
+  },
+  "review": {
+    "critical": 0,
+    "importantFound": 2,
+    "minorFound": 2,
+    "fixed": [
+      "Disabled captions retain reading contrast, including the old-layout comparison.",
+      "Pointer release and cancellation belong only to the initiating pointer.",
+      "Same-frame cancellation immediately redraws the idle UI.",
+      "The reviewed font license must be in the publication file set, not only present in the working tree."
+    ],
+    "regressionEvidence": "Gesture and license-membership failures reproduced before fixes, all 105 tests passed afterwards; caption contrast additionally checked in the browser."
+  },
+  "remaining": [
+    "Agree on design and preferred type size",
+    "Build a production LVGL font with adequate Chinese coverage and resource limits",
+    "Integrate the chosen layout while retaining existing settings in secondary pages",
+    "Physical-screen legibility, touch, privacy export and voice performance acceptance"
+  ]
+}
