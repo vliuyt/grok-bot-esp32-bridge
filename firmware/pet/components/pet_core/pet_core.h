@@ -41,6 +41,8 @@ typedef struct {
 } pet_pose_t;
 
 void pet_init(pet_state_t *state, uint64_t now_ms);
+/* Caller serializes state; local activity preserves expression and dialogue. */
+void pet_note_activity(pet_state_t *state, uint64_t now_ms);
 uint32_t pet_step(pet_state_t *state, pet_event_t event);
 pet_pose_t pet_pose(const pet_state_t *state, uint64_t now_ms);
 typedef enum { PET_GESTURE_NONE, PET_GESTURE_TAP, PET_GESTURE_STROKE, PET_GESTURE_SETTINGS } pet_gesture_t;

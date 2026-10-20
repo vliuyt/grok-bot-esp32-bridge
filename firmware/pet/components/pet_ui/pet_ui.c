@@ -27,6 +27,7 @@ static bool initialized,screen_on=true,syncing,snapshot_requested;
 static int touch_x,touch_y;
 static bool touching;
 static char last_summary[321];
+static uint32_t last_reader_activity_tick;
 
 static void action(pet_ui_action_kind_t kind,int value){if(callback)callback((pet_ui_action_t){kind,value},callback_context);}
 static void text(lv_obj_t *o,const char *value){if(strcmp(lv_label_get_text(o),value))lv_label_set_text(o,value);}
@@ -60,7 +61,15 @@ static void show_page(pet_page_t next){
 static void navigate(lv_event_t *e){show_page((pet_page_t)(intptr_t)lv_event_get_user_data(e));action(PET_UI_WAKE,0);}
 static void open_reader(lv_event_t *e){
     (void)e;pet_readability_input_t in=input();
-    if(pet_readability_text(&in).can_read)show_page(PET_PAGE_READING);
+    if(pet_readability_text(&in).can_read){
+        show_page(PET_PAGE_READING);last_reader_activity_tick=lv_tick_get();action(PET_UI_WAKE,0);
+    }
+}
+static void reader_activity(lv_event_t *e){
+    lv_event_code_t code=lv_event_get_code(e);
+    if(code==LV_EVENT_PRESSED||((code==LV_EVENT_PRESSING||code==LV_EVENT_SCROLL)&&lv_tick_elaps(last_reader_activity_tick)>=1000)){
+        last_reader_activity_tick=lv_tick_get();action(PET_UI_WAKE,0);
+    }
 }
 static void open_detail(lv_event_t *e){detail_kind=(int)(intptr_t)lv_event_get_user_data(e);show_page(PET_PAGE_DETAIL);action(PET_UI_WAKE,0);}
 static void touch(lv_event_t *event){
@@ -213,6 +222,7 @@ static void build(void){
     label(pages[PET_PAGE_READING],"小糖说",113,108,240,PET_FONT_HINT);
     reader_box=container(pages[PET_PAGE_READING],73,160,320,205);
     lv_obj_add_flag(reader_box,LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_CLICKABLE);lv_obj_set_scroll_dir(reader_box,LV_DIR_VER);
+    lv_obj_add_event_cb(reader_box,reader_activity,LV_EVENT_ALL,NULL);
     lv_obj_set_scrollbar_mode(reader_box,LV_SCROLLBAR_MODE_AUTO);
     reader_text=label(reader_box,"",0,0,320,PET_FONT_READER);lv_obj_set_style_text_align(reader_text,LV_TEXT_ALIGN_LEFT,0);
     voice_hint=label(root,"语音连接中",103,400,260,PET_FONT_HINT);lv_obj_set_style_text_color(voice_hint,lv_color_hex(0xc9c3ca),0);

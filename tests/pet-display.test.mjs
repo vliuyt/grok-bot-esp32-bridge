@@ -18,6 +18,12 @@ test('font generation refuses an unverified source before changing output',()=>{
 });
 
 const lvgl=stage&&join(stage,'managed_components/lvgl__lvgl');
+test('production compressed glyphs use the serial renderer supported by the pinned LVGL decoder',()=>{
+  // LVGL's pinned font_fmt_rle decoder shares mutable global state, so two
+  // software draw workers cannot safely decode independent labels at once.
+  const defaults=readFileSync('firmware/pet/sdkconfig.defaults','utf8');
+  assert.equal(Number(defaults.match(/^CONFIG_LV_DRAW_SW_DRAW_UNIT_CNT=(\d+)$/m)?.[1]),1);
+});
 test('real LVGL renders readable gray glyphs and preserves the original character coverage',
   {skip:!lvgl||!existsSync(join(lvgl,'lvgl.h'))?'Build firmware once to resolve LVGL first':false},()=>{
     let cmake=process.env.GROK_PET_CMAKE;
@@ -34,4 +40,13 @@ test('real LVGL renders readable gray glyphs and preserves the original characte
     execFileSync(cmake,['--build',build,'--parallel','4'],{stdio:'pipe',maxBuffer:8*1024*1024});
     assert.match(execFileSync(join(build,'pet-font-test'),{encoding:'utf8'}),/PET_FONT_RENDER_OK/);
     assert.match(execFileSync(join(build,'pet-ui-test'),[build],{encoding:'utf8',stdio:['ignore','pipe','pipe']}),/PET_UI_RENDER_OK/);
+    const unsafe=mkdtempSync(join(tmpdir(),'pet-unsafe-draw-'));
+    try{
+      const config=join(unsafe,'lv_conf.h');
+      writeFileSync(config,readFileSync('tests/display_host/lv_conf.h','utf8').replace('#define LV_DRAW_SW_DRAW_UNIT_CNT 1','#define LV_DRAW_SW_DRAW_UNIT_CNT 2'));
+      const rejected=spawnSync('cc',['-std=c11','-fsyntax-only','-DLV_CONF_PATH='+JSON.stringify(config),'-DPET_FONT_COMPRESSED=1',
+        '-I'+lvgl,'-Ifirmware/pet/components/pet_ui','firmware/pet/components/pet_ui/pet_fonts.c'],{encoding:'utf8'});
+      assert.notEqual(rejected.status,0);
+      assert.match(rejected.stderr,/Readable pet fonts require one software draw unit/);
+    }finally{rmSync(unsafe,{recursive:true,force:true});}
   });

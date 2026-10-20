@@ -16,6 +16,9 @@ static lv_point_t pointer_point;
 static lv_indev_state_t pointer_state;
 static pet_ui_action_t last_action;
 static unsigned action_count;
+static pet_state_t activity_model;
+static uint64_t activity_now;
+static unsigned wake_count;
 static const char *artifact_dir;
 static void noop_sleep(bool on){(void)on;}
 static void noop_brightness(int level){(void)level;}
@@ -31,7 +34,10 @@ int mbedtls_base64_encode(unsigned char *dst,size_t capacity,size_t *used,const 
 static void flush(lv_display_t *d,const lv_area_t *area,uint8_t *map){(void)area;(void)map;lv_display_flush_ready(d);}
 static void read_pointer(lv_indev_t *d,lv_indev_data_t *data){(void)d;data->point=pointer_point;data->state=pointer_state;}
 static void point(int x,int y,bool pressed){pointer_point=(lv_point_t){x,y};pointer_state=pressed?LV_INDEV_STATE_PRESSED:LV_INDEV_STATE_RELEASED;lv_tick_inc(20);lv_indev_read(pointer);}
-static void record(pet_ui_action_t event,void *context){(void)context;last_action=event;action_count++;}
+static void record(pet_ui_action_t event,void *context){
+    (void)context;last_action=event;action_count++;
+    if(event.kind==PET_UI_WAKE){wake_count++;pet_note_activity(&activity_model,activity_now);}
+}
 static void frame(pet_ui_view_t *v){pet_ui_update(v);draw(NULL);lv_refr_now(display);}
 static lv_obj_t *find(lv_obj_t *parent,const char *text){
     if(lv_obj_check_type(parent,&lv_label_class)&&!strcmp(lv_label_get_text(parent),text))return parent;
@@ -70,6 +76,7 @@ static uint64_t raw_hash(void){
 }
 int main(int argc,char **argv){
     artifact_dir=argc>1?argv[1]:NULL;lv_init();display=lv_display_create(466,466);
+    pet_init(&activity_model,0);
     lv_display_set_color_format(display,LV_COLOR_FORMAT_RGB565);
     lv_display_set_buffers(display,framebuffer,NULL,sizeof(framebuffer),LV_DISPLAY_RENDER_MODE_FULL);
     lv_display_set_flush_cb(display,flush);
@@ -88,10 +95,27 @@ int main(int argc,char **argv){
     assert(lv_obj_get_height(caption)==75&&lv_obj_get_y(caption_box)==307);
     assert(lv_obj_get_y(handle)==425&&lv_obj_get_width(handle)==100);
     assert(lv_obj_has_flag(caption_box,LV_OBJ_FLAG_CLICKABLE));artifact("firmware-readable-home");
+    activity_now=115000;pet_step(&activity_model,(pet_event_t){.kind=PET_EV_TICK,.now_ms=activity_now});
+    assert(activity_model.life==PET_LIFE_DROWSY);
+    unsigned reader_wakes=wake_count;
     lv_obj_send_event(caption_box,LV_EVENT_CLICKED,NULL);frame(&v);only_page(PET_PAGE_READING);
+    assert(wake_count>reader_wakes&&activity_model.last_input_ms==activity_now);
+    pet_step(&activity_model,(pet_event_t){.kind=PET_EV_TICK,.now_ms=120001});
+    assert(activity_model.life==PET_LIFE_AWAKE);
     assert(!strcmp(lv_label_get_text(reader_text),v.caption));
     assert(lv_obj_get_style_text_font(reader_text,0)==pet_font(PET_FONT_READER));
     assert(lv_obj_get_scroll_bottom(reader_box)>0);artifact("firmware-readable-reading");
+    activity_now=200001;reader_wakes=wake_count;
+    point(230,290,true);point(230,235,true);frame(&v);point(230,235,false);
+    assert(wake_count>reader_wakes&&activity_model.last_input_ms==activity_now);
+    pet_step(&activity_model,(pet_event_t){.kind=PET_EV_TICK,.now_ms=250000});
+    assert(activity_model.life==PET_LIFE_AWAKE&&pet_pose(&activity_model,250000).screen_on);
+    reader_wakes=wake_count;
+    for(unsigned i=0;i<200;i++)lv_obj_send_event(reader_box,LV_EVENT_SCROLL,NULL);
+    assert(wake_count==reader_wakes); /* Movement is rate-limited, not queued per pixel. */
+    lv_tick_inc(1001);activity_now=251001;lv_obj_send_event(reader_box,LV_EVENT_SCROLL,NULL);
+    assert(wake_count==reader_wakes+1&&activity_model.last_input_ms==activity_now);
+    lv_anim_delete(pointer,NULL);lv_obj_stop_scroll_anim(reader_box);
     lv_obj_scroll_to_y(reader_box,30,LV_ANIM_OFF);frame(&v);assert(lv_obj_get_scroll_y(reader_box)==30);
     pet_ui_home();frame(&v);only_page(PET_PAGE_HOME);
     lv_obj_send_event(handle,LV_EVENT_CLICKED,NULL);frame(&v);only_page(PET_PAGE_SETTINGS);

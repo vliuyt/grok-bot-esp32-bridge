@@ -113,7 +113,7 @@ static void handle_action(pet_ui_action_t action){
             reduce((pet_event_t){.kind=action.kind==PET_UI_PET?PET_EV_PET:PET_EV_TOUCH_TAP,.now_ms=now});
         }
         else {
-            xSemaphoreTake(model_lock,portMAX_DELAY);model.last_input_ms=now;model.life=PET_LIFE_AWAKE;xSemaphoreGive(model_lock);
+            xSemaphoreTake(model_lock,portMAX_DELAY);pet_note_activity(&model,now);xSemaphoreGive(model_lock);
             pet_network_sleep(false);
         if(transport.sleep){transport.sleep(false,transport.context);}
             pet_audio_power(true);

@@ -12,7 +12,7 @@ The 28px set covers GB2312's 6763 Han ideographs, ASCII and common punctuation. 
 node scripts/generate-pet-fonts.mjs --noto /path/NotoSansSC-Medium.otf --unifont /path/unifont-16.0.04.otf --converter /path/lv_font_conv.js
 ```
 
-The script does not fetch fonts or install tools. It validates source hashes and converter version before writing outputs. `chat-characters.txt` is the Unicode Han set decoded from GB2312; `reading-characters.txt` is its level-1 set; `ui-characters.txt` is controlled interface copy. Regenerate the latter when adding new interface text. Real LVGL host tests check grayscale rendering and compare new fallback coverage with the original font. Final target image size and physical-screen acceptance are separate checks.
+The script does not fetch fonts or install tools. It validates source hashes and converter version before writing outputs. `chat-characters.txt` is the Unicode Han set decoded from GB2312; `reading-characters.txt` is its level-1 set; `ui-characters.txt` is controlled interface copy. Regenerate the latter when adding new interface text. Real LVGL host tests check grayscale rendering and compare new fallback coverage with the original font. Production enables compressed-font decoding and uses one software draw unit because pinned LVGL9.5.0 keeps shared RLE decoder state. Compile-time guards reject decoder-off or multiworker configurations; tests also check the production default and compile an unsafe configuration to prove rejection. Final target image size and physical-screen acceptance are separate checks.
 
 ## Original full reference
 

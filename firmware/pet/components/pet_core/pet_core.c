@@ -8,7 +8,7 @@ static uint32_t random_next(pet_state_t *s) {
     s->seed=x ? x : 0x72599a31u;
     return s->seed;
 }
-static void wake(pet_state_t *s,uint64_t now) {
+void pet_note_activity(pet_state_t *s,uint64_t now) {
     s->life=PET_LIFE_AWAKE;
     s->last_input_ms=now;
 }
@@ -46,13 +46,13 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
     switch(e.kind) {
     case PET_EV_PRESS:
         if(s->held) break;
-        s->held=true; s->expired=false; s->setup=false; wake(s,e.now_ms);
+        s->held=true; s->expired=false; s->setup=false; pet_note_activity(s,e.now_ms);
         fx=PET_FX_WAKE|PET_FX_CANCEL;
         if(s->connection==PET_CONN_READY) fx|=begin(s,e.now_ms);
         else fx|=PET_FX_CONNECT;
         break;
     case PET_EV_RELEASE:
-        s->held=false; s->expired=false; wake(s,e.now_ms);
+        s->held=false; s->expired=false; pet_note_activity(s,e.now_ms);
         if(s->dialogue==PET_DIALOGUE_LISTEN) {
             fx=PET_FX_STOP;
             if(e.now_ms-s->entered_ms>=100) { s->dialogue=PET_DIALOGUE_WAIT; fx|=PET_FX_SUBMIT; }
@@ -87,7 +87,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
     case PET_EV_BUFFERED:
         if(s->dialogue!=PET_DIALOGUE_LISTEN&&s->connection==PET_CONN_READY) {
             bool sleeping=s->life!=PET_LIFE_AWAKE;
-            wake(s,e.now_ms);if(sleeping)fx|=PET_FX_WAKE;
+            pet_note_activity(s,e.now_ms);if(sleeping)fx|=PET_FX_WAKE;
             if(s->dialogue==PET_DIALOGUE_IDLE || (s->playback_empty&&s->response_done)) {
                 s->response_done=false;s->dialogue=PET_DIALOGUE_WAIT;s->entered_ms=e.now_ms;
             }
@@ -104,21 +104,21 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
     case PET_EV_RESPONSE_DONE:
         if(s->dialogue==PET_DIALOGUE_LISTEN) break;
         s->response_done=true;
-        if(s->playback_empty) { s->dialogue=PET_DIALOGUE_IDLE; s->level=0; wake(s,e.now_ms); }
+        if(s->playback_empty) { s->dialogue=PET_DIALOGUE_IDLE; s->level=0; pet_note_activity(s,e.now_ms); }
         break;
     case PET_EV_DRAIN:
         s->playback_empty=true;
-        if(s->response_done) { s->dialogue=PET_DIALOGUE_IDLE; s->level=0; wake(s,e.now_ms); }
+        if(s->response_done) { s->dialogue=PET_DIALOGUE_IDLE; s->level=0; pet_note_activity(s,e.now_ms); }
         break;
     case PET_EV_PET:
-        wake(s,e.now_ms); fx|=PET_FX_WAKE;
+        pet_note_activity(s,e.now_ms); fx|=PET_FX_WAKE;
         if(s->dialogue==PET_DIALOGUE_IDLE) {
             s->pet_until_ms=e.now_ms+1800;
             s->curious_until_ms=s->confused_until_ms=s->greet_until_ms=0;
         }
         break;
     case PET_EV_TOUCH_TAP:
-        wake(s,e.now_ms); fx|=PET_FX_WAKE;
+        pet_note_activity(s,e.now_ms); fx|=PET_FX_WAKE;
         if(s->dialogue==PET_DIALOGUE_IDLE) {
             s->curious_until_ms=e.now_ms+2000;
             s->pet_until_ms=s->confused_until_ms=s->greet_until_ms=0;
@@ -132,7 +132,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         if(s->setup) {
             fx=PET_FX_CANCEL;
             if(s->dialogue==PET_DIALOGUE_LISTEN) fx|=PET_FX_STOP;
-            s->held=false; s->dialogue=PET_DIALOGUE_IDLE; s->response_cancelled=true; wake(s,e.now_ms);
+            s->held=false; s->dialogue=PET_DIALOGUE_IDLE; s->response_cancelled=true; pet_note_activity(s,e.now_ms);
         }
         break;
     case PET_EV_TASK_CHANNEL: s->task_channel=e.value!=0; break;
@@ -144,12 +144,12 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
     case PET_EV_TICK: {
         if(s->dialogue==PET_DIALOGUE_LISTEN && e.now_ms-s->entered_ms>=55000) {
             s->dialogue=PET_DIALOGUE_IDLE; s->expired=true; s->response_cancelled=true;
-            fx|=PET_FX_STOP|PET_FX_CANCEL; wake(s,e.now_ms);
+            fx|=PET_FX_STOP|PET_FX_CANCEL; pet_note_activity(s,e.now_ms);
         }
         if(s->dialogue==PET_DIALOGUE_WAIT && e.now_ms-s->entered_ms>=60000) {
             s->dialogue=PET_DIALOGUE_IDLE; s->response_cancelled=true;
             s->confused_until_ms=e.now_ms+2000;
-            fx|=PET_FX_CANCEL; wake(s,e.now_ms);
+            fx|=PET_FX_CANCEL; pet_note_activity(s,e.now_ms);
         }
         if(s->dialogue==PET_DIALOGUE_IDLE && !s->held && !s->setup) {
             uint64_t idle=e.now_ms-s->last_input_ms;
