@@ -1,0 +1,54 @@
+{
+  "converter": "lv_font_conv@1.5.3",
+  "sources": {
+    "noto": "7633f5a016d4dd95e685a69633d818aabc4644c4b08e26bd35b1b30c45ed5dda",
+    "unifont": "0e3981ab552231b5a2a870f2b61741903a4bf25c23ef5aeb05fdced1b3c7af4d"
+  },
+  "chatCharacters": 6763,
+  "fonts": [
+    {
+      "file": "pet_font_rare16.c",
+      "size": 16,
+      "bpp": 1,
+      "bitmapBytes": 456489,
+      "lineHeight": 17,
+      "glyphs": 14593,
+      "characterSetSha256": "ad0ca848ed8cfcfa1553e011a10014599536e4ecc57ec53642bd318d2b0505bf",
+      "sha256": "154979e8b361539d793e67d26f3e517b6342c3cd91edf78d04d5960fb805f3ac",
+      "fallback": null
+    },
+    {
+      "file": "pet_font_28.c",
+      "size": 28,
+      "bpp": 2,
+      "bitmapBytes": 893650,
+      "lineHeight": 35,
+      "glyphs": 7020,
+      "characterSetSha256": "86b3d015343fd54be42f2555f84643019fc07ac18f423030a535f3d011fe5bb3",
+      "sha256": "9e9fb2f8249ded971565a20d671b891e4f2052a13ffa0b12501965a3bc5cb089",
+      "fallback": "pet_font_rare16"
+    },
+    {
+      "file": "pet_font_30.c",
+      "size": 30,
+      "bpp": 2,
+      "bitmapBytes": 977585,
+      "lineHeight": 37,
+      "glyphs": 7020,
+      "characterSetSha256": "86b3d015343fd54be42f2555f84643019fc07ac18f423030a535f3d011fe5bb3",
+      "sha256": "922cf70a881f76b2f0dfcdf57ace88902c1245224408ed4c503ad79e45010c8f",
+      "fallback": "pet_font_28"
+    },
+    {
+      "file": "pet_font_22.c",
+      "size": 22,
+      "bpp": 2,
+      "bitmapBytes": 26589,
+      "lineHeight": 27,
+      "glyphs": 381,
+      "characterSetSha256": "b3329601010cf1f860f63485276ee1ae06f1a6a767aca614c4b4e6b4cd311214",
+      "sha256": "e37668cbc8d18ca3851a75085762869908c06753066ccd45decc912865c50eac",
+      "fallback": "pet_font_28"
+    }
+  ]
+}
