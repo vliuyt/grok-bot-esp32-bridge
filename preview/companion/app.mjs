@@ -11,7 +11,7 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const names={idle:'待机',happy:'开心',greet:'招呼',listen:'聆听',think:'思考',speak:'回答',sleep:'困倦',curious:'好奇',confused:'困惑'};
 const messages={idle:'安静地陪你。',curious:'轻点一下，它会好奇地歪歪头。',happy:'抚摸过后，开心会停留一小会儿。',greet:'不出声，也能和你打个招呼。',listen:'正在模拟聆听。松开 BOOT 后提交。',think:'正在模拟等待回答。此时摸它，不会打断思考。',speak:'正在模拟回答。再按住 BOOT，立即开始新一轮。',sleep:'眯一小会儿。碰一碰就醒来。',confused:'暂时没连上，露个小表情，稍后安静等你。'};
 const captions={idle:'',happy:'再摸一下嘛',greet:'嘿，我在这里',listen:'嗯，我在听',think:'让我想想',speak:'今天也有好好陪着你。',sleep:'',curious:'嗯？我在呢',confused:'等一下，再试试吧'};
-let data=null,lastMode='',lastOnline=null,gesture=null,bootSource=null,frameId;
+let data=null,lastMode='',lastOnline=null,gesture=null,bootSource=null,frameId=null,pageActive=true;
 
 function now(){return performance.now();}
 function cancelHold(){if(bootSource){pet.send('cancel',now());bootSource=null;}}
@@ -92,7 +92,7 @@ window.addEventListener('keydown',event=>{
   }
   if(event.key==='Escape'&&!settings.hidden){settings.hidden=true;canvas.focus();}
 });
-window.addEventListener('keyup',event=>{if(event.code==='Space'){event.preventDefault();release('space');}});
+window.addEventListener('keyup',event=>{if(event.code==='Space'&&bootSource==='space'){event.preventDefault();release('space');}});
 canvas.addEventListener('pointerdown',event=>{
   if(event.button!==0||!settings.hidden)return;
   const rect=canvas.getBoundingClientRect();
@@ -110,10 +110,17 @@ canvas.addEventListener('pointerup',event=>{
   else if(Math.abs(dx)<30&&Math.abs(dy)<30)pet.send('tap',now());
 });
 canvas.addEventListener('pointercancel',()=>{gesture=null;});
-canvas.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();pet.send('tap',now());}});
+canvas.addEventListener('keydown',event=>{
+  if(event.key==='Enter'){event.preventDefault();pet.send('tap',now());}
+  else if(event.key==='ArrowUp'){event.preventDefault();showSettings();}
+});
+boot.addEventListener('blur',cancelHold);
+canvas.addEventListener('blur',cancelHold);
 window.addEventListener('blur',cancelHold);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelHold();gesture=null;}});
-window.addEventListener('pagehide',()=>{cancelAnimationFrame(frameId);cancelHold();});
+function startLoop(){if(data&&pageActive&&frameId===null)frameId=requestAnimationFrame(tick);}
+window.addEventListener('pagehide',()=>{pageActive=false;cancelAnimationFrame(frameId);frameId=null;cancelHold();});
+window.addEventListener('pageshow',()=>{pageActive=true;startLoop();});
 
 for(const button of [...controls,boot,document.querySelector('#pet')])button.disabled=true;
 try {
@@ -122,7 +129,7 @@ try {
   data=await response.json();
   if(data.schema!==1||!Object.keys(names).every(mode=>data.states?.[mode]?.length))throw new Error('Invalid preview data');
   for(const button of [...controls,boot,document.querySelector('#pet')])button.disabled=false;
-  frameId=requestAnimationFrame(tick);
+  startLoop();
 } catch {
   const error=document.querySelector('#error');error.hidden=false;
   error.textContent='预览没有加载完成，请刷新页面重试。';

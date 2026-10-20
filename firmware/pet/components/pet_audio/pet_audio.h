@@ -16,7 +16,8 @@ esp_err_t pet_audio_start(const pet_config_t *config,pet_audio_callbacks_t callb
 void pet_audio_begin(uint32_t generation,uint32_t turn);
 void pet_audio_finish(void);
 void pet_audio_clear(uint32_t generation,uint32_t turn);
-int pet_audio_push(uint32_t generation,uint32_t turn,const void *pcm,size_t bytes);
+uint32_t pet_audio_receive_epoch(void);
+int pet_audio_push(uint32_t generation,uint32_t turn,uint32_t receive_epoch,const void *pcm,size_t bytes);
 void pet_audio_flush_playback(uint32_t generation,uint32_t turn);
 void pet_audio_done(uint32_t generation,uint32_t turn);
 void pet_audio_power(bool on);

@@ -84,11 +84,15 @@ void pet_audio_finish(void){
     xSemaphoreGive(state_lock);
     if(!active&&cb.stopped)cb.stopped(g,t,cb.context);
 }
-int pet_audio_push(uint32_t g,uint32_t t,const void *pcm,size_t bytes){
+uint32_t pet_audio_receive_epoch(void){return atomic_load(&playback_epoch);}
+int pet_audio_push(uint32_t g,uint32_t t,uint32_t receive_epoch,const void *pcm,size_t bytes){
     if(!queue||atomic_load(&recording)||!owns(g,t))return 0;
     if(!atomic_load(&powered)){pet_audio_power(true);if(!atomic_load(&powered))return -1;}
     xSemaphoreTake(state_lock,portMAX_DELAY);
-    int result=pet_pcm_push(queue,g,t,pcm,bytes);
+    /* Snapshot is taken before the model gate. A clear between gate and enqueue
+     * must invalidate the frame even when generation/turn stay the same. */
+    int result=receive_epoch==atomic_load(&playback_epoch)&&!atomic_load(&recording)?
+               pet_pcm_push(queue,g,t,pcm,bytes):0;
     if(result==1){drain_sent=false;if(!buffered_announced){buffered_announced=true;event(PET_EV_BUFFERED,g,t,0);}}
     xSemaphoreGive(state_lock);
     return result;

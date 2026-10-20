@@ -89,9 +89,12 @@ static bool receive(uint8_t type,uint32_t turn,const void *bytes,size_t n,void *
  (void)ctx;uint32_t g=atomic_load(&generation),current=atomic_load(&current_turn);
  if(type==3){
   if(turn!=current||!hello)return true;
+  uint32_t receive_epoch=pet_audio_receive_epoch();
   pet_state_t state=cb.state(cb.context);
   if(!pet_response_audio_allowed(&state,g,turn)){return enqueue(2,g,turn,"credit",6);}
-  int result=pet_audio_push(g,turn,bytes,n);return result>=0;
+  int result=pet_audio_push(g,turn,receive_epoch,bytes,n);
+  if(result==0)return enqueue(2,g,turn,"credit",6);
+  return result>0;
  }
  if(n&&((const char *)bytes)[0]=='{')return metadata(bytes,n);
  if(n==4&&!memcmp(bytes,"pong",4))return true;

@@ -10,9 +10,21 @@ int main(void) {
     assert(curious.eyes[0].height>curious.eyes[1].height);
     assert(curious.eyes[0].rotation!=curious.eyes[1].rotation);
     assert(curious.width==224&&curious.height==224&&!curious.eyes[0].arc);
+    float curious_tilt=0,curious_lift=0;
+    for(uint64_t now=100;now<2000;now+=33){
+        pet_pose_t pose=pet_pose(&s,now);
+        if(-pose.rotation>curious_tilt)curious_tilt=-pose.rotation;
+        if(-pose.offset_y>curious_lift)curious_lift=-pose.offset_y;
+    }
+    assert(curious_tilt>=12&&curious_lift>=8);
     pet_step(&s,(pet_event_t){.kind=PET_EV_PET,.now_ms=200});
     pet_face_t happy=pet_face_geometry(pet_pose(&s,200));
     assert(happy.eyes[0].arc&&happy.eyes[0].arc_start==200);
+    float low=100,high=-100;
+    for(uint64_t now=200;now<1800;now+=33){
+        float y=pet_pose(&s,now).offset_y;if(y<low)low=y;if(y>high)high=y;
+    }
+    assert(high-low>=8);
     pet_step(&s,(pet_event_t){.kind=PET_EV_TICK,.now_ms=91000});
     pet_face_t sleepy=pet_face_geometry(pet_pose(&s,91000));
     assert(sleepy.eyes[0].arc&&sleepy.eyes[0].arc_start==20);

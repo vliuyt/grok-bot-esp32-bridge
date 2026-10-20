@@ -190,12 +190,12 @@ pet_pose_t pet_pose(const pet_state_t *s,uint64_t now) {
         p.eye_open=.75f; p.eye_asymmetry=-.22f; p.eye_tilt=18;
     } else if(now<s->pet_until_ms) {
         p.expression=PET_EXPR_HAPPY; p.eye_open=.15f; p.scale_y=.94f+sinf(t*9)*.035f;
-        p.scale_x=1.04f; p.offset_y=6;
+        p.scale_x=1.04f; p.offset_y=3-fabsf(sinf(t*9))*10;
     } else if(now<s->curious_until_ms) {
-        p.expression=PET_EXPR_CURIOUS; p.rotation=-9; p.offset_y=-3;
-        p.look_x=7; p.eye_open=1; p.eye_asymmetry=.28f; p.eye_tilt=-8;
+        p.expression=PET_EXPR_CURIOUS; p.rotation=-12+sinf(t*4)*3; p.offset_y=-5-fabsf(sinf(t*5))*5;
+        p.look_x=10; p.eye_open=1; p.eye_asymmetry=.28f; p.eye_tilt=-8;
     } else if(now<s->greet_until_ms) {
-        p.expression=PET_EXPR_GREET; p.offset_y=-fabsf(sinf(t*5))*20; p.rotation=sinf(t*5)*5;
+        p.expression=PET_EXPR_GREET; p.offset_y=-fabsf(sinf(t*5))*28; p.rotation=sinf(t*5)*8;
         p.invitation=!s->quiet;
     } else {
         p.scale_y=1+sinf(t*1.3f)*.014f; p.offset_y=sinf(t*1.3f)*3;
