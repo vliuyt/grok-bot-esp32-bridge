@@ -37,6 +37,8 @@ static lv_obj_t *label(lv_obj_t *parent,const char *text,int width){
     lv_label_set_text(o,text);return o;
 }
 static void show_page(int next){
+    /* LVGL owns the dropdown list on the screen, outside the hidden drawer. */
+    if(next!=1&&caption_dropdown)lv_dropdown_close(caption_dropdown);
     page=next;lv_obj_set_flag(drawer,LV_OBJ_FLAG_HIDDEN,next!=1);lv_obj_set_flag(connection_page,LV_OBJ_FLAG_HIDDEN,next!=2);
 }
 static void touch(lv_event_t *event){

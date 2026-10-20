@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-20",
+  "stage": "caption-preview",
+  "modes": [
+    "full",
+    "compact",
+    "off"
+  ],
+  "receivedWindowBytes": 320,
+  "firmwareBuild": {
+    "passed": true,
+    "sha256": "9cf8d29e8b41281f0c4269da10702be22b93393811671563d1920f6b28c23506",
+    "bytes": 2290448,
+    "sourceAndDependenciesVerified": true
+  },
+  "hostTests": {
+    "command": "npm test",
+    "passed": 96,
+    "failed": 0,
+    "skipped": 0
+  },
+  "browser": {
+    "viewportWidth": 502,
+    "modeByFixtureMatrix": {
+      "full": 5,
+      "compact": 5,
+      "off": 5
+    },
+    "fixtures": [
+      "chinese",
+      "english",
+      "mixed-emoji",
+      "empty",
+      "long"
+    ],
+    "fullCaptionScroll": true,
+    "independentBottomSettingsHandle": true,
+    "settingsReturn": true,
+    "modeSurvivesReload": true,
+    "screenshot": "docs/caption-preview.png",
+    "staticExamplesOnly": true
+  },
+  "independentReview": {
+    "status": "completed-with-tested-fix",
+    "critical": 0,
+    "importantFound": 1,
+    "importantFixedWithRedGreenTests": 1,
+    "deferredMinor": 0,
+    "details": [
+      "Leaving settings explicitly closes the screen-owned LVGL caption dropdown.",
+      "The regression executes production navigation with LVGL object fakes; real-device popup behavior remains part of physical acceptance."
+    ]
+  },
+  "deviceFlashed": false,
+  "audibleTestsRun": false,
+  "remaining": [
+    "physical mode switching and reboot persistence",
+    "physical full-caption scrolling, settings return and BOOT voice regression",
+    "physical sanitized snapshot check",
+    "installable release packaging",
+    "new-device acceptance"
+  ],
+  "notes": [
+    "Full mode shows the current received window, not a complete conversation history.",
+    "Browser preference storage is separate from device NVS.",
+    "Previous expression-stage validation is a historical snapshot; this report adds caption-stage evidence."
+  ],
+  "rulings": [
+    {
+      "decision": "Complementary independent C/NVS and JavaScript reviews cover both parts.",
+      "reason": "Integration evidence comes from host tests and browser checks.",
+      "costIfWrong": "Cross-layer defects may remain until physical integration."
+    },
+    {
+      "decision": "Physical reboot persistence, touch/scroll, sanitized pixels and audio performance remain pending.",
+      "reason": "The spec excludes automatic flashing and audible tests during development.",
+      "costIfWrong": "Host/browser results may differ on the real device."
+    },
+    {
+      "decision": "Browser layout uses executor evidence rather than a duplicate reviewer browser pass.",
+      "reason": "Three modes and five fixed samples were exercised at viewport width502.",
+      "costIfWrong": "Other viewport sizes may differ."
+    }
+  ]
+}
