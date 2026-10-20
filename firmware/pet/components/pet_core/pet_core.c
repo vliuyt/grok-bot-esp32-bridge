@@ -18,7 +18,8 @@ static uint32_t begin(pet_state_t *s,uint64_t now) {
     if(!s->turn) { s->connection=PET_CONN_OFFLINE; return PET_FX_CANCEL|PET_FX_CONNECT; }
     s->dialogue=PET_DIALOGUE_LISTEN;
     s->entered_ms=now;
-    s->pet_until_ms=s->greet_until_ms=0;
+    s->pet_until_ms=s->greet_until_ms=s->curious_until_ms=s->confused_until_ms=0;
+    s->response_cancelled=false;
     s->response_done=false;
     s->playback_empty=true;
     return PET_FX_CANCEL|PET_FX_START;
@@ -40,7 +41,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
      * Clamp time, but preserve events; identity guards reject stale audio/links. */
     if(e.now_ms<s->now_ms)e.now_ms=s->now_ms;
     s->now_ms=e.now_ms;
-    if(voice_event(e.kind) && (e.generation!=s->generation || e.turn!=s->turn)) return PET_FX_NONE;
+    if(voice_event(e.kind) && (e.generation!=s->generation || e.turn!=s->turn || s->response_cancelled)) return PET_FX_NONE;
     uint32_t fx=PET_FX_NONE;
     switch(e.kind) {
     case PET_EV_PRESS:
@@ -55,7 +56,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         if(s->dialogue==PET_DIALOGUE_LISTEN) {
             fx=PET_FX_STOP;
             if(e.now_ms-s->entered_ms>=100) { s->dialogue=PET_DIALOGUE_WAIT; fx|=PET_FX_SUBMIT; }
-            else { s->dialogue=PET_DIALOGUE_IDLE; fx|=PET_FX_CANCEL; }
+            else { s->dialogue=PET_DIALOGUE_IDLE; s->response_cancelled=true; fx|=PET_FX_CANCEL; }
             s->entered_ms=e.now_ms;
         }
         break;
@@ -63,6 +64,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         fx=PET_FX_CANCEL;
         if(s->dialogue==PET_DIALOGUE_LISTEN) fx|=PET_FX_STOP;
         s->held=false; s->expired=false; s->dialogue=PET_DIALOGUE_IDLE;
+        s->response_cancelled=true;
         s->playback_empty=true; s->response_done=false;
         break;
     case PET_EV_LINK:
@@ -73,6 +75,12 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
             s->dialogue=PET_DIALOGUE_IDLE; s->playback_empty=true; s->level=0;
         }
         s->generation=e.generation; s->connection=(pet_connection_t)e.value;
+        if(e.value==PET_CONN_READY) {
+            s->connection_problem_seen=false; s->confused_until_ms=0;
+        } else if((e.value==PET_CONN_OFFLINE || e.value==PET_CONN_UNAVAILABLE) && !s->connection_problem_seen) {
+            s->connection_problem_seen=true; s->confused_until_ms=e.now_ms+2000;
+            s->curious_until_ms=s->pet_until_ms=s->greet_until_ms=0;
+        }
         if(s->connection==PET_CONN_READY && s->held && !s->expired && s->dialogue==PET_DIALOGUE_IDLE)
             fx|=begin(s,e.now_ms);
         break;
@@ -104,7 +112,17 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         break;
     case PET_EV_PET:
         wake(s,e.now_ms); fx|=PET_FX_WAKE;
-        if(s->dialogue==PET_DIALOGUE_IDLE) s->pet_until_ms=e.now_ms+1800;
+        if(s->dialogue==PET_DIALOGUE_IDLE) {
+            s->pet_until_ms=e.now_ms+1800;
+            s->curious_until_ms=s->confused_until_ms=s->greet_until_ms=0;
+        }
+        break;
+    case PET_EV_TOUCH_TAP:
+        wake(s,e.now_ms); fx|=PET_FX_WAKE;
+        if(s->dialogue==PET_DIALOGUE_IDLE) {
+            s->curious_until_ms=e.now_ms+2000;
+            s->pet_until_ms=s->confused_until_ms=s->greet_until_ms=0;
+        }
         break;
     case PET_EV_USB: s->usb=e.value!=0; break;
     case PET_EV_QUIET: s->quiet=e.value!=0; break;
@@ -114,7 +132,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         if(s->setup) {
             fx=PET_FX_CANCEL;
             if(s->dialogue==PET_DIALOGUE_LISTEN) fx|=PET_FX_STOP;
-            s->held=false; s->dialogue=PET_DIALOGUE_IDLE; wake(s,e.now_ms);
+            s->held=false; s->dialogue=PET_DIALOGUE_IDLE; s->response_cancelled=true; wake(s,e.now_ms);
         }
         break;
     case PET_EV_TASK_CHANNEL: s->task_channel=e.value!=0; break;
@@ -125,11 +143,13 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         break;
     case PET_EV_TICK: {
         if(s->dialogue==PET_DIALOGUE_LISTEN && e.now_ms-s->entered_ms>=55000) {
-            s->dialogue=PET_DIALOGUE_IDLE; s->expired=true;
+            s->dialogue=PET_DIALOGUE_IDLE; s->expired=true; s->response_cancelled=true;
             fx|=PET_FX_STOP|PET_FX_CANCEL; wake(s,e.now_ms);
         }
         if(s->dialogue==PET_DIALOGUE_WAIT && e.now_ms-s->entered_ms>=60000) {
-            s->dialogue=PET_DIALOGUE_IDLE; fx|=PET_FX_CANCEL; wake(s,e.now_ms);
+            s->dialogue=PET_DIALOGUE_IDLE; s->response_cancelled=true;
+            s->confused_until_ms=e.now_ms+2000;
+            fx|=PET_FX_CANCEL; wake(s,e.now_ms);
         }
         if(s->dialogue==PET_DIALOGUE_IDLE && !s->held && !s->setup) {
             uint64_t idle=e.now_ms-s->last_input_ms;
@@ -158,15 +178,22 @@ pet_pose_t pet_pose(const pet_state_t *s,uint64_t now) {
     if(s->dialogue==PET_DIALOGUE_LISTEN) {
         p.expression=PET_EXPR_LISTEN; p.rotation=-6; p.offset_y=-7; p.eye_open=1.1f;
     } else if(s->dialogue==PET_DIALOGUE_WAIT) {
-        if(now>=s->entered_ms&&now-s->entered_ms<20000){p.expression=PET_EXPR_THINK;p.rotation=6+sinf(t*2)*3;p.look_x=4;}
+        p.expression=PET_EXPR_THINK;
+        p.rotation=6+sinf(t*2)*3; p.look_x=4; p.eye_asymmetry=.12f;
     } else if(s->dialogue==PET_DIALOGUE_SPEAK) {
         p.expression=PET_EXPR_SPEAK; p.level=(float)s->level/1000;
         p.scale_y=1+p.level*.075f; p.scale_x=1-p.level*.04f; p.offset_y=-p.level*7;
     } else if(s->life!=PET_LIFE_AWAKE) {
         p.expression=PET_EXPR_SLEEP; p.eye_open=.08f; p.scale_y=.94f; p.offset_y=10;
+    } else if(now<s->confused_until_ms) {
+        p.expression=PET_EXPR_CONFUSED; p.rotation=sinf(t*3)*7;
+        p.eye_open=.75f; p.eye_asymmetry=-.22f; p.eye_tilt=18;
     } else if(now<s->pet_until_ms) {
         p.expression=PET_EXPR_HAPPY; p.eye_open=.15f; p.scale_y=.94f+sinf(t*9)*.035f;
         p.scale_x=1.04f; p.offset_y=6;
+    } else if(now<s->curious_until_ms) {
+        p.expression=PET_EXPR_CURIOUS; p.rotation=-9; p.offset_y=-3;
+        p.look_x=7; p.eye_open=1; p.eye_asymmetry=.28f; p.eye_tilt=-8;
     } else if(now<s->greet_until_ms) {
         p.expression=PET_EXPR_GREET; p.offset_y=-fabsf(sinf(t*5))*20; p.rotation=sinf(t*5)*5;
         p.invitation=!s->quiet;

@@ -25,13 +25,17 @@ int main(void){
     fx=pet_step(&s,(pet_event_t){.kind=PET_EV_CANCEL,.now_ms=4});
     assert((fx&PET_FX_STOP)&&!s.held&&s.dialogue==PET_DIALOGUE_IDLE);
     pet_step(&s,(pet_event_t){.kind=PET_EV_BUFFERED,.now_ms=5,.generation=s.generation,.turn=s.turn});
-    assert(s.dialogue==PET_DIALOGUE_WAIT);
-    pet_step(&s,(pet_event_t){.kind=PET_EV_PLAYING,.now_ms=6,.generation=s.generation,.turn=s.turn,.value=600});
-    assert(s.dialogue==PET_DIALOGUE_SPEAK);
-    pet_step(&s,(pet_event_t){.kind=PET_EV_CANCEL,.now_ms=10});
+    assert(s.dialogue==PET_DIALOGUE_IDLE); /* cancelled audio cannot resurrect this turn */
     pet_step(&s,(pet_event_t){.kind=PET_EV_PRESS,.now_ms=20});
-    pet_step(&s,(pet_event_t){.kind=PET_EV_RELEASE,.now_ms=500});
-    assert(pet_pose(&s,22000).expression!=PET_EXPR_THINK);
+    pet_step(&s,(pet_event_t){.kind=PET_EV_RELEASE,.now_ms=200});
+    pet_step(&s,(pet_event_t){.kind=PET_EV_BUFFERED,.now_ms=300,.generation=s.generation,.turn=s.turn});
+    assert(s.dialogue==PET_DIALOGUE_WAIT);
+    pet_step(&s,(pet_event_t){.kind=PET_EV_PLAYING,.now_ms=400,.generation=s.generation,.turn=s.turn,.value=600});
+    assert(s.dialogue==PET_DIALOGUE_SPEAK);
+    pet_step(&s,(pet_event_t){.kind=PET_EV_CANCEL,.now_ms=1000});
+    pet_step(&s,(pet_event_t){.kind=PET_EV_PRESS,.now_ms=1200});
+    pet_step(&s,(pet_event_t){.kind=PET_EV_RELEASE,.now_ms=1500});
+    assert(pet_pose(&s,22000).expression==PET_EXPR_THINK);
     pet_init(&s,0);pet_step(&s,(pet_event_t){.kind=PET_EV_LINK,.now_ms=1,.generation=1,.value=PET_CONN_READY});
     pet_step(&s,(pet_event_t){.kind=PET_EV_PRESS,.now_ms=20});pet_step(&s,(pet_event_t){.kind=PET_EV_RELEASE,.now_ms=500});
     pet_event_t ordered[]={

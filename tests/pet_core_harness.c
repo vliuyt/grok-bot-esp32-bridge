@@ -11,7 +11,74 @@ static void ready(pet_state_t *s,uint64_t now) {
 static void clock_at(pet_state_t *s,uint64_t now,int minute) {
     pet_step(s,(pet_event_t){.kind=PET_EV_CLOCK,.now_ms=now,.value=minute,.day=20261018});
 }
+/* Numeric fallbacks let this behavioral regression fail against the v0.1.1 core. */
+#ifndef PET_EXPRESSION_INPUT_VERSION
+#define PET_EV_TOUCH_TAP ((pet_event_kind_t)17)
+#define PET_EXPR_CURIOUS ((pet_expression_t)7)
+#define PET_EXPR_CONFUSED ((pet_expression_t)8)
+#endif
+static void companion_feedback(void) {
+    pet_state_t s;pet_init(&s,0);
+    uint32_t fx=event(&s,PET_EV_TOUCH_TAP,100,0);
+    assert(pet_pose(&s,100).expression==PET_EXPR_CURIOUS);
+    assert(pet_pose(&s,2099).expression==PET_EXPR_CURIOUS);
+    assert(pet_pose(&s,2100).expression==PET_EXPR_IDLE);
+    assert(!(fx&(PET_FX_START|PET_FX_SUBMIT)));
+    event(&s,PET_EV_MUTED,2200,1);event(&s,PET_EV_TOUCH_TAP,2300,0);
+    assert(pet_pose(&s,2300).expression==PET_EXPR_CURIOUS);
+    event(&s,PET_EV_PET,2400,0);
+    assert(pet_pose(&s,4199).expression==PET_EXPR_HAPPY);
+    assert(pet_pose(&s,4200).expression==PET_EXPR_IDLE);
+
+    ready(&s,5000);event(&s,PET_EV_PRESS,5100,0);
+    event(&s,PET_EV_TOUCH_TAP,5200,0);event(&s,PET_EV_PET,5300,0);
+    assert(pet_pose(&s,5300).expression==PET_EXPR_LISTEN);
+    event(&s,PET_EV_RELEASE,5500,0);event(&s,PET_EV_TOUCH_TAP,5600,0);
+    assert(pet_pose(&s,5600).expression==PET_EXPR_THINK);
+    assert(pet_pose(&s,26000).expression==PET_EXPR_THINK);
+    event(&s,PET_EV_PLAYING,27000,700);event(&s,PET_EV_PET,27100,0);
+    event(&s,PET_EV_TOUCH_TAP,27200,0);
+    assert(pet_pose(&s,27200).expression==PET_EXPR_SPEAK);
+    event(&s,PET_EV_RESPONSE_DONE,27300,0);
+    assert(pet_pose(&s,27300).expression==PET_EXPR_SPEAK);
+    event(&s,PET_EV_DRAIN,27400,0);
+    assert(pet_pose(&s,27400).expression==PET_EXPR_IDLE);
+
+    event(&s,PET_EV_PRESS,28000,0);event(&s,PET_EV_RELEASE,28200,0);
+    fx=event(&s,PET_EV_TICK,88200,0);assert(fx&PET_FX_CANCEL);
+    assert(pet_pose(&s,88200).expression==PET_EXPR_CONFUSED);
+    event(&s,PET_EV_TICK,89000,0);
+    assert(pet_pose(&s,90199).expression==PET_EXPR_CONFUSED);
+    assert(pet_pose(&s,90200).expression==PET_EXPR_IDLE);
+    assert(event(&s,PET_EV_BUFFERED,90300,0)==PET_FX_NONE);
+    assert(event(&s,PET_EV_PLAYING,90400,800)==PET_FX_NONE);
+    assert(s.dialogue==PET_DIALOGUE_IDLE);
+    event(&s,PET_EV_PRESS,91000,0);assert(pet_pose(&s,91000).expression==PET_EXPR_LISTEN);
+    event(&s,PET_EV_CANCEL,91500,0);
+    assert(event(&s,PET_EV_BUFFERED,91600,0)==PET_FX_NONE);
+
+    pet_init(&s,0);ready(&s,1);
+    event(&s,PET_EV_LINK,100,PET_CONN_OFFLINE);
+    assert(pet_pose(&s,100).expression==PET_EXPR_CONFUSED);
+    event(&s,PET_EV_LINK,1000,PET_CONN_OFFLINE);
+    assert(pet_pose(&s,2100).expression==PET_EXPR_IDLE);
+    event(&s,PET_EV_LINK,2200,PET_CONN_CONNECTING);
+    event(&s,PET_EV_LINK,2300,PET_CONN_UNAVAILABLE);
+    assert(pet_pose(&s,2300).expression==PET_EXPR_IDLE);
+    event(&s,PET_EV_TOUCH_TAP,2400,0);
+    assert(pet_pose(&s,2400).expression==PET_EXPR_CURIOUS);
+    event(&s,PET_EV_TICK,123000,0);assert(pet_pose(&s,123000).expression==PET_EXPR_SLEEP);
+    event(&s,PET_EV_TOUCH_TAP,123100,0);
+    assert(s.life==PET_LIFE_AWAKE&&pet_pose(&s,123100).expression==PET_EXPR_CURIOUS);
+    ready(&s,126000);event(&s,PET_EV_LINK,126100,PET_CONN_UNAVAILABLE);
+    assert(pet_pose(&s,126100).expression==PET_EXPR_CONFUSED);
+    ready(&s,126200);assert(pet_pose(&s,126200).expression==PET_EXPR_IDLE);
+    event(&s,PET_EV_PRESS,127000,0);event(&s,PET_EV_RELEASE,127050,0);
+    event(&s,PET_EV_BUFFERED,127100,0);
+    assert(s.dialogue==PET_DIALOGUE_IDLE);
+}
 int main(void) {
+    companion_feedback();
     assert(pet_delay_ticks(1,100)==1&&pet_delay_ticks(2,100)==1&&pet_delay_ticks(5,1000)==5);
     pet_state_t s;pet_init(&s,0);
     assert(s.connection==PET_CONN_OFFLINE&&s.dialogue==PET_DIALOGUE_IDLE);
