@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-21",
+  "stage": "reference-device-readability-acceptance",
+  "status": "awaiting_manual_voice_retry",
+  "firmwareCommit": "0c3cde6",
+  "applicationSha256": "c035f0c1555d154cdb2656f53c7732e1eeff4228e86d4eafd27f48f7d55b3f1e",
+  "applicationBytes": 3693968,
+  "deviceFlashed": true,
+  "fullBackupBytes": 8388608,
+  "backupReadbackVerified": true,
+  "applicationWriteReadbackVerified": true,
+  "previousSettingsRetained": true,
+  "screenResolution": [
+    466,
+    466
+  ],
+  "screenshots": [
+    "readability-device-home.png",
+    "readability-device-settings.png"
+  ],
+  "screenCaptureMethod": "actual device LVGL snapshot; conversation body and pairing code redacted",
+  "userConfirmed": {
+    "textClearer": true,
+    "touchTargetsEasier": true
+  },
+  "stability": {
+    "elapsedSeconds": 180.4,
+    "resets": 0,
+    "audioFaults": 0,
+    "minimumHeap": 30843,
+    "minimumPsram": 7859520,
+    "newEventDrops": 0,
+    "passed": true
+  },
+  "stabilityScope": "three-minute observation; not a long-duration soak or a voice acceptance pass",
+  "hostTests": {
+    "passed": 108,
+    "failed": 0,
+    "skipped": 0
+  },
+  "voiceAcceptance": {
+    "status": "investigating",
+    "firstManualTurn": "audio uploaded but no recognized input, response or speaker frames",
+    "fixedFixtureControl": "same native bot harness recognized fixed Chinese greeting and returned audio; output counted only, never played",
+    "currentProbe": "fresh device session; awaiting manual retry; no parallel cloud probes",
+    "retryObservation": {
+      "seconds": 119.3,
+      "newManualTurnsObserved": 0,
+      "lastBridgeState": "ready"
+    }
+  },
+  "pending": [
+    "device native voice reply",
+    "caption and reading scroll with real reply",
+    "reboot persistence after user setting changes",
+    "interruption and reconnect audio regression"
+  ],
+  "partitionAndBootMetadataGuard": "matched fresh full backup immediately before write; installer writes only the original application slot"
+}
