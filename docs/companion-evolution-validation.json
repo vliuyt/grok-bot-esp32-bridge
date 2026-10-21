@@ -2,7 +2,7 @@
   "date": "2026-10-21",
   "branch": "codex/v0.2.0-roadmap",
   "pullRequest": "https://github.com/vliuyt/grok-bot-esp32-bridge/pull/2",
-  "status": "voice_acceptance_failed_device_speaker_inaudible_investigating",
+  "status": "device_input_gain_installed_waiting_for_human_acceptance_after_continuous_failure",
   "release": false,
   "modules": [
     "voice_reliability",
@@ -10,8 +10,8 @@
     "device_reply_style_and_frozen_reader"
   ],
   "host": {
-    "tests": 152,
-    "passed": 152,
+    "tests": 156,
+    "passed": 156,
     "failed": 0,
     "skipped": 0,
     "scope": "local_offline_tests_after_resolving_target_dependencies"
@@ -52,7 +52,8 @@
     "nativeAndTaskReady": true,
     "old404LoopNoLongerObserved": true,
     "updatedModules": 8,
-    "unrelatedRuntimeSourcesPreserved": true
+    "unrelatedRuntimeSourcesPreserved": true,
+    "latestInputGainUpdateModules": 2
   },
   "offlineEvidence": {
     "redThenGreen": [
@@ -95,7 +96,7 @@
     "disconnectThenNewQuestion": "pending",
     "deviceAudibleFirstAudioMs": null,
     "interruptionStopMs": null,
-    "reason": "The 2026-10-22 human three-round trial stopped after the first unanswered turn. Input reached Mac but no recognized input, native reply or device playback was observed. UI confirmations remain separate.",
+    "reason": "The user confirmed one clear audible round, then reported an abnormal three-round attempt. Passive diagnostics show the second requested round committed input but never finalized recognition or started a response, followed by 30-second safe recovery. Continuous acceptance remains failed; earlier silent-speaker failure is also retained.",
     "firstTrial": {
       "result": "failed",
       "userReport": "voice_not_connecting",
@@ -160,6 +161,56 @@
       "outputSignalLevelMeasured": false,
       "cause": "undetermined",
       "limits": "Codec-consumed frames and native completion do not prove speaker audibility. Recognition event count includes interim status and is not a completed-turn count."
+    },
+    "audibleRecoveryFollowup": {
+      "date": "2026-10-22",
+      "result": "single_round_confirmed_by_user",
+      "userReport": "clear_normal_sound",
+      "volumeSetting": 88,
+      "approximateScreenVolumePercent": 50,
+      "micGain": 30,
+      "nativeInputBytes": 136320,
+      "inputDb": -39,
+      "finalRecognition": true,
+      "completedNativeReply": true,
+      "outputSamples16kHz": 45760,
+      "outputRmsDbFS": -22.66,
+      "outputPeakDbFS": -5.21,
+      "devicePlayedFrameDelta": 45760,
+      "playbackDrained": true,
+      "nativeFirstAudioMs": 1102,
+      "deviceAudibleFirstAudioMs": null,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "reconnectsDuringSpokenTurn": 0,
+      "observerErrorsDuringSpokenTurn": 0,
+      "observerTimeoutAfterTrial": 1,
+      "reconnectsEarlierInObservation": 3,
+      "rootCauseOfPreviousFailuresEstablished": false,
+      "continuousTenRoundAcceptance": false
+    },
+    "continuousThreeRoundFollowup": {
+      "date": "2026-10-22",
+      "result": "failed",
+      "userReport": "one_round_abnormal_or_answer_incorrect",
+      "independentObservation": "second_requested_round_no_final_recognition_and_no_native_response",
+      "firstRequestedRoundNativeCompleted": true,
+      "secondRequestedRound": {
+        "deviceTurn": 9,
+        "nativeTurn": 3,
+        "inputBytes": 122880,
+        "inputDb": -40,
+        "commitAcknowledged": true,
+        "speechStartedAfterCommitWasSent": true,
+        "finalRecognition": false,
+        "responseCreated": false,
+        "outputSamples": 0,
+        "timeoutSeconds": 30,
+        "safeSessionRebuild": true
+      },
+      "thirdRequestedRoundAfterRebuildNativeReply": true,
+      "semanticAnswersConfirmedByUser": false,
+      "rootCause": "undetermined"
     }
   },
   "knownBoundary": "The earlier unanswered voice attempt remains unexplained. Target compilation, readiness, text and host simulation do not prove audible device acceptance.",
@@ -506,7 +557,7 @@
       },
       "limits": "Fixed clean speech is not the human microphone signal. Returned audio alone does not prove recognition; padding did not establish the human failure cause. No gain or protocol behavior change follows from this comparison."
     },
-    "nextStep": "bounded_content_free_protocol_trace_before_one_human_trial",
+    "nextStep": "one_human_BOOT_trial_with_passive_input_output_levels_no_parallel_call_or_manual_reconnect",
     "protocolDiagnostics": {
       "implementation": "bounded_content_free_in_memory_only",
       "eventsPerSession": 96,
@@ -532,7 +583,7 @@
       "pairingAndUnrelatedSourcesPreserved": true,
       "firmwareAndAudioSettingsChanged": false,
       "runtimeSourceHead": "899cdb7",
-      "humanTraceTrial": "pending"
+      "humanTraceTrial": "failed_second_requested_round_no_final_recognition_or_response"
     },
     "outputMeter": {
       "scope": "numeric_resampled_16kHz_downlink_RMS_peak_and_sample_count_only",
@@ -555,12 +606,109 @@
         "fullLocalAfterTestFix": 152,
         "reReview": false
       },
-      "runtimeInstallation": "installed_ready_waiting_for_one_human_trial",
+      "runtimeInstallation": "installed_single_audible_reply_confirmed_continuous_followup_failed",
       "sourceHead": "c09dd941edcb01a76b6f747a4f6bfd81aeeb17ad",
       "pairingAndUnrelatedSourcesPreserved": true,
       "gracefulRestart": true,
       "observedVolumeSetting": 88,
-      "observedMicGain": 30
+      "observedMicGain": 30,
+      "humanTrial": "single_audible_reply_confirmed_at_existing_50_percent_volume"
+    },
+    "commitOrderControl": {
+      "fixture": "fixed_public_greeting_warmup_short_stream_short_burst",
+      "immediateRecognizedAndCompleted": 3,
+      "waitCommitAckRecognizedAndCompleted": 3,
+      "initialImmediateOpeningFailure": "VOICE_CONNECTION",
+      "initialOpeningFailureRetriedSeparately": true,
+      "toolsExecuted": 0,
+      "playback": false,
+      "productionOrderChanged": false,
+      "conclusion": "commit_order_hypothesis_not_established"
+    },
+    "inputGain": {
+      "sourceHead": "5f189a61e19518120a049e9d58dc65d041f363bc",
+      "scope": "device_only_live_24kHz_input_after_resampling_including_finish_tail",
+      "maximumLinearGain": 4,
+      "approximateMaximumDb": 12.04,
+      "peakLimit": 30000,
+      "minimumLinearGain": 1,
+      "releaseTimeConstantMs": 500,
+      "newEnvelopeEachPress": true,
+      "realPCMRetained": false,
+      "rawInputMeterPreserved": true,
+      "processedInputNumericMeter": true,
+      "speakerVolumeChanged": false,
+      "micHardwareGainChanged": false,
+      "firmwareChanged": false,
+      "protocolOrderChanged": false,
+      "silentLevelControl": {
+        "targetSpeechDb": [
+          -44,
+          -32,
+          -32,
+          -44
+        ],
+        "finalRecognized": [
+          false,
+          true,
+          true,
+          false
+        ],
+        "completedResponse": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "limits": "Audio without final recognition is not a recognized spoken turn. Clean fixed speech is not the human microphone signal."
+      },
+      "productionGainNativeControl": {
+        "rawTargetSpeechDb": -44,
+        "trials": 2,
+        "finalRecognized": [
+          true,
+          true
+        ],
+        "completedResponse": [
+          true,
+          true
+        ],
+        "toolsExecuted": 0,
+        "playback": false
+      },
+      "testsRedThenGreen": true,
+      "fullLocalTests": 156,
+      "fullLocalPassed": 156,
+      "fullLocalSkipped": 0,
+      "independentReview": {
+        "scope": "2160773..5f189a6",
+        "critical": 0,
+        "important": 0,
+        "minor": 1,
+        "minorRecoveryAssertionTightened": true,
+        "minorFixHead": "23329bbc7d3faa9f0c2e2a4c9487fb1f56c3cf57",
+        "pureDSPIndependentTests": 3,
+        "integrationIndependentTests": 16,
+        "extraChecks": "random_chunk_invariance_peak_unity_floor_and_reconnect_numeric_meter_isolation",
+        "fullLocalAfterFix": 156,
+        "reReview": false
+      },
+      "runtimeInstallation": "installed_ready_with_native_and_task_channels",
+      "humanAcceptance": "pending",
+      "previousFailuresRootCauseEstablished": false,
+      "limits": "Improves a reproduced low-input recognition weakness, without establishing the cause of every earlier human no-reply or silent-speaker failure. Digital gain also raises input noise and cannot repair poor signal-to-noise ratio.",
+      "runtimeModulesUpdated": 2,
+      "pairingAndUnrelatedSourcesPreserved": true,
+      "gracefulRestart": true,
+      "humanTrialBaseline": {
+        "volumeSetting": 88,
+        "approximateScreenPercent": 50,
+        "micGain": 30,
+        "inputSamples": 0,
+        "firmwareSha256": "14b744b7551cedc2e6e666a27b70520ef5057daf9f15ab87270f50d3d9133ac6",
+        "deviceReady": true,
+        "audioFault": false
+      }
     }
   }
 }
