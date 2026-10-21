@@ -32,6 +32,27 @@ export function petMessage(payload,{generation,turn}={}){
       if(!uint(m.turn)||!TURN_STATUS_CODES.includes(m.code))throw new Error('PET_PROTOCOL');
       if(turn!=null&&m.turn!==turn)return null;
       return {...common,turn:m.turn,code:m.code};
+    case 'caption_catalog':
+      if(!uint(m.turn)||!['available','responding','truncated'].every(key=>typeof m[key]==='boolean'))throw new Error('PET_PROTOCOL');
+      if(turn!=null&&m.turn!==turn)return null;
+      return {...common,turn:m.turn,available:m.available,responding:m.responding,truncated:m.truncated};
+    case 'caption_read':case 'caption_page': {
+      if(!uint(m.turn)||!uint(m.request)||!m.request||!uint(m.version)||!Number.isInteger(m.page)||m.page<0||m.page>65535)throw new Error('PET_PROTOCOL');
+      if(turn!=null&&m.turn!==turn)return null;
+      const identity={...common,turn:m.turn,request:m.request,version:m.version,page:m.page};
+      if(m.op==='caption_read'){
+        if(!m.version&&m.page!==0)throw new Error('PET_PROTOCOL');
+        return identity;
+      }
+      if(m.error!=null){
+        if(!['unavailable','stale','busy'].includes(m.error))throw new Error('PET_PROTOCOL');
+        return {...identity,error:m.error};
+      }
+      if(!m.version||!Number.isInteger(m.pages)||m.pages<1||m.pages>65535||m.page>=m.pages||
+        typeof m.text!=='string'||!m.text.isWellFormed()||Buffer.byteLength(m.text)>300||/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(m.text)||
+        typeof m.truncated!=='boolean'||typeof m.responding!=='boolean')throw new Error('PET_PROTOCOL');
+      return {...identity,pages:m.pages,text:m.text,truncated:m.truncated,responding:m.responding};
+    }
     case 'caption':
       if(!uint(m.turn)||typeof m.id!=='string'||!m.id.length||m.id.length>64||
          typeof m.text!=='string'||[...m.text].length>80||/[\x00-\x1f\x7f]/.test(m.text))throw new Error('PET_PROTOCOL');
