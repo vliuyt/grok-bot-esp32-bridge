@@ -102,3 +102,77 @@ test('hangup aborts the in-flight gateway renewal for native events',async()=>{
   catch(error){assert.notEqual(error.message,'NOT_CANCELLED');}
   assert.equal(aborted,true);
 });
+
+test('a missing old gateway route renews reads and events once, never mutations',async()=>{
+  const calls=[];
+  const backend=new Backend({}, {fetch:async(url)=>{
+    calls.push(url);
+    if(url.includes('/aiserver.'))return Response.json({gatewayUrl:'https://fresh.cursorvm.com/forward/8787',gatewayToken:'fresh'});
+    if(url.startsWith('https://stale.'))return new Response('',{status:404});
+    return url.endsWith('/events')?new Response('data: {}\n\n',{headers:{'content-type':'text/event-stream'}}):Response.json([{id:'one',name:'fixture'}]);
+  }});
+  for(const events of [false,true]){
+    calls.length=0;backend.gateway={url:'https://stale.cursorvm.com',token:'old'};
+    if(events)await (await backend.openEvents(new AbortController().signal)).cancel();
+    else assert.equal((await backend.listBots()).length,1);
+    assert.equal(calls.length,3);
+  }
+  for(const method of ['sendPrompt','nudgeVoiceCall','recordVoiceCall']){
+    calls.length=0;backend.gateway={url:'https://stale.cursorvm.com',token:'old'};
+    await assert.rejects(backend.gatewayCall(method,{}),e=>e.status===404);
+    assert.equal(calls.length,1);
+  }
+});
+
+test('concurrent missing routes share one refresh and a persistent 404 stops after one retry',async()=>{
+  let renewals=0;
+  const backend=new Backend({}, {fetch:async(url)=>{
+    if(url.includes('/aiserver.')){renewals++;await new Promise(r=>setTimeout(r,15));return Response.json({gatewayUrl:'https://fresh.cursorvm.com',gatewayToken:'fresh'});}
+    if(url.startsWith('https://stale.'))return new Response('',{status:404});
+    return Response.json([{id:'one',name:'fixture'}]);
+  }});
+  backend.gateway={url:'https://stale.cursorvm.com',token:'old'};
+  const results=await Promise.allSettled(Array.from({length:10},()=>backend.listBots()));
+  assert.equal(results.filter(r=>r.status==='fulfilled').length,10);
+  assert.equal(renewals,1);
+  let calls=0;
+  const missing=new Backend({}, {fetch:async url=>{calls++;return url.includes('/aiserver.')?Response.json({gatewayUrl:'https://fresh.cursorvm.com',gatewayToken:'new'}):new Response('',{status:404});}});
+  missing.gateway={url:'https://stale.cursorvm.com',token:'old'};
+  await assert.rejects(missing.listBots(),e=>e.status===404);assert.equal(calls,3);
+});
+
+test('one cancelled route-refresh waiter leaves the other active',async()=>{
+  let release,renewals=0,aborted=false;
+  const gate=new Promise(r=>{release=r;});
+  const backend=new Backend({}, {fetch:async(url,options)=>{
+    if(url.includes('/aiserver.')){
+      renewals++;
+      await new Promise((resolve,reject)=>{gate.then(resolve);options.signal.addEventListener('abort',()=>{aborted=true;reject(new Error('aborted'));},{once:true});});
+      return Response.json({gatewayUrl:'https://fresh.cursorvm.com',gatewayToken:'new'});
+    }
+    return Response.json({entries:[]});
+  }});
+  const a=new AbortController(),b=new AbortController();
+  const first=backend.gatewayCall('getAgentTranscriptTail',{},a.signal);
+  const second=backend.gatewayCall('getAgentTranscriptTail',{},b.signal);
+  const settled=Promise.allSettled([first,second]);
+  await new Promise(r=>setImmediate(r));a.abort();
+  await new Promise(r=>setImmediate(r));const prematureAbort=aborted;release();
+  const results=await settled;
+  assert.equal(results[0].status,'rejected');assert.equal(results[1].status,'fulfilled');
+  assert.equal(prematureAbort,false);assert.equal(renewals,1);
+});
+
+test('all cancelled refresh waiters abort the underlying request without publishing a binding',async()=>{
+  let renewals=0,aborted=false;
+  const backend=new Backend({}, {fetch:async(url,options)=>{
+    assert(url.includes('/aiserver.'));renewals++;
+    return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>{aborted=true;reject(new Error('aborted'));},{once:true}));
+  }});
+  const a=new AbortController(),b=new AbortController();
+  const pending=Promise.allSettled([backend.connectGateway(a.signal),backend.connectGateway(b.signal)]);
+  await new Promise(r=>setImmediate(r));a.abort();b.abort();
+  const results=await pending;
+  assert(results.every(r=>r.status==='rejected'));assert.equal(aborted,true);
+  assert.equal(renewals,1);assert.equal(backend.gateway,undefined);
+});
