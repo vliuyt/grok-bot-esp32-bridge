@@ -1,7 +1,7 @@
 {
   "date": "2026-10-21",
   "stage": "reference-device-readability-acceptance",
-  "status": "readability_and_manual_voice_passed_regressions_pending",
+  "status": "readability_voice_and_reboot_passed_regressions_pending",
   "firmwareCommit": "0c3cde6",
   "applicationSha256": "c035f0c1555d154cdb2656f53c7732e1eeff4228e86d4eafd27f48f7d55b3f1e",
   "applicationBytes": 3693968,
@@ -89,14 +89,35 @@
   "volumeObservation": {
     "earlierPercent": 14,
     "retryReceiptPercent": 100,
-    "cause": "not established; manual adjustment or unintended change not yet distinguished",
-    "followUp": "user asked to lower volume before next manual test; persistence remains pending"
+    "cause": "user confirmed manually raising volume",
+    "userConfirmedManualAdjustment": true,
+    "followUp": "silent reboot confirmed retained volume; no unintended volume change established"
+  },
+  "rebootAcceptance": {
+    "status": "passed",
+    "observedAt": "2026-10-21T00:06:28.718814+00:00",
+    "resetObserved": true,
+    "uptimeBeforeMs": 2609069,
+    "uptimeAfterBootMs": 977,
+    "volumeBeforeAndAfterPercent": 100,
+    "speakerBeforeAndAfter": true,
+    "settingsSnapshotsVisuallyMatched": true,
+    "brightnessBeforeAndAfterPercent": 41,
+    "captionModeBeforeAndAfter": "concise",
+    "automaticReconnectReady": true,
+    "readyObservedAtUptimeMs": 22021,
+    "taskReturnAvailable": true,
+    "playedFramesAfterReboot": 0,
+    "queuedPacketsAfterReboot": 0,
+    "audioFault": false,
+    "flashWrites": false,
+    "returnedToHome": true,
+    "scope": "idle reboot and automatic connection recovery; no new manual voice turn after reboot",
+    "initialDirectResetAttempt": "did not reset uptime and was not counted as a pass; supported maintenance reset then confirmed restart"
   },
   "pending": [
-    "reboot persistence after user setting changes",
-    "explain observed volume change before marking volume persistence passed",
     "continuous ten-round regression",
-    "interruption and reconnect audio regression"
+    "interruption and active-call reconnect audio regression"
   ],
   "partitionAndBootMetadataGuard": "matched fresh full backup immediately before write; installer writes only the original application slot"
 }
