@@ -13,7 +13,7 @@ typedef struct {
     pet_notice_t notice;
     pet_reader_t reader;
     char caption[321],wifi[80],mac[80],voice[80],setup[96];
-    int volume,brightness,battery,passkey;
+    int volume,brightness,battery,passkey; /* volume is the persisted codec setting. */
     pet_caption_mode_t caption_mode;
     bool quiet,speaker,task_channel,waiting_long,caption_save_failed;
     bool wifi_online,mac_online,setup_open;

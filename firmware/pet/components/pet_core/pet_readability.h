@@ -27,3 +27,8 @@ typedef struct {
 pet_readability_text_t pet_readability_text(const pet_readability_input_t *input);
 pet_page_t pet_readability_page(pet_page_t page,const pet_readability_input_t *input);
 pet_face_t pet_readability_face(pet_pose_t pose);
+
+/* UI percentage approximates signal amplitude. The persisted codec setting
+ * keeps its original -50..0 dB curve, including across firmware upgrades. */
+int pet_volume_percent(int codec_setting);
+int pet_volume_setting(int percent);

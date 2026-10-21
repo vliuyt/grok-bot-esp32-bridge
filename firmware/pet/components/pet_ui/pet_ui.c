@@ -28,6 +28,8 @@ static int requested_page=-1,detail_kind;
 static bool initialized,screen_on=true,syncing,snapshot_requested;
 static int touch_x,touch_y;
 static bool touching;
+static lv_indev_t *touch_input;
+static struct {bool active,slider;pet_page_t page;lv_point_t start;} return_touch;
 static char last_summary[321];
 static uint32_t last_reader_activity_tick;
 
@@ -61,7 +63,12 @@ static bool frozen_reader_valid(void){
 }
 static void show_page(pet_page_t next){
     pet_readability_input_t in=input();pet_page_t target=next==PET_PAGE_READING&&frozen_reader_valid()?PET_PAGE_READING:pet_readability_page(next,&in);
-    if(target!=page){touching=false;if(page==PET_PAGE_READING)action(PET_UI_READER_CLOSE,0);}
+    if(target!=page){
+        touching=false;return_touch.active=false;
+        /* A held control on the old page must not click after BOOT or a swipe navigates away. */
+        if(touch_input)lv_indev_reset(touch_input,NULL);
+        if(page==PET_PAGE_READING)action(PET_UI_READER_CLOSE,0);
+    }
     page=target;
     for(int i=0;i<PET_PAGE_COUNT;i++)lv_obj_set_flag(pages[i],LV_OBJ_FLAG_HIDDEN,i!=(int)page);
     lv_obj_set_flag(voice_hint,LV_OBJ_FLAG_HIDDEN,page!=PET_PAGE_HOME&&page!=PET_PAGE_READING);
@@ -98,16 +105,43 @@ static void touch(lv_event_t *event){
         else if(g==PET_GESTURE_STROKE)action(PET_UI_PET,0);
     }else if(code==LV_EVENT_PRESS_LOST)touching=false;
 }
+static void return_gesture(lv_event_t *event){
+    lv_indev_t *indev=lv_event_get_target(event);lv_event_code_t code=lv_event_get_code(event);
+    if(code==LV_EVENT_PRESSED){
+        lv_obj_t *origin=lv_event_get_param(event);
+        return_touch.active=page!=PET_PAGE_HOME;return_touch.page=page;
+        return_touch.slider=origin==volume_slider||origin==brightness_slider;
+        lv_indev_get_point(indev,&return_touch.start);
+    }else if(code==LV_EVENT_RELEASED){
+        bool allowed=return_touch.active&&return_touch.page==page&&!return_touch.slider&&!lv_indev_get_scroll_obj(indev);
+        return_touch.active=false;lv_point_t end;lv_indev_get_point(indev,&end);
+        int dx=end.x-return_touch.start.x,dy=end.y-return_touch.start.y;int ay=dy<0?-dy:dy;
+        if(allowed&&dx>=80&&ay<=40&&dx>=2*ay){
+            static const pet_page_t parent[PET_PAGE_COUNT]={
+                [PET_PAGE_SETTINGS]=PET_PAGE_HOME,[PET_PAGE_CONNECTION]=PET_PAGE_MORE,
+                [PET_PAGE_READING]=PET_PAGE_HOME,[PET_PAGE_VOLUME]=PET_PAGE_SETTINGS,
+                [PET_PAGE_BRIGHTNESS]=PET_PAGE_SETTINGS,[PET_PAGE_CAPTIONS]=PET_PAGE_SETTINGS,
+                [PET_PAGE_MORE]=PET_PAGE_SETTINGS,[PET_PAGE_PROVISION]=PET_PAGE_CONNECTION,
+                [PET_PAGE_DETAIL]=PET_PAGE_CONNECTION
+            };
+            show_page(parent[page]);action(PET_UI_WAKE,0);
+        }
+    }else if(code==LV_EVENT_INDEV_RESET)return_touch.active=false;
+}
 static lv_obj_t *button(lv_obj_t *parent,const char *value,int x,int y,int width,int height,lv_event_cb_t cb,int argument){
-    lv_obj_t *o=lv_button_create(parent);lv_obj_set_pos(o,x,y);lv_obj_set_size(o,width,height);
+    lv_obj_t *o=lv_button_create(parent);lv_obj_remove_style_all(o);lv_obj_set_pos(o,x,y);lv_obj_set_size(o,width,height);
     lv_obj_set_style_bg_color(o,lv_color_hex(0x282228),0);lv_obj_set_style_radius(o,22,0);
+    lv_obj_set_style_bg_opa(o,LV_OPA_COVER,0);
+    lv_obj_set_style_bg_color(o,lv_color_hex(0x593247),LV_STATE_PRESSED);
+    lv_obj_set_style_opa(o,LV_OPA_60,LV_STATE_DISABLED);
+    lv_obj_set_ext_click_area(o,8);
     lv_obj_set_style_shadow_width(o,0,0);lv_obj_set_style_pad_all(o,0,0);
     lv_obj_remove_flag(o,LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_t *txt=label(o,value,0,0,width,PET_FONT_BODY);lv_obj_center(txt);
     lv_obj_add_event_cb(o,cb,LV_EVENT_CLICKED,(void *)(intptr_t)argument);return o;
 }
 static void title(pet_page_t target,const char *value){label(pages[target],value,93,49,280,PET_FONT_BODY);}
-static void back(pet_page_t target,pet_page_t destination){button(pages[target],"返回",173,396,120,44,navigate,destination);}
+static void back(pet_page_t target,pet_page_t destination){button(pages[target],"返回",113,374,240,68,navigate,destination);}
 static lv_obj_t *row(pet_page_t target,const char *name,int index,lv_event_cb_t cb,int argument,lv_obj_t **value){
     lv_obj_t *o=button(pages[target],name,87,108+index*88,292,74,cb,argument);
     if(value){
@@ -122,7 +156,8 @@ static lv_obj_t *row(pet_page_t target,const char *name,int index,lv_event_cb_t 
 static void slider_changed(lv_event_t *event){
     if(syncing)return;
     lv_obj_t *o=lv_event_get_target(event);
-    action(o==volume_slider?PET_UI_VOLUME:PET_UI_BRIGHTNESS,lv_slider_get_value(o));
+    int value=lv_slider_get_value(o);
+    action(o==volume_slider?PET_UI_VOLUME:PET_UI_BRIGHTNESS,o==volume_slider?pet_volume_setting(value):value);
 }
 static lv_obj_t *slider(pet_page_t target,int minimum){
     lv_obj_t *o=lv_slider_create(pages[target]);lv_obj_set_pos(o,103,239);lv_obj_set_size(o,260,24);
@@ -157,10 +192,11 @@ static void snapshot(void){
 }
 static void sync_settings(void){
     char value[32];syncing=true;
-    if(!lv_obj_has_state(volume_slider,LV_STATE_PRESSED))lv_slider_set_value(volume_slider,presented.volume,LV_ANIM_OFF);
+    int volume_percent=pet_volume_percent(presented.volume);
+    if(!lv_obj_has_state(volume_slider,LV_STATE_PRESSED))lv_slider_set_value(volume_slider,volume_percent,LV_ANIM_OFF);
     if(!lv_obj_has_state(brightness_slider,LV_STATE_PRESSED))lv_slider_set_value(brightness_slider,presented.brightness,LV_ANIM_OFF);
     syncing=false;
-    snprintf(value,sizeof(value),"%d%%",presented.volume);text(setting_values[0],value);text(volume_value,value);
+    snprintf(value,sizeof(value),"%d%%",volume_percent);text(setting_values[0],value);text(volume_value,value);
     snprintf(value,sizeof(value),"%d%%",presented.brightness);text(setting_values[1],value);text(brightness_value,value);
     const char *modes[]={"完整","简洁","关闭"};
     text(setting_values[2],pet_caption_mode_valid(presented.caption_mode)?modes[presented.caption_mode]:"简洁");
@@ -224,6 +260,7 @@ static void build(void){
     for(unsigned i=0;i<PET_PAGE_COUNT;i++){
         pages[i]=container(root,0,0,466,466);lv_obj_set_style_bg_color(pages[i],lv_color_hex(0x101010),0);
         lv_obj_set_style_bg_opa(pages[i],LV_OPA_COVER,0);lv_obj_add_flag(pages[i],LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(pages[i],LV_OBJ_FLAG_CLICKABLE);
     }
     lv_obj_add_flag(pages[PET_PAGE_HOME],LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(pages[PET_PAGE_HOME],touch,LV_EVENT_ALL,NULL);
@@ -243,31 +280,34 @@ static void build(void){
     caption_box=container(pages[PET_PAGE_HOME],83,307,300,80);
     caption=label(caption_box,"",0,0,300,PET_FONT_BODY);lv_obj_set_height(caption,75);lv_label_set_long_mode(caption,LV_LABEL_LONG_DOT);
     lv_obj_add_event_cb(caption_box,open_reader,LV_EVENT_CLICKED,NULL);
-    handle=button(pages[PET_PAGE_HOME],"",183,425,100,36,navigate,PET_PAGE_SETTINGS);
-    lv_obj_remove_style_all(handle);lv_obj_set_pos(handle,183,425);lv_obj_set_size(handle,100,36);
-    lv_obj_t *bar=container(handle,26,15,48,4);
+    handle=button(pages[PET_PAGE_HOME],"",133,425,200,36,navigate,PET_PAGE_SETTINGS);
+    lv_obj_remove_style_all(handle);lv_obj_set_pos(handle,133,425);lv_obj_set_size(handle,200,36);
+    lv_obj_set_ext_click_area(handle,10);
+    lv_obj_t *bar=container(handle,76,15,48,4);
     lv_obj_set_style_bg_color(bar,lv_color_hex(0x93858e),0);lv_obj_set_style_bg_opa(bar,LV_OPA_COVER,0);lv_obj_set_style_radius(bar,2,0);
-    button(pages[PET_PAGE_READING],"返回",143,42,180,50,navigate,PET_PAGE_HOME);
-    reader_meta=container(pages[PET_PAGE_READING],73,101,320,48);
+    button(pages[PET_PAGE_READING],"返回",113,42,240,68,navigate,PET_PAGE_HOME);
+    reader_meta=container(pages[PET_PAGE_READING],73,119,320,48);
     reader_status=label(reader_meta,"小糖说",0,8,320,PET_FONT_HINT);
     reader_retry=button(reader_meta,"点此重试",40,0,240,48,reader_action,PET_UI_READER_RETRY);
+    lv_obj_set_ext_click_area(reader_retry,0); /* Keep it clear of the header's return target. */
     lv_obj_add_flag(reader_retry,LV_OBJ_FLAG_HIDDEN);
-    reader_box=container(pages[PET_PAGE_READING],73,153,320,165);
+    reader_box=container(pages[PET_PAGE_READING],73,173,320,135);
     lv_obj_add_flag(reader_box,LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_CLICKABLE);lv_obj_set_scroll_dir(reader_box,LV_DIR_VER);
     lv_obj_add_event_cb(reader_box,reader_activity,LV_EVENT_ALL,NULL);
     lv_obj_set_scrollbar_mode(reader_box,LV_SCROLLBAR_MODE_AUTO);
     reader_text=label(reader_box,"",0,0,320,PET_FONT_READER);lv_obj_set_style_text_align(reader_text,LV_TEXT_ALIGN_LEFT,0);
-    reader_nav=container(pages[PET_PAGE_READING],83,330,300,52);
-    reader_prev=button(reader_nav,"上一段",0,0,140,52,reader_action,PET_UI_READER_PREV);
-    reader_next=button(reader_nav,"下一段",160,0,140,52,reader_action,PET_UI_READER_NEXT);
+    reader_nav=container(pages[PET_PAGE_READING],83,326,300,68);
+    lv_obj_add_flag(reader_nav,LV_OBJ_FLAG_OVERFLOW_VISIBLE);
+    reader_prev=button(reader_nav,"上一段",0,0,140,68,reader_action,PET_UI_READER_PREV);
+    reader_next=button(reader_nav,"下一段",160,0,140,68,reader_action,PET_UI_READER_NEXT);
     lv_obj_add_flag(reader_nav,LV_OBJ_FLAG_HIDDEN);
     voice_hint=label(root,"语音连接中",103,400,260,PET_FONT_HINT);lv_obj_set_style_text_color(voice_hint,lv_color_hex(0xc9c3ca),0);
     title(PET_PAGE_SETTINGS,"舒服一点");
     row(PET_PAGE_SETTINGS,"音量",0,navigate,PET_PAGE_VOLUME,&setting_values[0]);
     row(PET_PAGE_SETTINGS,"亮度",1,navigate,PET_PAGE_BRIGHTNESS,&setting_values[1]);
     row(PET_PAGE_SETTINGS,"通话字幕",2,navigate,PET_PAGE_CAPTIONS,&setting_values[2]);
-    button(pages[PET_PAGE_SETTINGS],"返回",133,388,90,44,navigate,PET_PAGE_HOME);
-    button(pages[PET_PAGE_SETTINGS],"更多",243,388,90,44,navigate,PET_PAGE_MORE);
+    button(pages[PET_PAGE_SETTINGS],"返回",105,374,118,68,navigate,PET_PAGE_HOME);
+    button(pages[PET_PAGE_SETTINGS],"更多",243,374,118,68,navigate,PET_PAGE_MORE);
     title(PET_PAGE_VOLUME,"音量");title(PET_PAGE_BRIGHTNESS,"亮度");
     volume_value=label(pages[PET_PAGE_VOLUME],"",113,140,240,PET_FONT_READER);
     brightness_value=label(pages[PET_PAGE_BRIGHTNESS],"",113,140,240,PET_FONT_READER);
@@ -278,15 +318,15 @@ static void build(void){
     back(PET_PAGE_VOLUME,PET_PAGE_SETTINGS);back(PET_PAGE_BRIGHTNESS,PET_PAGE_SETTINGS);
     title(PET_PAGE_CAPTIONS,"通话字幕");const char *modes[]={"完整","简洁","关闭"};
     for(int i=0;i<3;i++)caption_buttons[i]=row(PET_PAGE_CAPTIONS,modes[i],i,caption_changed,i,NULL);
-    caption_status=label(pages[PET_PAGE_CAPTIONS],"",93,363,280,PET_FONT_HINT);back(PET_PAGE_CAPTIONS,PET_PAGE_SETTINGS);
+    caption_status=label(pages[PET_PAGE_CAPTIONS],"",93,82,280,PET_FONT_HINT);back(PET_PAGE_CAPTIONS,PET_PAGE_SETTINGS);
     title(PET_PAGE_MORE,"更多设置");
     row(PET_PAGE_MORE,"安静陪伴",0,toggle_changed,PET_UI_QUIET,&more_values[0]);
     row(PET_PAGE_MORE,"扬声器",1,toggle_changed,PET_UI_SPEAKER,&more_values[1]);
     row(PET_PAGE_MORE,"连接状态",2,navigate,PET_PAGE_CONNECTION,NULL);back(PET_PAGE_MORE,PET_PAGE_SETTINGS);
     title(PET_PAGE_CONNECTION,"连接状态");const char *names[]={"Wi-Fi","Mac 桥接","原生语音"};
     for(int i=0;i<3;i++)row(PET_PAGE_CONNECTION,names[i],i,open_detail,i,&connection_values[i]);
-    button(pages[PET_PAGE_CONNECTION],"返回",133,388,90,44,navigate,PET_PAGE_MORE);
-    button(pages[PET_PAGE_CONNECTION],"配网",243,388,90,44,navigate,PET_PAGE_PROVISION);
+    button(pages[PET_PAGE_CONNECTION],"返回",105,374,118,68,navigate,PET_PAGE_MORE);
+    button(pages[PET_PAGE_CONNECTION],"配网",243,374,118,68,navigate,PET_PAGE_PROVISION);
     title(PET_PAGE_DETAIL,"连接详情");lv_obj_t *detail_box=container(pages[PET_PAGE_DETAIL],83,130,300,220);
     lv_obj_add_flag(detail_box,LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_CLICKABLE);lv_obj_set_scroll_dir(detail_box,LV_DIR_VER);
     detail_text=label(detail_box,"",0,0,300,PET_FONT_BODY);back(PET_PAGE_DETAIL,PET_PAGE_CONNECTION);
@@ -301,7 +341,8 @@ static void build(void){
 static void ui_task(void *unused){
     (void)unused;lv_indev_t *touch_device=NULL;
     if(pet_board_display_start(&touch_device)&&pet_board()->display_lock(-1)){
-        build();pet_board()->display_unlock();initialized=true;
+        touch_input=touch_device;build();if(touch_device)lv_indev_add_event_cb(touch_device,return_gesture,LV_EVENT_ALL,NULL);
+        pet_board()->display_unlock();initialized=true;
     }
     xSemaphoreGive(ready_signal);vTaskDelete(NULL);
 }

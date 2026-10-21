@@ -246,6 +246,25 @@
   "usabilityFeedback": {
     "lowVolume": "10_to_20_percent_barely_audible",
     "touch": "return_requires_5_to_10_attempts",
-    "nextStep": "bounded_design_presented_awaiting_user_choice"
+    "nextStep": "independent_review_then_build_backup_guarded_install_and_physical_trial",
+    "designApproved": true,
+    "status": "implemented_host_tests_passed_review_and_target_pending",
+    "offlineTests": {
+      "total": 143,
+      "passed": 143,
+      "failed": 0,
+      "skipped": 0
+    },
+    "redThenGreen": [
+      "real_volume_display_and_codec_action",
+      "peripheral_return_taps_and_pressed_feedback",
+      "nested_right_swipe_slider_and_scroll_exclusion",
+      "stale_held_button_after_navigation",
+      "disabled_page_feedback_and_retry_label_clipping"
+    ],
+    "volumeStorageUnchanged": true,
+    "maximumOutputUnchanged": true,
+    "coordinateCalibrationChanged": false,
+    "physicalAcceptance": "pending"
   }
 }

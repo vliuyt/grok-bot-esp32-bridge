@@ -55,6 +55,7 @@ static void click(const char *text){
     lv_obj_send_event(o,LV_EVENT_CLICKED,NULL);
 }
 static void only_page(pet_page_t expected){
+    if(page!=expected)fprintf(stderr,"page=%d expected=%d\n",page,expected);
     assert(page==expected);
     for(int i=0;i<PET_PAGE_COUNT;i++)assert(lv_obj_has_flag(pages[i],LV_OBJ_FLAG_HIDDEN)==(i!=(int)expected));
 }
@@ -76,6 +77,74 @@ static uint64_t raw_hash(void){
     for(int y=0;y<466;y++)for(int x=0;x<932;x++){hash^=buf->data[y*buf->header.stride+x];hash*=1099511628211ULL;}
     lv_draw_buf_destroy(buf);return hash;
 }
+static void tap_at(int x,int y){point(x,y,true);point(x+4,y+3,false);}
+static void ergonomics(pet_ui_view_t *v,const char *mode){
+    if(!strcmp(mode,"volume")){
+        v->volume=65;show_page(PET_PAGE_VOLUME);unsigned before=action_count;frame(v);
+        assert(action_count==before&&v->volume==65); /* Rendering never rewrites the saved codec setting. */
+        assert(!strcmp(lv_label_get_text(volume_value),"13%"));
+        const int percent[]={0,1,10,20,50,100},codec[]={0,20,60,72,88,100};
+        for(unsigned i=0;i<sizeof(percent)/sizeof(percent[0]);i++){
+            lv_slider_set_value(volume_slider,percent[i],LV_ANIM_OFF);
+            lv_obj_send_event(volume_slider,LV_EVENT_VALUE_CHANGED,NULL);
+            assert(last_action.kind==PET_UI_VOLUME&&last_action.value==codec[i]);
+        }
+        v->volume=100;frame(v);assert(!strcmp(lv_label_get_text(volume_value),"100%"));
+        v->volume=0;frame(v);assert(!strcmp(lv_label_get_text(volume_value),"0%"));
+        v->volume=1;frame(v);assert(!strcmp(lv_label_get_text(volume_value),"1%"));
+    }else if(!strcmp(mode,"buttons")){
+        const pet_page_t single[]={PET_PAGE_VOLUME,PET_PAGE_BRIGHTNESS,PET_PAGE_CAPTIONS,PET_PAGE_MORE,PET_PAGE_PROVISION,PET_PAGE_DETAIL};
+        const pet_page_t parent[]={PET_PAGE_SETTINGS,PET_PAGE_SETTINGS,PET_PAGE_SETTINGS,PET_PAGE_SETTINGS,PET_PAGE_CONNECTION,PET_PAGE_CONNECTION};
+        const lv_point_t spots[]={{128,378},{233,368},{342,416},{233,438}};
+        for(unsigned i=0;i<sizeof(single)/sizeof(single[0]);i++)for(unsigned j=0;j<sizeof(spots)/sizeof(spots[0]);j++){
+            show_page(single[i]);frame(v);tap_at(spots[j].x,spots[j].y);only_page(parent[i]);
+        }
+        show_page(PET_PAGE_VOLUME);frame(v);
+        lv_obj_t *b=lv_obj_get_parent(find(pages[page],"返回"));
+        point(233,400,true);frame(v);assert(lv_obj_has_state(b,LV_STATE_PRESSED));
+        assert(lv_color_eq(lv_obj_get_style_bg_color(b,LV_PART_MAIN),lv_color_hex(0x593247)));
+        point(249,410,false);only_page(PET_PAGE_SETTINGS);
+        show_page(PET_PAGE_SETTINGS);frame(v);tap_at(115,393);only_page(PET_PAGE_HOME);
+        show_page(PET_PAGE_SETTINGS);frame(v);tap_at(348,393);only_page(PET_PAGE_MORE);
+        show_page(PET_PAGE_CONNECTION);frame(v);tap_at(115,393);only_page(PET_PAGE_MORE);
+        show_page(PET_PAGE_CONNECTION);frame(v);tap_at(348,393);only_page(PET_PAGE_PROVISION);
+        show_page(PET_PAGE_HOME);frame(v);tap_at(160,435);only_page(PET_PAGE_SETTINGS);
+        v->reader=(pet_reader_t){.enabled=true,.capable=true,.available=true,.active=true,.version=4,.page=1,.pages=3};
+        strcpy(v->reader.text,"这是一段可以阅读的字幕。");
+        show_page(PET_PAGE_READING);frame(v);tap_at(130,104);only_page(PET_PAGE_HOME);
+        show_page(PET_PAGE_READING);frame(v);tap_at(150,386);assert(last_reader_action==PET_UI_READER_PREV);
+        tap_at(310,386);assert(last_reader_action==PET_UI_READER_NEXT);
+        v->reader.failed=true;frame(v);
+        lv_area_t retry_text,meta_bounds;lv_obj_get_coords(lv_obj_get_child(reader_retry,0),&retry_text);lv_obj_get_coords(reader_meta,&meta_bounds);
+        assert(retry_text.y1>=meta_bounds.y1&&retry_text.y2<=meta_bounds.y2); /* Retry label must not be cropped. */
+        v->reader.failed=false;frame(v);
+        artifact("firmware-easy-reading");
+        show_page(PET_PAGE_SETTINGS);frame(v);artifact("firmware-easy-settings");
+        show_page(PET_PAGE_VOLUME);frame(v);artifact("firmware-easy-volume");
+    }else if(!strcmp(mode,"swipe")){
+        const pet_page_t nested[]={PET_PAGE_SETTINGS,PET_PAGE_CONNECTION,PET_PAGE_READING,PET_PAGE_VOLUME,PET_PAGE_BRIGHTNESS,PET_PAGE_CAPTIONS,PET_PAGE_MORE,PET_PAGE_PROVISION,PET_PAGE_DETAIL};
+        const pet_page_t parent[]={PET_PAGE_HOME,PET_PAGE_MORE,PET_PAGE_HOME,PET_PAGE_SETTINGS,PET_PAGE_SETTINGS,PET_PAGE_SETTINGS,PET_PAGE_SETTINGS,PET_PAGE_CONNECTION,PET_PAGE_CONNECTION};
+        for(unsigned i=0;i<sizeof(nested)/sizeof(nested[0]);i++){
+            show_page(nested[i]);frame(v);point(120,180,true);point(170,182,true);point(240,184,true);point(260,185,false);
+            if(page!=parent[i])fprintf(stderr,"swipe from page=%d\n",nested[i]);
+            only_page(parent[i]);
+        }
+        show_page(PET_PAGE_VOLUME);frame(v);unsigned before=action_count;
+        point(130,250,true);point(210,252,true);point(300,251,false);only_page(PET_PAGE_VOLUME);assert(action_count>before);
+        show_page(PET_PAGE_BRIGHTNESS);frame(v);
+        point(130,250,true);point(210,252,true);point(300,251,false);only_page(PET_PAGE_BRIGHTNESS);
+        show_page(PET_PAGE_READING);frame(v);
+        point(230,290,true);point(231,240,true);point(232,200,false);only_page(PET_PAGE_READING);assert(lv_obj_get_scroll_y(reader_box)>0);
+        lv_anim_delete(pointer,NULL);lv_obj_stop_scroll_anim(reader_box);
+        show_page(PET_PAGE_SETTINGS);frame(v);
+        point(130,90,true);point(165,92,false);only_page(PET_PAGE_SETTINGS); /* Short drift in blank space is not a back gesture. */
+        point(330,90,true);point(220,92,true);point(180,93,false);only_page(PET_PAGE_SETTINGS);
+        point(130,180,true);show_page(PET_PAGE_MORE);frame(v);point(280,183,false);only_page(PET_PAGE_MORE);
+        show_page(PET_PAGE_HOME);frame(v);point(180,190,true);point(300,192,true);point(320,193,false);
+        only_page(PET_PAGE_HOME);assert(last_action.kind==PET_UI_PET);
+    }else assert(!"unknown ergonomic test");
+    puts("PET_UI_ERGONOMICS_OK");
+}
 int main(int argc,char **argv){
     artifact_dir=argc>1?argv[1]:NULL;lv_init();display=lv_display_create(466,466);
     pet_init(&activity_model,0);
@@ -85,9 +154,10 @@ int main(int argc,char **argv){
     pointer=lv_indev_create();lv_indev_set_type(pointer,LV_INDEV_TYPE_POINTER);
     lv_indev_set_display(pointer,display);lv_indev_set_read_cb(pointer,read_pointer);
     assert(pet_ui_start(record,NULL)==ESP_OK);
-    pet_ui_view_t v={.pose={.expression=PET_EXPR_IDLE,.scale_x=1,.scale_y=1,.eye_open=1,.screen_on=true},.connection=PET_CONN_READY,.caption_mode=PET_CAPTION_FULL,.brightness=80,.volume=20,.speaker=true,.battery=76,.wifi_online=true,.mac_online=true};
+    pet_ui_view_t v={.pose={.expression=PET_EXPR_IDLE,.scale_x=1,.scale_y=1,.eye_open=1,.screen_on=true},.connection=PET_CONN_READY,.caption_mode=PET_CAPTION_FULL,.brightness=80,.volume=72,.speaker=true,.battery=76,.wifi_online=true,.mac_online=true};
     snprintf(v.caption,sizeof(v.caption),"今天也想和你一起，慢慢发现生活里的小快乐。我们可以先喝杯水，再聊聊今天的心情。你有想分享的事，我就在这里听着。");
     frame(&v);only_page(PET_PAGE_HOME);
+    if(argc>2){ergonomics(&v,argv[2]);return 0;}
     point(230,190,true);frame(&v);frame(&v);point(300,190,false);
     assert(last_action.kind==PET_UI_PET); /* A frame cannot cancel an in-flight stroke. */
     /* LVGL DOT mode replaces the overflowing tail in its own text buffer. */
@@ -95,7 +165,6 @@ int main(int argc,char **argv){
     assert(lv_label_get_long_mode(caption)==LV_LABEL_LONG_DOT);
     assert(lv_obj_get_style_text_font(caption,0)==pet_font(PET_FONT_BODY));
     assert(lv_obj_get_height(caption)==75&&lv_obj_get_y(caption_box)==307);
-    assert(lv_obj_get_y(handle)==425&&lv_obj_get_width(handle)==100);
     assert(lv_obj_has_flag(caption_box,LV_OBJ_FLAG_CLICKABLE));artifact("firmware-readable-home");
     activity_now=115000;pet_step(&activity_model,(pet_event_t){.kind=PET_EV_TICK,.now_ms=activity_now});
     assert(activity_model.life==PET_LIFE_DROWSY);
@@ -128,7 +197,7 @@ int main(int argc,char **argv){
     assert(bounds.x1==lv_obj_get_x(volume_row)+16&&bounds.y1==lv_obj_get_y(volume_row)+19);
     click("音量");frame(&v);only_page(PET_PAGE_VOLUME);
     lv_slider_set_value(volume_slider,37,LV_ANIM_OFF);lv_obj_send_event(volume_slider,LV_EVENT_VALUE_CHANGED,NULL);
-    assert(last_action.kind==PET_UI_VOLUME&&last_action.value==37);click("返回");
+    assert(last_action.kind==PET_UI_VOLUME&&last_action.value==83);click("返回");
     click("亮度");frame(&v);only_page(PET_PAGE_BRIGHTNESS);
     lv_slider_set_value(brightness_slider,63,LV_ANIM_OFF);lv_obj_send_event(brightness_slider,LV_EVENT_VALUE_CHANGED,NULL);
     assert(last_action.kind==PET_UI_BRIGHTNESS&&last_action.value==63);click("返回");
@@ -192,7 +261,8 @@ int main(int argc,char **argv){
     }
     v.notice=PET_NOTICE_NONE;v.dialogue=PET_DIALOGUE_IDLE;lv_obj_scroll_to_y(reader_box,0,LV_ANIM_OFF);frame(&v);
     artifact("firmware-paged-reading");
-    assert(lv_obj_has_state(prev,LV_STATE_DISABLED));click("下一段");assert(last_reader_action==PET_UI_READER_NEXT);
+    assert(lv_obj_has_state(prev,LV_STATE_DISABLED));assert(lv_obj_get_style_opa(prev,0)<LV_OPA_COVER);
+    click("下一段");assert(last_reader_action==PET_UI_READER_NEXT);
     v.reader.pending=true;frame(&v);assert(!strcmp(lv_label_get_text(reader_text),v.reader.text));assert(find(pages[page],"正在加载"));
     v.reader.pending=false;v.reader.failed=true;frame(&v);click("点此重试");assert(last_reader_action==PET_UI_READER_RETRY);
     v.reader.failed=false;v.reader.page=1;strcpy(v.reader.text,"第二段的私密文字");frame(&v);

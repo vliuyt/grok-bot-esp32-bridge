@@ -1,4 +1,5 @@
 #include "pet_readability.h"
+#include <math.h>
 #include <string.h>
 
 static bool readable(const pet_readability_input_t *in) {
@@ -36,4 +37,15 @@ pet_face_t pet_readability_face(pet_pose_t pose) {
     pose.scale_x*=200.0f/224;pose.scale_y*=200.0f/224;
     pose.offset_y-=21;
     return pet_face_geometry(pose);
+}
+int pet_volume_percent(int codec_setting) {
+    if(codec_setting<=0)return 0;
+    if(codec_setting>=100)return 100;
+    int percent=(int)lroundf(100*powf(10,(codec_setting-100)/40.0f));
+    return percent<1?1:percent;
+}
+int pet_volume_setting(int percent) {
+    if(percent<=0)return 0;
+    if(percent>=100)return 100;
+    return (int)lroundf(100+40*log10f(percent/100.0f));
 }
