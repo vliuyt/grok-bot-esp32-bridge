@@ -1,7 +1,7 @@
 {
   "date": "2026-10-21",
   "stage": "reference-device-readability-acceptance",
-  "status": "awaiting_manual_voice_retry",
+  "status": "awaiting_manual_reading_acceptance",
   "firmwareCommit": "0c3cde6",
   "applicationSha256": "c035f0c1555d154cdb2656f53c7732e1eeff4228e86d4eafd27f48f7d55b3f1e",
   "applicationBytes": 3693968,
@@ -21,7 +21,8 @@
   "screenCaptureMethod": "actual device LVGL snapshot; conversation body and pairing code redacted",
   "userConfirmed": {
     "textClearer": true,
-    "touchTargetsEasier": true
+    "touchTargetsEasier": true,
+    "nativeVoiceHeard": true
   },
   "stability": {
     "elapsedSeconds": 180.4,
@@ -39,20 +40,45 @@
     "skipped": 0
   },
   "voiceAcceptance": {
-    "status": "investigating",
+    "status": "basic_manual_reply_passed",
     "firstManualTurn": "audio uploaded but no recognized input, response or speaker frames",
     "fixedFixtureControl": "same native bot harness recognized fixed Chinese greeting and returned audio; output counted only, never played",
-    "currentProbe": "fresh device session; awaiting manual retry; no parallel cloud probes",
+    "currentProbe": "fresh device session; user confirmed normal native voice reply; no parallel cloud probes during retry",
     "retryObservation": {
       "seconds": 119.3,
       "newManualTurnsObserved": 0,
       "lastBridgeState": "ready"
-    }
+    },
+    "confirmedRetry": {
+      "observedAt": "2026-10-20T23:59:54.182929+00:00",
+      "userConfirmedNormalSpeakerReply": true,
+      "bridgeState": "ready",
+      "bridgeFault": null,
+      "devicePlayedFramesCumulative": 101760,
+      "deviceQueuedPackets": 0,
+      "deviceRecording": false,
+      "deviceAudioFault": false,
+      "bridgeRepliesCumulative": 2,
+      "nativeAudioDeltaEventsCumulative": 16,
+      "taskReturnAvailable": true,
+      "lastInputDb": -41,
+      "firstNativeAudioAtBridgeMs": 974,
+      "latencyScope": "BOOT release to first native audio at Mac; not measured physical speaker latency"
+    },
+    "firstFailureRootCause": "not established; session was refreshed before successful retry; no production code changed during diagnosis",
+    "scope": "one manual retry confirmed by user; cumulative counters do not establish continuous multi-round acceptance"
+  },
+  "volumeObservation": {
+    "earlierPercent": 14,
+    "retryReceiptPercent": 100,
+    "cause": "not established; manual adjustment or unintended change not yet distinguished",
+    "followUp": "user asked to lower volume before next manual test; persistence remains pending"
   },
   "pending": [
-    "device native voice reply",
     "caption and reading scroll with real reply",
     "reboot persistence after user setting changes",
+    "explain observed volume change before marking volume persistence passed",
+    "continuous multi-round and long-answer regression",
     "interruption and reconnect audio regression"
   ],
   "partitionAndBootMetadataGuard": "matched fresh full backup immediately before write; installer writes only the original application slot"
