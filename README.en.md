@@ -6,7 +6,11 @@ A standalone companion-pet firmware for the **Waveshare ESP32-S3-Touch-AMOLED-1.
 
 ![Actual device screen](docs/pet-device-screen.png)
 
-This independent community prototype is not affiliated with xAI, Grok Bot, Meta or Waveshare. It uses the desktop App's internal native-voice contract, tested against version 0.71.2. Normal App login and account permissions are required; compatibility with future versions is not guaranteed. No App, account or cloud service is distributed.
+This independent community prototype is not affiliated with xAI, Grok Bot, Meta or Waveshare. It uses the desktop App's internal native-voice contract, tested against versions 0.71.2 and 0.72.1. Normal App login and account permissions are required; compatibility with future versions is not guaranteed. No App, account or cloud service is distributed.
+
+The `codex/v0.2.0-roadmap` development branch adds livelier expressions, caption modes, grayscale Noto Sans SC fonts, a 28px home summary, a 30px reading page and larger settings targets. On 2026-10-21, the reference-device user confirmed legibility, touch targets, native voice, real captions, scrolling and return. Settings survived a silent reboot and the connection recovered. Ten-round, interruption and active-call reconnect regressions remain pending; the first unanswered voice attempt has no established root cause. See the [device acceptance record](docs/readability-device-validation.json). This is not a new release or precompiled firmware package.
+
+To inspect this development work, switch to that branch after cloning. Run `npm run preview` for the silent interactive preview; device installation still requires the documented backup and build steps.
 
 ## Architecture and features
 
@@ -51,4 +55,4 @@ Full acoustic interruption/reconnection, physical touch feel, authenticated BLE 
 
 Read [CONTRIBUTING](CONTRIBUTING.md), [SECURITY](SECURITY.md), [architecture](docs/宠物固件架构.md), [protocol](docs/PROTOCOL.md) and [roadmap](docs/ROADMAP.md). Never submit credentials, Wi-Fi passwords, paired device configuration, full-flash backups, recordings or personal transcripts.
 
-Original code is Apache-2.0; retained Muse sources remain Apache-2.0 with their original notices. The Unifont-derived font is distributed separately under OFL-1.1. See [third-party notices](THIRD_PARTY_NOTICES.md). Trademarks are not licensed by this project.
+Original code is Apache-2.0; retained Muse sources remain Apache-2.0 with their original notices. The Unifont-derived and Noto Sans SC font assets are distributed separately under OFL-1.1. See [third-party notices](THIRD_PARTY_NOTICES.md). Trademarks are not licensed by this project.

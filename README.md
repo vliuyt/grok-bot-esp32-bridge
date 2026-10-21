@@ -16,6 +16,8 @@
 
 开发分支已加入28px大字主屏、30px独立阅读页和三项大设置入口，采用Noto Sans SC灰度字形。实际LVGL主机画面与验收边界见[大字圆屏说明](docs/UI_READABILITY.md)；已刷入参考设备，使用者确认文字更清楚、点击更容易，原生声音回复、真实字幕显示、阅读滚动及返回均通过。设置重启保留和自动重连已核实；连续十轮、打断及通话断线后的音频回归仍待验收，尚未发布新版本。
 
+如需查看本轮开发源码，克隆后切换到 `codex/v0.2.0-roadmap` 分支；运行 `npm run preview` 可查看无声交互预览。设备安装仍须按快速开始完成备份和构建。
+
 ## 它能做什么
 
 | 能力 | 当前实现 |
@@ -44,7 +46,7 @@ flowchart LR
 ## 适用条件
 
 - **已验证硬件**：Waveshare ESP32-S3-Touch-AMOLED-1.43C，466×466，8 MiB flash／PSRAM，原板显示、触摸、麦克风及扬声器。不承诺其他 ESP32-S3 板型直接可刷。
-- **Mac 常驻**：macOS、Node.js ≥22.19、Xcode Command Line Tools；Grok Bot App 已正常登录，拥有一个可原生语音通话的 Bot。参考验证 App 版本为 0.71.2；后续版本可能改变契约。
+- **Mac 常驻**：macOS、Node.js ≥22.19、Xcode Command Line Tools；Grok Bot App 已正常登录，拥有一个可原生语音通话的 Bot。参考验证 App 版本为 0.71.2／0.72.1；后续版本可能改变契约。
 - **局域网**：Mac 和设备在互通的私人局域网，路由器允许设备访问 Mac；无需端口映射。Mac 多个有效网卡时程序会拒绝猜测地址，请见排错指南。
 - **固件开发**：Python ≥3.11、ESP-IDF **6.0.1**，其余组件版本由 `dependencies.lock` 固定。
 
