@@ -10,9 +10,9 @@ class Socket extends EventTarget {
 }
 const credential = { websocketUrl: 'wss://api.x.ai/v1/realtime', model: 'fixture-model', clientSecret: 'fixture-secret', expiresAtUnixSeconds: 2100000000 };
 const plan = { instructions: 'real bot instructions', tools: [{ type: 'function', name: 'recall_text_messages', description: 'Recall history', parameters: { type: 'object', properties: {} } }] };
-function fixture() {
+function fixture(options={}) {
   const socket = new Socket();
-  const voice = new RealtimeSession({ socketFactory: () => socket, now: () => 1800000000000 });
+  const voice = new RealtimeSession({ socketFactory: () => socket, now: () => 1800000000000,...options });
   return { socket, voice };
 }
 test('configures native instructions and tools and waits for session acknowledgement', async () => {
@@ -120,4 +120,56 @@ test('publishes every parallel tool result before requesting continuation', asyn
   finish.two({ ok: 2 }); await new Promise(resolve => setImmediate(resolve));
   assert.deepEqual(socket.sent.filter(x => x.item?.type === 'function_call_output').map(x => x.item.call_id), ['one', 'two']);
   assert.equal(socket.sent.filter(x => x.type === 'response.create').length, 1); voice.close();
+});
+
+test('short input is explained without committing an empty recording',async()=>{
+  const {socket,voice}=fixture(),notices=[];voice.on('turnStatus',e=>notices.push(e));
+  const opening=voice.open({credential,plan});socket.receive({type:'session.updated'});await opening;
+  voice.beginTurn();voice.sendAudio(Buffer.alloc(4798));voice.endTurn();
+  assert.deepEqual(notices,[{turn:1,code:'short_input'}]);
+  assert.equal(socket.sent.filter(x=>x.type==='input_audio_buffer.commit').length,0);voice.close();
+});
+test('an empty or failed response is a recoverable per-turn outcome',async()=>{
+  for(const [status,code] of [['completed','empty_response'],['failed','response_failed']]){
+    const {socket,voice}=fixture(),notices=[];voice.on('turnStatus',e=>notices.push(e));
+    const opening=voice.open({credential,plan});socket.receive({type:'session.updated'});await opening;
+    voice.beginTurn();voice.sendAudio(Buffer.alloc(9600));voice.endTurn();
+    socket.receive({type:'response.created',response:{id:'reply',metadata:{bridge_turn:'1'}}});
+    socket.receive({type:'response.done',response:{id:'reply',status}});
+    assert.deepEqual(notices,[{turn:1,code}]);assert.equal(voice.state,'ready');voice.close();
+  }
+});
+test('late recognition retains the committed input turn instead of becoming the next turn',async()=>{
+  const {socket,voice}=fixture(),heard=[];voice.on('transcript',e=>heard.push(e));
+  const opening=voice.open({credential,plan});socket.receive({type:'session.updated'});await opening;
+  voice.beginTurn();voice.sendAudio(Buffer.alloc(9600));voice.endTurn();
+  socket.receive({type:'input_audio_buffer.committed',item_id:'first-input'});
+  socket.receive({type:'response.created',response:{id:'reply',metadata:{bridge_turn:'1'}}});
+  voice.beginTurn();
+  socket.receive({type:'conversation.item.input_audio_transcription.completed',item_id:'first-input',transcript:'old fixture'});
+  assert.equal(heard[0].turn,1);assert.equal(voice.turn,2);voice.close();
+});
+test('interrupt before a response identity arrives closes the ambiguous native session',async()=>{
+  const {socket,voice}=fixture(),audio=[];voice.on('audio',a=>audio.push(a));
+  const opening=voice.open({credential,plan});socket.receive({type:'session.updated'});await opening;
+  voice.beginTurn();voice.sendAudio(Buffer.alloc(9600));voice.endTurn();
+  assert.throws(()=>voice.beginTurn(),/reconnect|closed|unavailable/i);
+  socket.receive({type:'response.created',response:{id:'late-untagged'}});
+  socket.receive({type:'response.output_audio.delta',response_id:'late-untagged',delta:'AQA='});
+  assert.equal(audio.length,0);assert.equal(voice.state,'closed');
+});
+
+test('a tool finishing before response.done leaves its continuation monitored',async()=>{
+  let now=0,id=0;const timers=new Map(),notices=[];
+  const {socket,voice}=fixture({setTimer:(fn,ms)=>{timers.set(++id,{fn,at:now+ms});return id;},clearTimer:id=>timers.delete(id)});
+  voice.on('turnStatus',e=>notices.push(e));
+  const opening=voice.open({credential,plan,onTool:async()=>({ok:true})});socket.receive({type:'session.updated'});await opening;
+  voice.beginTurn();voice.sendAudio(Buffer.alloc(9600));voice.endTurn();
+  socket.receive({type:'response.created',response:{id:'tool-reply'}});
+  socket.receive({type:'response.function_call_arguments.done',response_id:'tool-reply',call_id:'one',name:'recall_text_messages',arguments:'{}'});
+  await new Promise(r=>setImmediate(r));
+  socket.receive({type:'response.done',response:{id:'tool-reply',status:'completed'}});
+  socket.receive({type:'response.created',response:{id:'continuation'}});
+  for(;;){const next=[...timers].sort((a,b)=>a[1].at-b[1].at)[0];if(!next||next[1].at>30000)break;now=next[1].at;timers.delete(next[0]);next[1].fn();}
+  assert(notices.some(e=>e.code==='no_reply'));voice.close();
 });

@@ -1,10 +1,16 @@
 import { EventEmitter } from 'node:events';
 import { validatePcm } from './audio.mjs';
+import {createTurnMonitor} from './voice-turn.mjs';
 
 export class RealtimeSession extends EventEmitter {
-  constructor({ socketFactory = (url, protocols) => new WebSocket(url, protocols), now = Date.now } = {}) {
+  constructor({ socketFactory = (url, protocols) => new WebSocket(url, protocols), now = Date.now,setTimer=setTimeout,clearTimer=clearTimeout } = {}) {
     super(); this.socketFactory = socketFactory; this.now = now; this.state = 'idle';
     this.turn = 0; this.cancelled = new Set(); this.toolCalls = new Set(); this.pendingTools = new Set(); this.updates = [];
+    this.inputTurns=[];this.inputItems=new Map();
+    this.monitor=createTurnMonitor({now,setTimer,clearTimer,onStatus:event=>this.emit('turnStatus',event),onExpire:turn=>{
+      if(turn!==this.turn||this.state==='closed')return;
+      this.stopPlayback();if(this.state!=='closed'){this.state='ready';this.emit('state','ready');}
+    }});
   }
   async open({ credential, plan, onTool = async () => ({ error: 'Tool unavailable' }), voice = null, language = 'zh' }) {
     if (this.state !== 'idle') throw new Error('Session already opened');
@@ -52,11 +58,13 @@ export class RealtimeSession extends EventEmitter {
         if (!id || this.state === 'recording' || (tag != null && Number(tag) !== this.turn)) {
           if (id) this.cancelled.add(id); break;
         }
-        this.responseRequested = false; this.responseId = id; this.responseActive = true; break;
+        this.responseRequested = false; this.responseId = id; this.responseActive = true;
+        this.responseHasAudio=false;this.responseHadTool=false;this.monitor.note(this.turn,'response');break;
       }
       case 'response.audio.delta': case 'response.output_audio.delta': {
         if (this.state === 'recording' || this.cancelled.has(message.response_id) || message.response_id !== this.responseId) break;
         const pcm = validatePcm(Buffer.from(message.delta, 'base64'));
+        this.responseHasAudio ||= pcm.length>0;this.monitor.note(this.turn,'audio');
         if (this.firstAudioAt == null) { this.firstAudioAt = this.now(); this.emit('latency', { firstAudioMs: this.firstAudioAt - this.submittedAt }); }
         this.emit('audio', pcm); break;
       }
@@ -65,20 +73,43 @@ export class RealtimeSession extends EventEmitter {
       case 'response.done':
         if (message.response?.id === this.responseId) {
           this.responseActive = false;
-          if (message.response?.status === 'failed') this.emit('fault', { code: 'VOICE_RESPONSE_FAILED' });
+          this.monitor.note(this.turn,'done');
+          if(message.response?.status==='failed'){
+            this.monitor.clear(this.turn);this.pendingResponse=false;
+            this.emit('turnStatus',{turn:this.turn,code:'response_failed'});
+          }else if(!this.responseHasAudio&&!this.responseHadTool&&!this.pendingTools.size&&!this.pendingResponse){
+            this.emit('turnStatus',{turn:this.turn,code:'empty_response'});
+          }
           this.emit('responseDone');
           if (this.pendingResponse) { this.pendingResponse = false; this.requestResponse(); }
         } break;
-      case 'conversation.item.input_audio_transcription.completed':
-        this.emit('transcript', { role: 'user', text: message.transcript ?? '', itemId: message.item_id }); break;
+      case 'input_audio_buffer.committed':{
+        const turn=this.inputTurns.shift();
+        if(turn!=null&&typeof message.item_id==='string'){
+          this.inputItems.set(message.item_id,turn);
+          if(this.inputItems.size>128)this.inputItems.delete(this.inputItems.keys().next().value);
+        }break;
+      }
+      case 'conversation.item.input_audio_transcription.completed':{
+        const turn=this.inputItems.get(message.item_id);if(turn==null)break;
+        if(turn===this.turn&&this.state!=='recording')this.monitor.note(turn,'recognized');
+        this.emit('transcript', { role: 'user', text: message.transcript ?? '', itemId: message.item_id,turn });break;
+      }
+      case 'conversation.item.input_audio_transcription.failed':{
+        if(this.inputItems.get(message.item_id)!==this.turn||this.state==='recording')break;
+        this.emit('turnStatus',{turn:this.turn,code:'unrecognized'});this.stopPlayback();
+        if(this.state!=='closed')this.emit('state','ready');break;
+      }
       case 'response.output_audio_transcript.done': case 'response.audio_transcript.done':
-        if (this.ownsResponse(message.response_id)) this.emit('transcript', { role: 'assistant', text: message.transcript ?? '', itemId: message.item_id }); break;
+        if (this.ownsResponse(message.response_id)) this.emit('transcript', { role: 'assistant', text: message.transcript ?? '', itemId: message.item_id,turn:this.turn }); break;
       case 'error': this.fail('VOICE_SERVICE_ERROR'); break;
     }
   }
   beginTurn() {
     if (!['ready', 'recording'].includes(this.state)) throw new Error('Voice session not ready');
-    this.stopPlayback(); this.turn++; this.inputBytes = 0; this.state = 'recording';
+    this.stopPlayback();
+    if(this.state==='closed')throw new Error('Voice session closed; reconnect before recording');
+    this.turn++; this.inputBytes = 0; this.state = 'recording';
     this.send({ type: 'input_audio_buffer.clear' }); this.emit('state', 'recording');
   }
   sendAudio(bytes) {
@@ -90,9 +121,12 @@ export class RealtimeSession extends EventEmitter {
   endTurn() {
     if (this.state !== 'recording') return;
     this.state = 'ready';
-    if (this.inputBytes < 4800) { this.send({ type: 'input_audio_buffer.clear' }); this.emit('state', 'ready'); }
+    if (this.inputBytes < 4800) {
+      this.send({ type: 'input_audio_buffer.clear' });this.emit('turnStatus',{turn:this.turn,code:'short_input'});this.emit('state', 'ready');
+    }
     else {
       this.submittedAt = this.now(); this.firstAudioAt = null;
+      this.inputTurns.push(this.turn);
       this.send({ type: 'input_audio_buffer.commit' }); this.requestResponse(); this.emit('state', 'waiting');
     }
     for (const update of this.updates.splice(0)) this.injectUpdate(update);
@@ -106,20 +140,24 @@ export class RealtimeSession extends EventEmitter {
   }
   requestResponse() {
     if (this.responseActive || this.responseRequested || this.pendingTools.size) { this.pendingResponse = true; return; }
+    this.monitor.start(this.turn);
     this.responseRequested = true;
     this.send({ type: 'response.create', response: { metadata: { bridge_turn: String(this.turn) } } });
   }
   ownsResponse(id) { return Boolean(id) && id === this.responseId && !this.cancelled.has(id) && !['recording', 'closed'].includes(this.state); }
   stopPlayback() {
+    const ambiguous=!!this.responseRequested&&!this.responseId;
+    this.monitor.clear(this.turn);
     this.pendingTools.clear(); this.pendingResponse = false; this.responseRequested = false;
     if (this.responseId) this.cancelled.add(this.responseId);
     if (this.responseActive) { this.send({ type: 'response.cancel' }); this.responseActive = false; }
     this.responseId = undefined; this.emit('clearAudio');
+    if(ambiguous)this.fail('VOICE_TURN_UNCERTAIN');
   }
   async handleTool(message) {
     const id = message.call_id, turn = this.turn;
     if (!this.ownsResponse(message.response_id) || typeof id !== 'string' || this.toolCalls.has(id)) return;
-    this.toolCalls.add(id); this.pendingTools.add(id);
+    this.toolCalls.add(id); this.pendingTools.add(id);this.responseHadTool=true;this.monitor.note(turn,'tool_started');
     let output;
     try {
       if (!this.plan.tools.some(tool => tool.name === message.name)) throw new Error();
@@ -128,6 +166,7 @@ export class RealtimeSession extends EventEmitter {
     } catch { output = { error: 'Tool failed; do not automatically retry an uncertain task.' }; this.emit('fault', { code: 'TOOL_FAILED' }); }
     this.pendingTools.delete(id);
     if (this.state === 'closed' || this.state === 'recording' || this.cancelled.has(message.response_id) || turn !== this.turn) return;
+    this.monitor.note(turn,'tool_completed');
     this.send({ type: 'conversation.item.create', item: { type: 'function_call_output', call_id: id, output: JSON.stringify(output) } });
     if (!this.pendingTools.size) { this.pendingResponse = false; this.requestResponse(); }
   }
@@ -137,7 +176,7 @@ export class RealtimeSession extends EventEmitter {
   }
   close() {
     if (this.state === 'closed') return;
-    this.state = 'closed'; clearTimeout(this.openTimer); this.emit('clearAudio');
+    this.state = 'closed'; clearTimeout(this.openTimer);this.monitor.close();this.inputTurns=[];this.inputItems.clear(); this.emit('clearAudio');
     this.openReject?.(new Error('Voice session closed')); this.socket?.close(); this.emit('closed');
   }
 }

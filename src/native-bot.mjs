@@ -30,15 +30,15 @@ export class NativeBotSession extends EventEmitter {
     ]);
     this.assertOpen();
     this.model = credential.model;
-    this.voice.on('transcript', ({ role, text, itemId }) => {
+    this.voice.on('transcript', ({ role, text, itemId,turn }) => {
       if (this.closed) return;
       const id = itemId ? `${role}:${itemId}` : randomUUID();
       const previous = this.turns.find(turn => turn.id === id);
       if (previous) previous.text = text;
       else if (this.turns.length < 1000) this.turns.push({ id, speaker: role, text, atMs: Date.now() });
-      this.emit('transcript', { role, text, itemId, turn: this.voice.turn });
+      this.emit('transcript', { role, text, itemId, turn: turn??this.voice.turn });
     });
-    for (const name of ['audio', 'clearAudio', 'state', 'latency', 'responseDone']) this.voice.on(name, event => this.emit(name, event));
+    for (const name of ['audio', 'clearAudio', 'state', 'latency', 'responseDone','turnStatus']) this.voice.on(name, event => this.emit(name, event));
     this.voice.on('fault', fault => this.emit('fault', fault));
     this.voice.on('closed', () => { void this.close('disconnected'); });
     await this.voice.open({ credential, plan, onTool: args => this.tool(args) });
