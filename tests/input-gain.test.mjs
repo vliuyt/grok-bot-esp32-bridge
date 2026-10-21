@@ -19,7 +19,8 @@ test('input peak limiting avoids integer clipping, preserves full-scale input, a
   assert.deepEqual(values(gain.push(pcm([10000,-32768,32767]))),[30000,-32768,32767]);
   const immediately=values(gain.push(pcm([100])))[0];assert(immediately>=100&&immediately<102);
   gain.push(Buffer.alloc(24000));
-  const later=values(gain.push(pcm([100])))[0];assert(later>200&&later<400);
+  // A 500 ms time constant recovers 63.2% of the unity-to-4 gap in 0.5 s.
+  const later=values(gain.push(pcm([100])))[0];assert.equal(later,290);
   assert.equal(values(new DeviceInputGain().push(pcm([100])))[0],400);
   const source=pcm(Array.from({length:65536},(_,i)=>i-32768));
   const result=values(new DeviceInputGain().push(source));
