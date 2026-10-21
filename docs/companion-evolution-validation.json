@@ -544,7 +544,17 @@
       "testsRedThenGreen": true,
       "fullLocalTests": 152,
       "fullLocalPassed": 152,
-      "independentReview": "pending",
+      "independentReview": {
+        "scope": "93e4fae..6634959",
+        "critical": 0,
+        "important": 0,
+        "minorTestSuggestions": 2,
+        "minorSuggestionsApplied": true,
+        "pureMeterIndependentTests": 4,
+        "integrationIndependentTests": 12,
+        "fullLocalAfterTestFix": 152,
+        "reReview": false
+      },
       "runtimeInstallation": "pending"
     }
   }
