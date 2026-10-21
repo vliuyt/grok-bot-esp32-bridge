@@ -7,6 +7,36 @@ import { startDeviceServer } from '../src/device-server.mjs';
 import { encodeFrame, FrameDecoder } from '../src/device-wire.mjs';
 import {VoiceTrace} from '../src/voice-trace.mjs';
 const key = Buffer.alloc(32, 42);
+test('device uplink boosts quiet live PCM, resets its limiter each turn, and never replays cancelled input',async()=>{
+  let session;
+  class Session extends EventEmitter {
+    voice={turn:0};chunks=[];commits=0;async open(){}beginTurn(){this.voice.turn++;this.emit('clearAudio');}
+    sendAudio(bytes){this.chunks.push(Buffer.from(bytes));}endTurn(){this.commits++;}stopPlayback(){}async close(){return{saved:true};}
+  }
+  const until=async check=>{const end=performance.now()+2000;while(!check()){assert(performance.now()<end);await delay(5);}};
+  const server=await startDeviceServer({bot:{name:'fixture'},key,host:'127.0.0.1',port:0,sessionFactory:()=>(session=new Session())});
+  const socket=await client(server.port);
+  const send=(type,turn,data)=>socket.write(encodeFrame(type,turn,Buffer.isBuffer(data)?data:Buffer.from(data)));
+  const samples=value=>{const b=Buffer.alloc(640);for(let at=0;at<b.length;at+=2)b.writeInt16LE(value,at);return b;};
+  try{
+    await until(()=>server.snapshot().state==='ready');
+    send(3,0,samples(100));await delay(15);assert.equal(session.chunks.length,0);
+    send(2,1,'press');send(3,1,samples(100));send(2,1,'release');await until(()=>session.commits===1);
+    const input=Buffer.concat(session.chunks);assert.equal(input.length,960);
+    for(let at=0;at<input.length;at+=2)assert.equal(input.readInt16LE(at),400);
+    assert.equal(server.snapshot().lastInputDb,-50);
+    assert.deepEqual(server.snapshot().inputAudio,{turn:1,samples:480,rmsDb:-38.27,peakDb:-38.27});
+    send(2,1,'release');await delay(15);assert.equal(session.commits,1);
+    send(2,2,'press');send(3,2,samples(32767));send(2,2,'cancel');await until(()=>server.snapshot().state==='ready');
+    const afterCancel=session.chunks.length;
+    send(3,2,samples(100));send(2,2,'release');await delay(15);
+    assert.equal(session.chunks.length,afterCancel);assert.equal(session.commits,1);
+    session.chunks=[];send(2,3,'press');send(3,2,samples(32767));send(3,3,samples(100));send(2,3,'release');await until(()=>session.commits===2);
+    const fresh=Buffer.concat(session.chunks);assert.equal(fresh.length,960);
+    for(let at=0;at<fresh.length;at+=2)assert.equal(fresh.readInt16LE(at),400);
+    assert.equal(server.snapshot().inputAudio.turn,3);assert.equal(server.snapshot().inputAudio.samples,480);
+  }finally{socket.destroy();await server.close();}
+});
 test('downlink level measures the actual resampled PCM and resets before a new recording',async()=>{
   let session;
   class Session extends EventEmitter {voice={responseActive:false};async open(){}beginTurn(){this.emit('clearAudio');}sendAudio(){}endTurn(){}async close(){return{saved:true};}}
