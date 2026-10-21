@@ -1,7 +1,7 @@
 {
   "date": "2026-10-21",
   "stage": "reference-device-readability-acceptance",
-  "status": "awaiting_manual_reading_acceptance",
+  "status": "readability_and_manual_voice_passed_regressions_pending",
   "firmwareCommit": "0c3cde6",
   "applicationSha256": "c035f0c1555d154cdb2656f53c7732e1eeff4228e86d4eafd27f48f7d55b3f1e",
   "applicationBytes": 3693968,
@@ -22,7 +22,10 @@
   "userConfirmed": {
     "textClearer": true,
     "touchTargetsEasier": true,
-    "nativeVoiceHeard": true
+    "nativeVoiceHeard": true,
+    "realCaptionDisplayed": true,
+    "readingScroll": true,
+    "readingReturn": true
   },
   "stability": {
     "elapsedSeconds": 180.4,
@@ -66,7 +69,22 @@
       "latencyScope": "BOOT release to first native audio at Mac; not measured physical speaker latency"
     },
     "firstFailureRootCause": "not established; session was refreshed before successful retry; no production code changed during diagnosis",
-    "scope": "one manual retry confirmed by user; cumulative counters do not establish continuous multi-round acceptance"
+    "scope": "greeting retry confirmed by user, followed by caption/reading acceptance with a story reply; cumulative counters do not establish ten-round acceptance"
+  },
+  "readingAcceptance": {
+    "status": "passed",
+    "method": "user requested a five-to-six-sentence story using physical BOOT, then confirmed caption display, manual scrolling and return",
+    "observedAt": "2026-10-21T00:02:35.597909+00:00",
+    "bridgeStateAfterPlayback": "ready",
+    "bridgeFault": null,
+    "devicePlayedFramesCumulative": 633920,
+    "deviceQueuedPackets": 0,
+    "deviceAudioFault": false,
+    "deviceEventDrops": 0,
+    "deviceHeapAfterPlayback": 53483,
+    "devicePsramAfterPlayback": 8039748,
+    "firstNativeAudioAtBridgeMs": 760,
+    "scope": "one real story reply; current bounded caption window, not full conversation history"
   },
   "volumeObservation": {
     "earlierPercent": 14,
@@ -75,10 +93,9 @@
     "followUp": "user asked to lower volume before next manual test; persistence remains pending"
   },
   "pending": [
-    "caption and reading scroll with real reply",
     "reboot persistence after user setting changes",
     "explain observed volume change before marking volume persistence passed",
-    "continuous multi-round and long-answer regression",
+    "continuous ten-round regression",
     "interruption and reconnect audio regression"
   ],
   "partitionAndBootMetadataGuard": "matched fresh full backup immediately before write; installer writes only the original application slot"
