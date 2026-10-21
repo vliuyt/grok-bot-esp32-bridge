@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createController} from '../preview/companion/controller.mjs';
+import {sampleFace} from '../preview/companion/face.mjs';
 
 // Only the DOM, animation clock and static fetch are fake. Run the actual app
 // listeners and controller; these regressions are at the input/lifecycle boundary.
@@ -19,7 +20,7 @@ class Target {
 }
 async function harness(storage=new Map(),failSave=false) {
   const data=JSON.parse(readFileSync('preview/companion/states.json','utf8'));
-  const source=readFileSync('preview/companion/app.mjs','utf8').replace("import {createController} from './controller.mjs';",'');
+  const source=readFileSync('preview/companion/app.mjs','utf8').replace(/^import .*;$/gm,'');
   const nodes=new Map();const get=id=>nodes.get(id)??(nodes.set(id,new Target()),nodes.get(id));
   const buttons=Object.keys(data.states).map(mode=>{const b=new Target();b.dataset={mode};return b;});
   get('#screen').getContext=()=>new Proxy({},{get:()=>()=>{},set:()=>true});
@@ -29,8 +30,8 @@ async function harness(storage=new Map(),failSave=false) {
   const requestAnimationFrame=fn=>{raf.set(++id,fn);return id;};
   const cancelAnimationFrame=key=>raf.delete(key);
   const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
-  const run=new AsyncFunction('createController','document','window','matchMedia','performance','requestAnimationFrame','cancelAnimationFrame','fetch','localStorage',source);
-  await run(()=>controller=createController(),document,window,()=>({matches:false}),{now:()=>time},
+  const run=new AsyncFunction('createController','sampleFace','document','window','matchMedia','performance','requestAnimationFrame','cancelAnimationFrame','fetch','localStorage',source);
+  await run(()=>controller=createController(),sampleFace,document,window,()=>({matches:false}),{now:()=>time},
     requestAnimationFrame,cancelAnimationFrame,async()=>({ok:true,json:async()=>data}),{getItem:key=>storage.get(key)??null,setItem:(key,value)=>{if(failSave)throw new Error('storage');storage.set(key,value);}});
   const tick=()=>{const jobs=[...raf.values()];raf.clear();for(const fn of jobs)fn(time);};
   return {get,buttons,document,window,tick,raf,controller,storage,setTime(t){time=t;}};
