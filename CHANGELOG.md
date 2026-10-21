@@ -2,6 +2,7 @@
 
 ## Unreleased — v0.2.0 work in progress
 
+- Follow up a failed physical swipe trial: recognize moderate rightward motion before release, tolerate a slight diagonal and repeated release coordinates, preserve slider/vertical-scroll exclusions, and allow at most one back navigation per finger. The user confirmed the prior volume and return-button improvements; this swipe correction requires separate physical confirmation.
 - Remap the on-screen volume percentage to approximate signal amplitude while preserving stored codec settings, mute, maximum output and upgrade loudness. Enlarge return, footer and reader targets, add immediate pressed/disabled feedback, and support right-swipe back without stealing slider drags or vertical reading scroll. Cancel stale held controls on page changes. Physical usability acceptance remains separate from real LVGL pointer tests.
 - Explain short input, delayed/failed/empty replies, authentication needs and disconnections with controlled per-turn feedback. Cancel stale tools/audio and coordinate device watchdogs with real progress.
 - Renew an expired gateway route once for safe reads/presence, including verified 404 recovery. Coalesce renewal and never replay uncertain task or call-record writes. This does not establish the cause of the earlier unanswered voice attempt.

@@ -124,6 +124,19 @@ static void ergonomics(pet_ui_view_t *v,const char *mode){
     }else if(!strcmp(mode,"swipe")){
         const pet_page_t nested[]={PET_PAGE_SETTINGS,PET_PAGE_CONNECTION,PET_PAGE_READING,PET_PAGE_VOLUME,PET_PAGE_BRIGHTNESS,PET_PAGE_CAPTIONS,PET_PAGE_MORE,PET_PAGE_PROVISION,PET_PAGE_DETAIL};
         const pet_page_t parent[]={PET_PAGE_HOME,PET_PAGE_MORE,PET_PAGE_HOME,PET_PAGE_SETTINGS,PET_PAGE_SETTINGS,PET_PAGE_SETTINGS,PET_PAGE_SETTINGS,PET_PAGE_CONNECTION,PET_PAGE_CONNECTION};
+        /* Real release reads can repeat the last pressed point. A short,
+         * slightly diagonal stroke should already navigate before the lift. */
+        for(unsigned i=0;i<sizeof(nested)/sizeof(nested[0]);i++){
+            show_page(nested[i]);frame(v);point(120,180,true);point(145,188,true);point(184,204,true);
+            only_page(parent[i]);
+            point(300,207,true);only_page(parent[i]); /* One finger cannot pop two pages. */
+            point(300,207,false);only_page(parent[i]);
+        }
+        show_page(PET_PAGE_SETTINGS);frame(v);
+        point(120,180,true);point(180,216,true);only_page(PET_PAGE_HOME);point(180,216,false);
+        show_page(PET_PAGE_SETTINGS);frame(v);
+        point(120,90,true);point(125,115,true);point(230,116,true);point(230,116,false);
+        only_page(PET_PAGE_SETTINGS); /* A stroke initially locked vertical cannot become back. */
         for(unsigned i=0;i<sizeof(nested)/sizeof(nested[0]);i++){
             show_page(nested[i]);frame(v);point(120,180,true);point(170,182,true);point(240,184,true);point(260,185,false);
             if(page!=parent[i])fprintf(stderr,"swipe from page=%d\n",nested[i]);

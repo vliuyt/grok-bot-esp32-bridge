@@ -322,6 +322,27 @@
       "nativeAndTaskReady": true,
       "audioFault": false,
       "eventDrops": 0
+    },
+    "swipeFollowup": {
+      "date": "2026-10-22",
+      "status": "host_passed_review_and_target_pending",
+      "base": "a3b255e",
+      "redThenGreen": true,
+      "productionLvglCases": [
+        "moderate_diagonal_before_release_all_nested_pages",
+        "sparse_samples_with_repeated_release_coordinates",
+        "one_navigation_per_finger",
+        "initial_vertical_lock",
+        "existing_slider_scroll_short_drift_and_left_swipe_exclusions"
+      ],
+      "fullLocalTests": {
+        "passed": 143,
+        "failed": 0,
+        "skipped": 0
+      },
+      "volumeAndButtonLayoutChanged": false,
+      "actualFailingFingerTraceCaptured": false,
+      "physicalAcceptance": "pending"
     }
   }
 }

@@ -32,6 +32,7 @@ static lv_indev_t *touch_input;
 static struct {bool active,slider;pet_page_t page;lv_point_t start;} return_touch;
 static char last_summary[321];
 static uint32_t last_reader_activity_tick;
+static void return_moved(lv_event_t *event);
 
 static void action(pet_ui_action_kind_t kind,int value){if(callback)callback((pet_ui_action_t){kind,value},callback_context);}
 static void text(lv_obj_t *o,const char *value){if(strcmp(lv_label_get_text(o),value))lv_label_set_text(o,value);}
@@ -48,7 +49,8 @@ static lv_obj_t *label(lv_obj_t *parent,const char *value,int x,int y,int width,
 static lv_obj_t *container(lv_obj_t *parent,int x,int y,int width,int height){
     lv_obj_t *o=lv_obj_create(parent);lv_obj_remove_style_all(o);
     lv_obj_set_pos(o,x,y);lv_obj_set_size(o,width,height);
-    lv_obj_remove_flag(o,LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_CLICKABLE);return o;
+    lv_obj_remove_flag(o,LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(o,return_moved,LV_EVENT_PRESSING,NULL);return o;
 }
 static pet_readability_input_t input(void){
     return (pet_readability_input_t){presented.pose,presented.dialogue,presented.connection,
@@ -105,6 +107,31 @@ static void touch(lv_event_t *event){
         else if(g==PET_GESTURE_STROKE)action(PET_UI_PET,0);
     }else if(code==LV_EVENT_PRESS_LOST)touching=false;
 }
+static void return_sample(lv_indev_t *indev){
+    if(!indev||!return_touch.active||return_touch.page!=page||return_touch.slider)return;
+    if(lv_indev_get_scroll_obj(indev)){return_touch.active=false;return;}
+    lv_point_t end;lv_indev_get_point(indev,&end);
+    int dx=end.x-return_touch.start.x,dy=end.y-return_touch.start.y;
+    int ax=dx<0?-dx:dx,ay=dy<0?-dy:dy;
+    /* Lock a clearly vertical stroke before LVGL starts scrolling. */
+    if(ay>=20&&ay>ax){return_touch.active=false;return;}
+    if(dx>=48&&2*dx>=3*ay){
+        static const pet_page_t parent[PET_PAGE_COUNT]={
+            [PET_PAGE_SETTINGS]=PET_PAGE_HOME,[PET_PAGE_CONNECTION]=PET_PAGE_MORE,
+            [PET_PAGE_READING]=PET_PAGE_HOME,[PET_PAGE_VOLUME]=PET_PAGE_SETTINGS,
+            [PET_PAGE_BRIGHTNESS]=PET_PAGE_SETTINGS,[PET_PAGE_CAPTIONS]=PET_PAGE_SETTINGS,
+            [PET_PAGE_MORE]=PET_PAGE_SETTINGS,[PET_PAGE_PROVISION]=PET_PAGE_CONNECTION,
+            [PET_PAGE_DETAIL]=PET_PAGE_CONNECTION
+        };
+        show_page(parent[page]);action(PET_UI_WAKE,0);
+    }
+}
+static void return_moved(lv_event_t *event){
+    (void)event;
+    /* LVGL sends PRESSING to objects, not to the indev event list. Sample
+     * motion here: the board's release read may only repeat the last point. */
+    return_sample(lv_indev_active());
+}
 static void return_gesture(lv_event_t *event){
     lv_indev_t *indev=lv_event_get_target(event);lv_event_code_t code=lv_event_get_code(event);
     if(code==LV_EVENT_PRESSED){
@@ -112,21 +139,8 @@ static void return_gesture(lv_event_t *event){
         return_touch.active=page!=PET_PAGE_HOME;return_touch.page=page;
         return_touch.slider=origin==volume_slider||origin==brightness_slider;
         lv_indev_get_point(indev,&return_touch.start);
-    }else if(code==LV_EVENT_RELEASED){
-        bool allowed=return_touch.active&&return_touch.page==page&&!return_touch.slider&&!lv_indev_get_scroll_obj(indev);
-        return_touch.active=false;lv_point_t end;lv_indev_get_point(indev,&end);
-        int dx=end.x-return_touch.start.x,dy=end.y-return_touch.start.y;int ay=dy<0?-dy:dy;
-        if(allowed&&dx>=80&&ay<=40&&dx>=2*ay){
-            static const pet_page_t parent[PET_PAGE_COUNT]={
-                [PET_PAGE_SETTINGS]=PET_PAGE_HOME,[PET_PAGE_CONNECTION]=PET_PAGE_MORE,
-                [PET_PAGE_READING]=PET_PAGE_HOME,[PET_PAGE_VOLUME]=PET_PAGE_SETTINGS,
-                [PET_PAGE_BRIGHTNESS]=PET_PAGE_SETTINGS,[PET_PAGE_CAPTIONS]=PET_PAGE_SETTINGS,
-                [PET_PAGE_MORE]=PET_PAGE_SETTINGS,[PET_PAGE_PROVISION]=PET_PAGE_CONNECTION,
-                [PET_PAGE_DETAIL]=PET_PAGE_CONNECTION
-            };
-            show_page(parent[page]);action(PET_UI_WAKE,0);
-        }
-    }else if(code==LV_EVENT_INDEV_RESET)return_touch.active=false;
+    }else if(code==LV_EVENT_RELEASED){return_sample(indev);return_touch.active=false;}
+    else if(code==LV_EVENT_INDEV_RESET)return_touch.active=false;
 }
 static lv_obj_t *button(lv_obj_t *parent,const char *value,int x,int y,int width,int height,lv_event_cb_t cb,int argument){
     lv_obj_t *o=lv_button_create(parent);lv_obj_remove_style_all(o);lv_obj_set_pos(o,x,y);lv_obj_set_size(o,width,height);
@@ -138,6 +152,7 @@ static lv_obj_t *button(lv_obj_t *parent,const char *value,int x,int y,int width
     lv_obj_set_style_shadow_width(o,0,0);lv_obj_set_style_pad_all(o,0,0);
     lv_obj_remove_flag(o,LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_t *txt=label(o,value,0,0,width,PET_FONT_BODY);lv_obj_center(txt);
+    lv_obj_add_event_cb(o,return_moved,LV_EVENT_PRESSING,NULL);
     lv_obj_add_event_cb(o,cb,LV_EVENT_CLICKED,(void *)(intptr_t)argument);return o;
 }
 static void title(pet_page_t target,const char *value){label(pages[target],value,93,49,280,PET_FONT_BODY);}
