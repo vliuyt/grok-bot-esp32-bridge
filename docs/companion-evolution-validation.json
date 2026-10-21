@@ -95,7 +95,7 @@
     "disconnectThenNewQuestion": "pending",
     "deviceAudibleFirstAudioMs": null,
     "interruptionStopMs": null,
-    "reason": "No automated sound at night; requires the user to lower volume and press BOOT. Previous-build success does not certify these changes.",
+    "reason": "A user-confirmed spoken reply after diagnostic installation does not establish ten rounds, interruption, reconnection or long reading. User then reported unusably quiet low volume and difficult touch targets; these usability issues are open.",
     "firstTrial": {
       "result": "failed",
       "userReport": "voice_not_connecting",
@@ -111,7 +111,8 @@
       "safeSessionRebuild": true,
       "readyAfterRebuild": true,
       "cause": "undetermined"
-    }
+    },
+    "singlePostDiagnosticReply": "passed_by_user"
   },
   "knownBoundary": "The earlier unanswered voice attempt remains unexplained. Target compilation, readiness, text and host simulation do not prove audible device acceptance.",
   "silentDeviceStatus": {
@@ -178,6 +179,73 @@
     },
     "fixtureDb": -18.08,
     "failedDeviceInputDb": -42,
-    "nextStep": "Await a close-range user trial without parallel cloud probes or reconnects."
+    "nextStep": "Awaiting one human BOOT utterance with passive two-channel telemetry; no concurrent cloud probes or reconnects.",
+    "closeRangeUserReport": "screen_connecting",
+    "deviceTrialsObserved": {
+      "turns": 4,
+      "replies": 1,
+      "recognizedInputs": 2,
+      "failedTurnInputDb": -39,
+      "lastOutcome": "no_reply_then_safe_reconnect"
+    },
+    "snapshotObserved": "physical_home_hint_hold_BOOT_ready",
+    "quietFixture": {
+      "minus40db": "recognized_and_audio",
+      "minus24db": "recognized_and_audio",
+      "playback": false
+    },
+    "idle45Seconds": "recognized_and_audio",
+    "fullTlsNativePipeline": {
+      "originalStyle": "recognized_and_audio",
+      "companionStyle": "recognized_and_audio",
+      "playback": false,
+      "toolsExecuted": 0,
+      "fixtureHistoryPersisted": false
+    },
+    "microphoneDiagnostic": {
+      "commit": "3efa408267345bb45d53b1563988a41900a73f97",
+      "onlyNumericTelemetry": true,
+      "rawAudioRetained": false,
+      "channelAndGainUnchanged": true,
+      "independentReview": "approved_no_actionable_findings",
+      "audioWorkerSanitizers": "2_passed",
+      "fullLocalTests": {
+        "total": 143,
+        "passed": 143,
+        "failed": 0,
+        "skipped": 0
+      },
+      "targetBytes": 3700128,
+      "sha256": "eeb068e971d134ddf796ecccf0f6d27d1c68c1393952351118473f021128ba05",
+      "freshCompleteBackupVerified": true,
+      "applicationOnlyInstall": "PET_INSTALL_VERIFIED",
+      "postInstall": {
+        "volume": 21,
+        "connection": 2,
+        "linkFlags": 7,
+        "audioFault": false,
+        "eventDrops": 0,
+        "micLeftDb": -100,
+        "micRightDb": -100,
+        "screenHint": "hold_BOOT_to_speak"
+      },
+      "provesFailureCause": false,
+      "humanTrial": {
+        "result": "audible_reply_confirmed",
+        "screenHintConfirmed": "hold_BOOT_to_speak",
+        "macObservedAdditionalTurns": 2,
+        "macObservedAdditionalReplies": 2,
+        "macReconnectionsDuringTrial": 0,
+        "leftDb": -41,
+        "rightDb": -40,
+        "provesPhysicalChannelFault": false,
+        "originalFailureCause": "undetermined"
+      }
+    }
+  },
+  "usabilityFeedback": {
+    "lowVolume": "10_to_20_percent_barely_audible",
+    "touch": "return_requires_5_to_10_attempts",
+    "nextStep": "bounded_design_presented_awaiting_user_choice"
   }
 }
