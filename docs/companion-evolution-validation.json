@@ -555,7 +555,12 @@
         "fullLocalAfterTestFix": 152,
         "reReview": false
       },
-      "runtimeInstallation": "pending"
+      "runtimeInstallation": "installed_ready_waiting_for_one_human_trial",
+      "sourceHead": "c09dd941edcb01a76b6f747a4f6bfd81aeeb17ad",
+      "pairingAndUnrelatedSourcesPreserved": true,
+      "gracefulRestart": true,
+      "observedVolumeSetting": 88,
+      "observedMicGain": 30
     }
   }
 }
