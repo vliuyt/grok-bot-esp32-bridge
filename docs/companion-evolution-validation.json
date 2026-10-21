@@ -2,7 +2,7 @@
   "date": "2026-10-21",
   "branch": "codex/v0.2.0-roadmap",
   "pullRequest": "https://github.com/vliuyt/grok-bot-esp32-bridge/pull/2",
-  "status": "implemented_and_installed_manual_acceptance_pending",
+  "status": "installed_voice_trial_failed_under_investigation",
   "release": false,
   "modules": [
     "voice_reliability",
@@ -88,14 +88,30 @@
   },
   "manualAcceptance": {
     "pettingOnPhysicalScreen": "pending",
-    "tenLowVolumeChineseRounds": "pending",
+    "tenLowVolumeChineseRounds": "not_passed",
     "contextAndSpokenCalculation": "pending",
     "longNativeAnswerPhysicalPagination": "pending",
     "interruptAndRejectOldAudio": "pending",
     "disconnectThenNewQuestion": "pending",
     "deviceAudibleFirstAudioMs": null,
     "interruptionStopMs": null,
-    "reason": "No automated sound at night; requires the user to lower volume and press BOOT. Previous-build success does not certify these changes."
+    "reason": "No automated sound at night; requires the user to lower volume and press BOOT. Previous-build success does not certify these changes.",
+    "firstTrial": {
+      "result": "failed",
+      "userReport": "voice_not_connecting",
+      "volume": 13,
+      "bridgeObservedTurns": 1,
+      "uplinkBytes": 115840,
+      "nativeInputBytes": 173760,
+      "inputDb": -42,
+      "cloudCommitAcknowledged": true,
+      "recognized": false,
+      "responseCreated": false,
+      "timeoutStatus": "no_reply",
+      "safeSessionRebuild": true,
+      "readyAfterRebuild": true,
+      "cause": "undetermined"
+    }
   },
   "knownBoundary": "The earlier unanswered voice attempt remains unexplained. Target compilation, readiness, text and host simulation do not prove audible device acceptance.",
   "silentDeviceStatus": {
@@ -135,8 +151,33 @@
     "No real voice/style/touch/stop-time acceptance claimed for this image; no overnight automated sound or soak."
   ],
   "github": {
-    "status": "pending_push_and_ci",
+    "status": "first_sync_ci_passed",
     "draft": true,
-    "release": false
+    "release": false,
+    "testedHead": "3491cf94adb2c7142b7a82c1a05baf8681562683",
+    "checks": [
+      "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39610994259",
+      "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39610988372"
+    ]
+  },
+  "diagnosisAfterUserFailure": {
+    "silentPublicFixture": {
+      "normalSpeech": {
+        "recognized": true,
+        "nativeAudioReturned": true,
+        "playback": false,
+        "toolsExecuted": 0
+      },
+      "alternateTurnDetectionShape": {
+        "recognized": true,
+        "nativeAudioReturned": true,
+        "playback": false,
+        "toolsExecuted": 0
+      },
+      "conclusion": "Both shapes worked with a fixed public fixture; session-config-shape hypothesis not established, product configuration unchanged."
+    },
+    "fixtureDb": -18.08,
+    "failedDeviceInputDb": -42,
+    "nextStep": "Await a close-range user trial without parallel cloud probes or reconnects."
   }
 }
