@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { randomUUID } from 'node:crypto';
 import { RealtimeSession } from './realtime.mjs';
+import { companionPlan } from './companion-style.mjs';
 import { NativeEventDecoder, taskUpdate } from './native-events.mjs';
 
 export function voiceUpdates(entries, callId, seen, {markSeen=true}={}) {
@@ -16,8 +17,8 @@ export function voiceUpdates(entries, callId, seen, {markSeen=true}={}) {
 }
 
 export class NativeBotSession extends EventEmitter {
-  constructor({ backend, bot, voice = new RealtimeSession(), pollMs = 1000 }) {
-    super(); this.backend = backend; this.bot = bot; this.voice = voice; this.pollMs = pollMs;
+  constructor({ backend, bot, voice = new RealtimeSession(), pollMs = 1000, replyStyle = null }) {
+    super(); this.backend = backend; this.bot = bot; this.voice = voice; this.pollMs = pollMs; this.replyStyle = replyStyle;
     this.callId = randomUUID(); this.closed = false; this.seen = new Set(); this.turns = [];
     this.nudgeSeen=new Set();this.historyAbort=new AbortController();
     this.toolCalls = []; this.nudges = []; this.startedAt = Date.now();
@@ -41,7 +42,7 @@ export class NativeBotSession extends EventEmitter {
     for (const name of ['audio', 'clearAudio', 'state', 'latency', 'responseDone','turnStatus']) this.voice.on(name, event => this.emit(name, event));
     this.voice.on('fault', fault => this.emit('fault', fault));
     this.voice.on('closed', () => { void this.close('disconnected'); });
-    await this.voice.open({ credential, plan, onTool: args => this.tool(args) });
+    await this.voice.open({ credential, plan: this.replyStyle==='companion'?companionPlan(plan):plan, onTool: args => this.tool(args) });
     this.assertOpen();
     await this.backend.gatewayCall('setVoiceCallPresence', { id: this.bot.id, callId: this.callId, isOnTheLine: true, acceptsOverheard: false });
     if (this.closed) {

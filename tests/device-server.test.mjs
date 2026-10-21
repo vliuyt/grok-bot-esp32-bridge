@@ -126,3 +126,14 @@ test('turn feedback is negotiated and late notices cannot affect newer recording
     }finally{socket.destroy();await server.close();}
   }
 });
+
+test('the default device session opts into companion style',async()=>{
+ const {NativeBotSession}=await import('../src/native-bot.mjs');
+ const oldOpen=NativeBotSession.prototype.open,oldClose=NativeBotSession.prototype.close;
+ let style;
+ NativeBotSession.prototype.open=async function(){style=this.replyStyle;};
+ NativeBotSession.prototype.close=async function(){return{saved:true};};
+ let server,socket;
+ try{server=await startDeviceServer({bot:{name:'fixture'},key,host:'127.0.0.1',port:0});socket=await client(server.port);await delay(20);assert.equal(style,'companion');}
+ finally{socket?.destroy();await server?.close();NativeBotSession.prototype.open=oldOpen;NativeBotSession.prototype.close=oldClose;}
+});

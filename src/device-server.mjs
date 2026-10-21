@@ -5,7 +5,7 @@ import { encodeFrame, FrameDecoder, PlaybackQueue } from './device-wire.mjs';
 import { petMessage,encodePetMessage,shortCaption,privateLanPeer,bridgeIdentity } from './pet-protocol.mjs';
 
 export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', port = 8790,bridgeId,
-  sessionFactory = () => new NativeBotSession({ backend, bot }) }) {
+  sessionFactory = () => new NativeBotSession({ backend, bot, replyStyle:'companion' }) }) {
   if (!Buffer.isBuffer(key) || key.length !== 32) throw new Error('INVALID_PAIRING_KEY');
   bridgeId ??= bridgeIdentity(key.toString('hex'));
   let active, connections = 0, paused = false, stopping = false;
