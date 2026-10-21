@@ -19,18 +19,38 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const names={idle:'待机',happy:'开心',greet:'招呼',listen:'聆听',think:'思考',speak:'回答',sleep:'困倦',curious:'好奇',confused:'困惑'};
 const messages={idle:'安静地陪你。',curious:'轻点一下，它会好奇地歪歪头。',happy:'抚摸过后，开心会停留一小会儿。',greet:'不出声，也能和你打个招呼。',listen:'正在模拟聆听。松开 BOOT 后提交。',think:'正在模拟等待回答。此时摸它，不会打断思考。',speak:'正在模拟回答。再按住 BOOT，立即开始新一轮。',sleep:'眯一小会儿。碰一碰就醒来。',confused:'暂时没连上，露个小表情，稍后安静等你。'};
 const captions={idle:'',happy:'再摸一下嘛',greet:'嘿，我在这里',listen:'嗯，我在听',think:'让我想想',speak:'',sleep:'',curious:'嗯？我在呢',confused:'等一下，再试试吧'};
+let readerPages=[],readerPage=0,readerResponding=false;
+const reader=document.querySelector('#reader');
+function closeReader(){reader.hidden=true;readerPages=[];document.querySelector('#reader-text').textContent='';}
+function renderReader(){
+  document.querySelector('#reader-text').textContent=readerPages[readerPage]||'';
+  document.querySelector('#reader-status').textContent=`${readerPage+1} / ${readerPages.length}${readerResponding?' · 回答中':''}`;
+  document.querySelector('#reader-body').scrollTop=0;
+  document.querySelector('#reader-prev').disabled=readerPage===0;document.querySelector('#reader-next').disabled=readerPage+1>=readerPages.length;
+}
+document.querySelector('#caption-window').addEventListener('click',()=>{
+  const state=pet.read(now());if(!data||captionMode===2||!sampleActive||!state.online||!['idle','speak'].includes(state.mode))return;
+  const sample=data.captionCases.find(item=>item.id===(captionCase.value||'chinese'));
+  if(!sample?.readerPages?.length)return;readerPages=[...sample.readerPages];readerPage=0;readerResponding=state.mode==='speak';
+  reader.hidden=false;renderReader();document.querySelector('#reader-close').focus();
+});
+document.querySelector('#reader-close').addEventListener('click',()=>{closeReader();canvas.focus();});
+for(const [id,step]of [['#reader-prev',-1],['#reader-next',1]])document.querySelector(id).addEventListener('click',()=>{
+  const next=readerPage+step;if(next>=0&&next<readerPages.length){readerPage=next;renderReader();}
+});
 let data=null,lastMode='',lastOnline=null,gesture=null,bootSource=null,frameId=null,pageActive=true;
 
 function now(){return performance.now();}
 function act(action){
   const before=pet.read(now()),next=pet.send(action,now());
+  if(['press','disconnect'].includes(action))closeReader();
   if((action==='press'&&next.held)||action==='disconnect'||(action==='cancel'&&before.held))sampleActive=false;
   return next;
 }
 function cancelHold(){if(bootSource){act('cancel');bootSource=null;}}
 function press(source){if(settings.hidden&&bootSource===null){bootSource=source;act('press');}}
 function release(source){if(bootSource===source){act('release');bootSource=null;}}
-function showSettings(){cancelHold();settings.hidden=false;document.querySelector('#close-settings').focus();}
+function showSettings(){closeReader();cancelHold();settings.hidden=false;document.querySelector('#close-settings').focus();}
 function sync(state) {
   if(state.mode!==lastMode){
     lastMode=state.mode;status.textContent=messages[state.mode];
@@ -56,6 +76,7 @@ captionModeControl.addEventListener('change',()=>{
 });
 captionCase.addEventListener('change',()=>{cancelHold();sampleActive=true;pet.select('speak',now());});
 function syncCaption(state){
+  if(captionMode===2||!state.online||!sampleActive||!['idle','speak'].includes(state.mode))closeReader();
   const sample=data.captionCases.find(item=>item.id===(captionCase.value||'chinese'))||data.captionCases[0];
   const text=sampleActive&&state.online&&['idle','speak'].includes(state.mode)?sample.modes[captionMode]:captions[state.mode];
   if(captionText.textContent!==text||lastCaptionMode!==captionMode){captionText.textContent=text;captionWindow.scrollTop=0;}
@@ -93,7 +114,7 @@ function tick(time){
   frameId=requestAnimationFrame(tick);
 }
 for(const button of controls)button.addEventListener('click',()=>{
-  cancelHold();pet.select(button.dataset.mode,now());
+  closeReader();cancelHold();pet.select(button.dataset.mode,now());
 });
 document.querySelector('#pet').addEventListener('click',()=>act('stroke'));
 document.querySelector('#connection').addEventListener('click',()=>{
@@ -116,6 +137,7 @@ window.addEventListener('keydown',event=>{
   if(event.code==='Space'&&(event.target===document.body||event.target===canvas||event.target===boot)){
     event.preventDefault();if(!event.repeat)press('space');
   }
+  if(event.key==='Escape'&&!reader.hidden){closeReader();canvas.focus();}
   if(event.key==='Escape'&&!settings.hidden){settings.hidden=true;canvas.focus();}
 });
 window.addEventListener('keyup',event=>{if(event.code==='Space'&&bootSource==='space'){event.preventDefault();release('space');}});

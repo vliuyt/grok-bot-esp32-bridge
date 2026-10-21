@@ -67,7 +67,7 @@ int main(void) {
         "Let's take a little walk. We can talk about your day and watch the clouds drift by.",
         "今天状态很好🙂！Let's make a tiny plan: 喝杯水，再看看窗外。",
         "",
-        "这是一段用于检查圆屏字幕边界的固定示例。这里不会出现私人聊天内容。长一些的文字可以在完整模式中上下滚动，底部仍然保留实体按键提示和设置入口，切换为简洁时只显示第一句，关闭后隐藏对话正文。"
+        "这是一段用于检查圆屏字幕边界的固定示例。这里不会出现私人聊天内容。长一些的文字可以在完整模式中上下滚动，底部仍然保留实体按键提示和设置入口，切换为简洁时只显示第一句，关闭后隐藏对话正文。接着，小糖和苹果一起坐在窗边，等晚风轻轻吹过。苹果说今天最开心的事就是听你讲故事，小糖眨眨眼，又把窗外的星星数了一遍。这个示例只用于展示分页，翻到最后一段就能读完完整的小故事。"
     };
     for(unsigned c=0;c<5;c++){
         printf("%s{\"id\":",c?",":"");json_string(ids[c]);printf(",\"label\":");json_string(labels[c]);
@@ -76,6 +76,10 @@ int main(void) {
             char text[321];pet_caption_text((pet_caption_mode_t)m,texts[c],text,sizeof(text));
             if(m)putchar(',');json_string(text);
         }
+        printf("],\"readerPages\":[");
+        const char *remaining=texts[c];unsigned segment=0;
+        while(*remaining){char part[301];size_t bytes=pet_caption_text(PET_CAPTION_FULL,remaining,part,sizeof(part));if(!bytes)break;
+            if(segment++)putchar(',');json_string(part);remaining+=bytes;}
         printf("]}");
     }
     printf("],\"moodCases\":[");

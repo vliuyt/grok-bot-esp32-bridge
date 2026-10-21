@@ -8,3 +8,14 @@ main{max-width:1312px;margin:0 auto;padding:46px 44px 44px;display:grid;grid-tem
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;animation:none!important}}
 
 [hidden]{display:none!important}.screen-overlay{position:absolute;inset:10px;z-index:1;pointer-events:none;border-radius:50%;overflow:hidden;container-type:inline-size}.caption-window{position:absolute;left:17.811%;top:71.674%;width:64.378%;height:8.155%;overflow:hidden;pointer-events:none;color:#d7cdd3;font-size:3.433cqw;line-height:1.15;text-align:center}.caption-window p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.caption-window[data-mode=full]{left:19.957%;top:65.451%;width:60.086%;height:16.738%;overflow-y:auto;pointer-events:auto;touch-action:pan-y;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#72606b transparent}.setting-row select{max-width:110px;background:#32272e;border:1px solid #62404f;color:#e8dce2;border-radius:5px;padding:5px 7px;font:inherit}.caption-trial{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin-top:20px;align-items:center;font-size:12px}.caption-trial select{font:inherit;color:var(--ink);background:#fbf9f5;border:1px solid var(--line);border-radius:3px;padding:9px}.caption-trial small{grid-column:1 / 3;color:var(--muted);font-size:10px;line-height:1.6}.settings-title{margin-bottom:18px}.settings .setting-row{margin:13px 0}.settings-note{margin:10px 0}.settings button{margin-top:12px}
+
+.caption-window{pointer-events:auto;cursor:pointer}
+.reader{position:absolute;inset:10px;z-index:2;border-radius:50%;overflow:hidden;background:#101010;color:#f5f3f5;container-type:inline-size}
+.reader button{background:#282228;color:#f5f3f5;border:0;border-radius:5cqw;font-size:6cqw}
+#reader-close{position:absolute;top:9%;left:30.7%;width:38.6%;height:10.7%}
+#reader-status{position:absolute;top:22%;width:100%;margin:0;text-align:center;font-size:4.7cqw;line-height:1.4}
+#reader-body{position:absolute;top:32.8%;left:15.66%;width:68.67%;height:35.4%;overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#72606b transparent}
+#reader-text{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:6.44cqw;line-height:1.35}
+.reader-nav{position:absolute;top:70.8%;left:17.8%;width:64.4%;height:11.2%;display:flex;justify-content:space-between}
+.reader-nav button{width:46.67%;height:100%}.reader button:disabled{cursor:default;opacity:.4}
+.reader-hint{position:absolute;top:86%;width:100%;margin:0;text-align:center;font-size:4.7cqw;color:#c9c3ca}

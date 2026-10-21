@@ -1,4 +1,5 @@
 import tls from 'node:tls';
+import { CaptionBook } from './caption-book.mjs';
 import { NativeBotSession } from './native-bot.mjs';
 import { PcmResampler, validatePcm } from './audio.mjs';
 import { encodeFrame, FrameDecoder, PlaybackQueue } from './device-wire.mjs';
@@ -18,6 +19,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     if (active || paused || stopping || !privateLanPeer(socket.remoteAddress)) { socket.destroy(); return; }
     sockets.add(socket); connections++; stats.reconnects = Math.max(0, connections - 1);
     const call = { socket, session: sessionFactory(), turn: 0, ready: false, recording: false,
+      book:new CaptionBook(),
       up: new PcmResampler(16000, 24000), down: new PcmResampler(24000, 16000) };
     active = call; stats.state = 'connecting'; stats.fault = null;
     calls.add(call);
@@ -29,13 +31,14 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     };
     const control = text => send(2, call.turn, Buffer.from(text));
     const metadata=message=>{if(call.petGeneration&&current())send(2,call.turn,encodePetMessage({...message,generation:call.petGeneration}));};
+    const catalog=()=>{if(call.capabilities?.has('caption_pages'))metadata({op:'caption_catalog',turn:call.turn,...call.book.catalog()});};
     call.playback = new PlaybackQueue(send);
     const updateDrained = () => {
       if (!call.recording && call.playback.available === 20 && !call.playback.queue.length && !call.session.voice?.responseActive) stats.state = 'ready';
     };
     const cleanup = () => {
       if (call.closing) return call.closing;
-      clearTimeout(call.timer);clearInterval(call.clockTimer); sockets.delete(socket);
+      clearTimeout(call.timer);clearInterval(call.clockTimer);call.book.clear(); sockets.delete(socket);
       if (active === call) { active = null; stats.state = 'disconnected'; }
       diagnostic(call.ready ? 'DEVICE_CLOSED_READY' : 'DEVICE_CLOSED_OPENING');
       socket.destroy();
@@ -63,12 +66,13 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     });
     call.session.on('clearAudio', () => {
       if (!current()) return;
+      call.book.clear();catalog();
       call.playback.reset(call.turn); call.down = new PcmResampler(24000, 16000);
       try { control('clear'); } catch (error) { fail(error.message); }
     });
     call.session.on('responseDone', () => {
       if (!current() || call.recording) return;
-      try { call.playback.push(call.down.finish()); call.playback.done(); stats.replies++; updateDrained(); } catch (error) { fail(error.message); }
+      try { call.book.finish();catalog();call.playback.push(call.down.finish()); call.playback.done(); stats.replies++; updateDrained(); } catch (error) { fail(error.message); }
     });
     call.session.on('state', state => {
       if (current() && call.ready && !call.recording && state === 'ready') {
@@ -91,6 +95,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     call.session.on('transcript',event=>{
       if(!current()||!call.petGeneration||call.recording||event.role!=='assistant'||
          (event.turn!=null&&event.turn!==call.voiceTurn))return;
+      try{call.book.receive({turn:call.turn,itemId:event.itemId??'current',text:event.text});catalog();}catch{diagnostic('CAPTION_TEXT_INVALID');}
       const text=shortCaption(event.text);if(!text)return;
       const item=event.itemId??'current';
       if(!call.captionItems.has(item))call.captionItems.set(item,'c-'+(++call.captionSequence));
@@ -113,11 +118,26 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
       const action = payload.toString('utf8');
       if(action.startsWith('{')){
         const message=petMessage(payload);
+        if(message?.op==='caption_read'){
+          if(!call.capabilities?.has('caption_pages')||message.generation!==call.petGeneration||message.turn!==call.turn||turn!==call.turn||call.recording)return;
+          const identity={op:'caption_page',turn:call.turn,request:message.request,version:message.version,page:message.page};
+          const now=performance.now();
+          if(message.request<=(call.readerSequence??0)){metadata({...identity,error:'stale'});return;}
+          call.readerSequence=message.request;
+          if(call.readerAt!=null&&now-call.readerAt<1000){metadata({...identity,error:'busy'});return;}
+          call.readerAt=now;
+          try{
+            const version=message.version||call.book.open().version;
+            metadata({...identity,...call.book.page({version,page:message.page})});
+          }catch(error){metadata({...identity,error:error.message==='CAPTION_STALE'?'stale':'unavailable'});}
+          return;
+        }
         if(message?.op!=='hello'||!bridgeId||call.petGeneration)throw new Error('PET_PROTOCOL');
-        call.petGeneration=message.generation;call.capabilities=new Set((message.capabilities??[]).filter(c=>['turn_status','turn_progress'].includes(c)));stats.petProtocol=2;diagnostic("PET_HELLO");
+        call.petGeneration=message.generation;call.capabilities=new Set((message.capabilities??[]).filter(c=>['turn_status','turn_progress','caption_pages'].includes(c)));stats.petProtocol=2;diagnostic("PET_HELLO");
         metadata({op:'hello',v:2,bridgeId,...(message.capabilities?{capabilities:[...call.capabilities]}:{})});metadata({op:'link',state:call.ready?'ready':'connecting'});
         metadata({op:'clock',epochMs:Date.now()});
         call.clockTimer=setInterval(()=>{try{metadata({op:'clock',epochMs:Date.now()});}catch(error){fail(error.message);}},30000);call.clockTimer.unref();
+        catalog();
         if(typeof stats.taskReturnAvailable==='boolean')metadata({op:'task_channel',available:stats.taskReturnAvailable});
         return;
       }
@@ -130,7 +150,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
         // beginTurn clears an unfinished old capture without committing it.
         call.turn = turn; call.recording = true; call.up = new PcmResampler(16000, 24000);
         call.energy = 0; call.samples = 0;
-        call.session.beginTurn();call.voiceTurn=call.session.voice?.turn; stats.state = 'recording'; stats.turns++;
+        call.session.beginTurn();call.voiceTurn=call.session.voice?.turn;call.book.start(call.petGeneration,turn);call.captionItems.clear();catalog(); stats.state = 'recording'; stats.turns++;
         clearTimeout(call.timer); call.timer = setTimeout(() => fail('RECORDING_LIMIT'), 60000); call.timer.unref();
       } else if (action === 'release' && turn === call.turn && call.recording) {
         clearTimeout(call.timer); call.session.sendAudio(call.up.finish()); call.recording = false; stats.state = 'waiting';
@@ -138,7 +158,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
         stats.lastInputDb = Math.round(10 * Math.log10((call.energy ?? 0) / Math.max(1, call.samples ?? 0) / 1073741824 + 1e-10));
         control('sent'); call.session.endTurn();
       } else if (action === 'cancel' && turn === call.turn) {
-        clearTimeout(call.timer); call.recording = false; call.session.stopPlayback(); stats.state = 'ready';
+        clearTimeout(call.timer); call.recording = false; call.session.stopPlayback();call.book.clear();catalog(); stats.state = 'ready';
         call.playback.done();
       } else if (action === 'credit') {
         call.playback.credit(turn, 1);

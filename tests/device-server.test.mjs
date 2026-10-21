@@ -137,3 +137,34 @@ test('the default device session opts into companion style',async()=>{
  try{server=await startDeviceServer({bot:{name:'fixture'},key,host:'127.0.0.1',port:0});socket=await client(server.port);await delay(20);assert.equal(style,'companion');}
  finally{socket?.destroy();await server?.close();NativeBotSession.prototype.open=oldOpen;NativeBotSession.prototype.close=oldClose;}
 });
+
+test('negotiated reader reconstructs a frozen native story and rejects stale page requests',async()=>{
+ let session;
+ class Session extends EventEmitter{voice={turn:0};async open(){}beginTurn(){this.voice.turn++;this.emit('clearAudio');}sendAudio(){}endTurn(){}stopPlayback(){this.emit('clearAudio');}async close(){return{saved:true};}}
+ const server=await startDeviceServer({bot:{name:'fixture'},key,host:'127.0.0.1',port:0,sessionFactory:()=>(session=new Session())});
+ const socket=await client(server.port),messages=[];const decoder=new FrameDecoder(f=>{if(f.payload[0]===123)messages.push(JSON.parse(f.payload));});socket.on('data',c=>decoder.push(c));
+ const write=m=>socket.write(encodeFrame(2,m.turn??0,Buffer.from(JSON.stringify(m))));
+ const wait=async predicate=>{for(let i=0;i<200&&!predicate();i++)await delay(5);assert.ok(predicate(),'expected reader frame');};
+ try{
+  write({op:'hello',v:2,generation:7,capabilities:['caption_pages']});await wait(()=>messages.some(m=>m.op==='hello'));
+  assert.deepEqual(messages.find(m=>m.op==='hello').capabilities,['caption_pages']);
+  socket.write(encodeFrame(2,1,Buffer.from('press')));socket.write(encodeFrame(2,1,Buffer.from('release')));await delay(20);
+  const story='苹果在窗边讲故事：“一起散步吧。”🙂\n'.repeat(20);
+  session.emit('transcript',{role:'assistant',turn:1,itemId:'story',text:story});session.emit('responseDone');
+  await wait(()=>messages.some(m=>m.op==='caption_catalog'&&m.available));
+  write({op:'caption_read',generation:7,turn:1,request:1,version:0,page:0});await wait(()=>messages.some(m=>m.op==='caption_page'));
+  const first=messages.find(m=>m.op==='caption_page');assert.ok(first.pages>1);assert.equal(first.responding,false);
+  session.emit('transcript',{role:'assistant',turn:1,itemId:'story',text:'已改变的回答'});
+  let result=first.text;
+  for(let page=1;page<first.pages;page++){
+   await delay(1005);write({op:'caption_read',generation:7,turn:1,request:page+1,version:first.version,page});
+   await wait(()=>messages.some(m=>m.op==='caption_page'&&m.request===page+1));result+=messages.find(m=>m.op==='caption_page'&&m.request===page+1).text;
+  }
+  assert.equal(result,story);
+  const before=messages.filter(m=>m.op==='caption_page').length;
+  socket.write(encodeFrame(2,2,Buffer.from('press')));await delay(20);
+  write({op:'caption_read',generation:7,turn:1,request:100,version:first.version,page:0});await delay(30);
+  assert.equal(messages.filter(m=>m.op==='caption_page').length,before);assert.equal(server.snapshot().fault,null);
+  socket.write(encodeFrame(2,2,Buffer.from('cancel')));await delay(20);
+ }finally{socket.destroy();await server.close();}
+});

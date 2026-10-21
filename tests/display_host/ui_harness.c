@@ -16,6 +16,7 @@ static lv_point_t pointer_point;
 static lv_indev_state_t pointer_state;
 static pet_ui_action_t last_action;
 static unsigned action_count;
+static pet_ui_action_kind_t last_reader_action;
 static pet_state_t activity_model;
 static uint64_t activity_now;
 static unsigned wake_count;
@@ -36,6 +37,7 @@ static void read_pointer(lv_indev_t *d,lv_indev_data_t *data){(void)d;data->poin
 static void point(int x,int y,bool pressed){pointer_point=(lv_point_t){x,y};pointer_state=pressed?LV_INDEV_STATE_PRESSED:LV_INDEV_STATE_RELEASED;lv_tick_inc(20);lv_indev_read(pointer);}
 static void record(pet_ui_action_t event,void *context){
     (void)context;last_action=event;action_count++;
+    if(event.kind>=PET_UI_READER_OPEN)last_reader_action=event.kind;
     if(event.kind==PET_UI_WAKE){wake_count++;pet_note_activity(&activity_model,activity_now);}
 }
 static void frame(pet_ui_view_t *v){pet_ui_update(v);draw(NULL);lv_refr_now(display);}
@@ -172,5 +174,22 @@ int main(int argc,char **argv){
         snprintf(v.caption,sizeof(v.caption),"私密橙子记录");v.passkey=987654;frame(&v);
         assert(raw_hash()!=a);export_now();assert(!memcmp(previous,exported,sizeof(previous)));
     }
+    pet_ui_home();v.caption_mode=PET_CAPTION_FULL;v.dialogue=PET_DIALOGUE_IDLE;v.connection=PET_CONN_READY;
+    v.reader=(pet_reader_t){.enabled=true,.capable=true,.available=true,.active=true,.version=6,.page=0,.pages=3};
+    snprintf(v.reader.text,sizeof(v.reader.text),"这是第一段。这里是完整的中文故事正文，可以上下滚动阅读。翻段由使用者按下大按钮，不会自己跳到下一段。");
+    frame(&v);lv_obj_send_event(caption_box,LV_EVENT_CLICKED,NULL);frame(&v);only_page(PET_PAGE_READING);
+    assert(last_reader_action==PET_UI_READER_OPEN);assert(!strcmp(lv_label_get_text(reader_text),v.reader.text));
+    lv_obj_t *prev=lv_obj_get_parent(find(pages[page],"上一段")),*next_button=lv_obj_get_parent(find(pages[page],"下一段"));
+    assert(lv_obj_get_width(prev)>=132&&lv_obj_get_height(prev)>=48);
+    assert(lv_obj_get_width(next_button)>=132&&lv_obj_get_height(next_button)>=48);
+    assert(lv_obj_has_state(prev,LV_STATE_DISABLED));click("下一段");assert(last_reader_action==PET_UI_READER_NEXT);
+    v.reader.pending=true;frame(&v);assert(!strcmp(lv_label_get_text(reader_text),v.reader.text));assert(find(pages[page],"正在加载"));
+    v.reader.pending=false;v.reader.failed=true;frame(&v);click("点此重试");assert(last_reader_action==PET_UI_READER_RETRY);
+    v.reader.failed=false;v.reader.page=1;strcpy(v.reader.text,"第二段的私密文字");frame(&v);
+    assert(!lv_obj_has_state(prev,LV_STATE_DISABLED));click("上一段");assert(last_reader_action==PET_UI_READER_PREV);
+    uint64_t first_raw=raw_hash();export_now();memcpy(previous,exported,sizeof(previous));
+    v.reader.page=2;strcpy(v.reader.text,"第三段的不同私密文字");frame(&v);assert(raw_hash()!=first_raw);export_now();assert(!memcmp(previous,exported,sizeof(previous)));
+    artifact("firmware-paged-reading");click("返回");assert(last_reader_action==PET_UI_READER_CLOSE);
+    v.reader.active=false;frame(&v);only_page(PET_PAGE_HOME);
     puts("PET_UI_RENDER_OK");return 0;
 }

@@ -18,6 +18,8 @@ static pet_ui_callback_t callback;
 static void *callback_context;
 static lv_obj_t *root,*pages[PET_PAGE_COUNT],*body,*eyes[2],*smiles[2];
 static lv_obj_t *caption,*caption_box,*reader_box,*reader_text,*voice_hint,*handle;
+static lv_obj_t *reader_meta,*reader_nav,*reader_status,*reader_prev,*reader_next,*reader_retry;
+static bool reader_session_seen;
 static lv_obj_t *volume_slider,*brightness_slider,*volume_value,*brightness_value;
 static lv_obj_t *setting_values[3],*more_values[2],*connection_values[3],*caption_buttons[3];
 static lv_obj_t *caption_status,*setup_label,*passkey_label,*setup_button_text,*detail_text,*power_label;
@@ -52,7 +54,7 @@ static pet_readability_input_t input(void){
 }
 static void show_page(pet_page_t next){
     pet_readability_input_t in=input();pet_page_t target=pet_readability_page(next,&in);
-    if(target!=page)touching=false;
+    if(target!=page){touching=false;if(page==PET_PAGE_READING)action(PET_UI_READER_CLOSE,0);}
     page=target;
     for(int i=0;i<PET_PAGE_COUNT;i++)lv_obj_set_flag(pages[i],LV_OBJ_FLAG_HIDDEN,i!=(int)page);
     lv_obj_set_flag(voice_hint,LV_OBJ_FLAG_HIDDEN,page!=PET_PAGE_HOME&&page!=PET_PAGE_READING);
@@ -62,8 +64,13 @@ static void navigate(lv_event_t *e){show_page((pet_page_t)(intptr_t)lv_event_get
 static void open_reader(lv_event_t *e){
     (void)e;pet_readability_input_t in=input();
     if(pet_readability_text(&in).can_read){
-        show_page(PET_PAGE_READING);last_reader_activity_tick=lv_tick_get();action(PET_UI_WAKE,0);
+        reader_session_seen=false;show_page(PET_PAGE_READING);
+        if(presented.reader.capable&&presented.reader.available)action(PET_UI_READER_OPEN,0);
+        last_reader_activity_tick=lv_tick_get();action(PET_UI_WAKE,0);
     }
+}
+static void reader_action(lv_event_t *e){
+    action((pet_ui_action_kind_t)(intptr_t)lv_event_get_user_data(e),0);action(PET_UI_WAKE,0);
 }
 static void reader_activity(lv_event_t *e){
     lv_event_code_t code=lv_event_get_code(e);
@@ -127,10 +134,10 @@ static void provision(lv_event_t *e){(void)e;action(presented.setup_open?PET_UI_
 static void snapshot(void){
 #if LV_USE_SNAPSHOT
     /* UI-task atomic redaction: private body on either page and pairing code. */
-    lv_obj_t *private_objects[]={caption_box,reader_box,passkey_label};bool hidden[3];
-    for(unsigned i=0;i<3;i++){hidden[i]=lv_obj_has_flag(private_objects[i],LV_OBJ_FLAG_HIDDEN);lv_obj_add_flag(private_objects[i],LV_OBJ_FLAG_HIDDEN);}
+    lv_obj_t *private_objects[]={caption_box,reader_box,passkey_label,reader_meta,reader_nav};bool hidden[5];
+    for(unsigned i=0;i<5;i++){hidden[i]=lv_obj_has_flag(private_objects[i],LV_OBJ_FLAG_HIDDEN);lv_obj_add_flag(private_objects[i],LV_OBJ_FLAG_HIDDEN);}
     lv_draw_buf_t *buf=lv_snapshot_take(root,LV_COLOR_FORMAT_RGB565);
-    for(unsigned i=0;i<3;i++)lv_obj_set_flag(private_objects[i],LV_OBJ_FLAG_HIDDEN,hidden[i]);
+    for(unsigned i=0;i<5;i++)lv_obj_set_flag(private_objects[i],LV_OBJ_FLAG_HIDDEN,hidden[i]);
     if(!buf)return;
     char line[48];int count=snprintf(line,sizeof(line),"\nSNAP BEGIN %u %u 144\n",(unsigned)buf->header.w,(unsigned)buf->header.h);
     usb_serial_jtag_write_bytes(line,count,portMAX_DELAY);unsigned char encoded[196];
@@ -166,7 +173,10 @@ static void sync_settings(void){
 static void draw(lv_timer_t *timer){
     (void)timer;xSemaphoreTake(view_lock,portMAX_DELAY);presented=view;
     int next=requested_page;requested_page=-1;bool snap=snapshot_requested;snapshot_requested=false;xSemaphoreGive(view_lock);
-    pet_readability_input_t in=input();show_page(next>=0?(pet_page_t)next:page);
+    pet_readability_input_t in=input();
+    if(page==PET_PAGE_READING&&presented.reader.active)reader_session_seen=true;
+    if(page==PET_PAGE_READING&&reader_session_seen&&!presented.reader.active)next=PET_PAGE_HOME;
+    show_page(next>=0?(pet_page_t)next:page);
     pet_pose_t p=presented.pose;
     if(p.screen_on!=screen_on){screen_on=p.screen_on;pet_board()->panel_sleep(!screen_on);if(screen_on)lv_obj_invalidate(root);}
     if(!screen_on){if(snap)snapshot();return;}
@@ -185,7 +195,19 @@ static void draw(lv_timer_t *timer){
     if(strcmp(last_summary,copy.summary)){snprintf(last_summary,sizeof(last_summary),"%s",copy.summary);lv_label_set_text(caption,last_summary);}
     text(voice_hint,copy.hint);
     lv_obj_set_flag(caption_box,LV_OBJ_FLAG_HIDDEN,!copy.summary[0]);lv_obj_set_flag(caption_box,LV_OBJ_FLAG_CLICKABLE,copy.can_read);
-    const char *full=pet_readability_page(PET_PAGE_READING,&in)==PET_PAGE_READING?presented.caption:"";
+    bool paged=presented.reader.capable&&presented.reader.available;
+    const char *full=pet_readability_page(PET_PAGE_READING,&in)==PET_PAGE_READING?
+        (paged&&presented.reader.active&&presented.reader.text[0]?presented.reader.text:presented.caption):"";
+    lv_obj_set_flag(reader_nav,LV_OBJ_FLAG_HIDDEN,!paged);
+    char status[96];
+    if(!paged)snprintf(status,sizeof(status),"小糖说");
+    else if(presented.reader.pending)snprintf(status,sizeof(status),"正在加载");
+    else if(presented.reader.failed)status[0]=0;
+    else snprintf(status,sizeof(status),"%u / %u%s",(unsigned)presented.reader.page+1,(unsigned)presented.reader.pages,
+        presented.reader.truncated?" · 后续文字未保存":presented.reader.responding?" · 回答中":"");
+    text(reader_status,status);lv_obj_set_flag(reader_retry,LV_OBJ_FLAG_HIDDEN,!paged||!presented.reader.failed);
+    lv_obj_set_state(reader_prev,LV_STATE_DISABLED,presented.reader.pending||!presented.reader.version||presented.reader.page==0);
+    lv_obj_set_state(reader_next,LV_STATE_DISABLED,presented.reader.pending||!presented.reader.version||presented.reader.page+1>=presented.reader.pages);
     if(strcmp(lv_label_get_text(reader_text),full)){text(reader_text,full);lv_obj_scroll_to_y(reader_box,0,LV_ANIM_OFF);}
     sync_settings();if(snap)snapshot();
 }
@@ -219,12 +241,19 @@ static void build(void){
     lv_obj_t *bar=container(handle,26,15,48,4);
     lv_obj_set_style_bg_color(bar,lv_color_hex(0x93858e),0);lv_obj_set_style_bg_opa(bar,LV_OPA_COVER,0);lv_obj_set_style_radius(bar,2,0);
     button(pages[PET_PAGE_READING],"返回",143,42,180,50,navigate,PET_PAGE_HOME);
-    label(pages[PET_PAGE_READING],"小糖说",113,108,240,PET_FONT_HINT);
-    reader_box=container(pages[PET_PAGE_READING],73,160,320,205);
+    reader_meta=container(pages[PET_PAGE_READING],73,101,320,48);
+    reader_status=label(reader_meta,"小糖说",0,8,320,PET_FONT_HINT);
+    reader_retry=button(reader_meta,"点此重试",40,0,240,48,reader_action,PET_UI_READER_RETRY);
+    lv_obj_add_flag(reader_retry,LV_OBJ_FLAG_HIDDEN);
+    reader_box=container(pages[PET_PAGE_READING],73,153,320,165);
     lv_obj_add_flag(reader_box,LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_CLICKABLE);lv_obj_set_scroll_dir(reader_box,LV_DIR_VER);
     lv_obj_add_event_cb(reader_box,reader_activity,LV_EVENT_ALL,NULL);
     lv_obj_set_scrollbar_mode(reader_box,LV_SCROLLBAR_MODE_AUTO);
     reader_text=label(reader_box,"",0,0,320,PET_FONT_READER);lv_obj_set_style_text_align(reader_text,LV_TEXT_ALIGN_LEFT,0);
+    reader_nav=container(pages[PET_PAGE_READING],83,330,300,52);
+    reader_prev=button(reader_nav,"上一段",0,0,140,52,reader_action,PET_UI_READER_PREV);
+    reader_next=button(reader_nav,"下一段",160,0,140,52,reader_action,PET_UI_READER_NEXT);
+    lv_obj_add_flag(reader_nav,LV_OBJ_FLAG_HIDDEN);
     voice_hint=label(root,"语音连接中",103,400,260,PET_FONT_HINT);lv_obj_set_style_text_color(voice_hint,lv_color_hex(0xc9c3ca),0);
     title(PET_PAGE_SETTINGS,"舒服一点");
     row(PET_PAGE_SETTINGS,"音量",0,navigate,PET_PAGE_VOLUME,&setting_values[0]);

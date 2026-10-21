@@ -29,6 +29,7 @@ static atomic_uint phase,emergency_reasons,event_drops;
 static bool dirty,network_connected,mac_connected;
 static uint64_t dirty_at,last_power;
 static pet_caption_buffer_t captions;
+static pet_reader_t reader;
 static pet_caption_mode_t caption_mode=PET_CAPTION_COMPACT;
 static bool caption_save_failed;
 static uint64_t now_ms(void){return (uint64_t)esp_timer_get_time()/1000;}
@@ -52,7 +53,7 @@ static bool control(const char *name,uint32_t g,uint32_t t){
 static void effects(uint32_t fx,pet_event_kind_t kind){
     pet_state_t s=pet_app_state();atomic_store(&phase,10);
     if(fx&(PET_FX_START|PET_FX_CANCEL)){
-        xSemaphoreTake(metadata_lock,portMAX_DELAY);pet_caption_reset(&captions);ui.caption[0]=0;xSemaphoreGive(metadata_lock);
+        xSemaphoreTake(metadata_lock,portMAX_DELAY);pet_caption_reset(&captions);ui.caption[0]=0;pet_reader_close(&reader);reader.available=false;xSemaphoreGive(metadata_lock);
     }
     if(fx&PET_FX_START){
         pet_ui_home();pet_audio_clear(s.generation,s.turn);
@@ -76,6 +77,8 @@ static void effects(uint32_t fx,pet_event_kind_t kind){
 static void reduce(pet_event_t event){
     if(event.kind==PET_EV_PRESS&&pet_app_state().setup)pet_provision_open(false);
     xSemaphoreTake(model_lock,portMAX_DELAY);uint32_t fx=pet_step(&model,event);xSemaphoreGive(model_lock);
+    pet_state_t state=pet_app_state();
+    xSemaphoreTake(metadata_lock,portMAX_DELAY);pet_reader_sync(&reader,&state,caption_mode,now_ms());xSemaphoreGive(metadata_lock);
     effects(fx,event.kind);atomic_store(&phase,13);
 }
 static void audio_event(pet_event_t event,void *ctx){(void)ctx;pet_app_post(event);}
@@ -96,7 +99,7 @@ static void ui_action(pet_ui_action_t action,void *ctx){
 void pet_app_caption(uint32_t g,uint32_t t,const char *text){
     pet_state_t state=pet_app_state();
     xSemaphoreTake(metadata_lock,portMAX_DELAY);
-    pet_caption_receive(&captions,&state,g,t,text);
+    if(caption_mode!=PET_CAPTION_OFF)pet_caption_receive(&captions,&state,g,t,text);
     xSemaphoreGive(metadata_lock);
 }
 void pet_app_network(bool connected,const char *detail){
@@ -105,6 +108,14 @@ void pet_app_network(bool connected,const char *detail){
 }
 void pet_app_setup_status(const char *detail,int passkey){
     xSemaphoreTake(metadata_lock,portMAX_DELAY);snprintf(ui.setup,sizeof(ui.setup),"%s",detail);ui.passkey=passkey;xSemaphoreGive(metadata_lock);
+}
+static void link_catalog(uint32_t g,uint32_t t,bool available,bool responding,bool truncated,void *ctx){
+    (void)ctx;pet_state_t state=pet_app_state();xSemaphoreTake(metadata_lock,portMAX_DELAY);
+    pet_reader_sync(&reader,&state,caption_mode,now_ms());pet_reader_catalog(&reader,g,t,available,responding,truncated);xSemaphoreGive(metadata_lock);
+}
+static void link_reader(const pet_reader_page_t *page,void *ctx){
+    (void)ctx;pet_state_t state=pet_app_state();xSemaphoreTake(metadata_lock,portMAX_DELAY);
+    pet_reader_sync(&reader,&state,caption_mode,now_ms());pet_reader_receive(&reader,page);xSemaphoreGive(metadata_lock);
 }
 static void handle_action(pet_ui_action_t action){
     uint64_t now=now_ms();
@@ -120,6 +131,17 @@ static void handle_action(pet_ui_action_t action){
         }
         return;
     }
+    if(action.kind>=PET_UI_READER_OPEN&&action.kind<=PET_UI_READER_CLOSE){
+        pet_reader_request_t request;bool send=false;pet_state_t state=pet_app_state();
+        xSemaphoreTake(metadata_lock,portMAX_DELAY);pet_reader_sync(&reader,&state,caption_mode,now);
+        if(action.kind==PET_UI_READER_CLOSE)pet_reader_close(&reader);
+        else send=pet_reader_begin(&reader,(pet_reader_intent_t)(action.kind-PET_UI_READER_OPEN),now,&request);
+        xSemaphoreGive(metadata_lock);
+        if(send&&(!transport.reader||!transport.reader(&request,transport.context))){
+            xSemaphoreTake(metadata_lock,portMAX_DELAY);if(reader.request==request.request){reader.pending=false;reader.failed=true;}xSemaphoreGive(metadata_lock);
+        }
+        return;
+    }
     if(action.kind==PET_UI_SETUP_OPEN||action.kind==PET_UI_SETUP_CLOSE){
         bool open=action.kind==PET_UI_SETUP_OPEN;
         reduce((pet_event_t){.kind=PET_EV_SETUP,.now_ms=now,.value=open});
@@ -129,7 +151,9 @@ static void handle_action(pet_ui_action_t action){
     if(action.kind==PET_UI_CAPTIONS){
         pet_caption_mode_t next=(pet_caption_mode_t)action.value;
         if(pet_caption_mode_valid(next)&&pet_store_caption_mode_save(next)){
-            caption_mode=next;caption_save_failed=false;
+            xSemaphoreTake(metadata_lock,portMAX_DELAY);caption_mode=next;caption_save_failed=false;
+            if(next==PET_CAPTION_OFF){pet_caption_reset(&captions);ui.caption[0]=0;pet_reader_close(&reader);reader.available=false;}
+            xSemaphoreGive(metadata_lock);
         }else caption_save_failed=true;
         return;
     }
@@ -151,6 +175,7 @@ static void refresh(void){
     uint64_t now=now_ms();pet_state_t s=pet_app_state();pet_config_t c=pet_app_config();
     xSemaphoreTake(metadata_lock,portMAX_DELAY);
     pet_caption_current(&captions,&s,PET_CAPTION_FULL,ui.caption,sizeof(ui.caption));
+    pet_reader_sync(&reader,&s,caption_mode,now);ui.reader=reader;
     ui.caption_mode=caption_mode;ui.caption_save_failed=caption_save_failed;
     ui.pose=pet_pose(&s,now);ui.dialogue=s.dialogue;ui.connection=s.connection;ui.notice=s.notice;
     ui.volume=c.volume;ui.brightness=c.brightness;ui.quiet=c.quiet;ui.speaker=c.speaker;
@@ -214,8 +239,8 @@ void app_main(void){
     if(pet_provision_start(provisioning)!=ESP_OK)pet_app_setup_status("蓝牙不可用，可用 USB 配网",0);
     pet_network_callbacks_t networking={.current=current_config,.commit=commit_network,.status=network_status,.result=network_result};
     if(pet_network_start(networking)!=ESP_OK)pet_app_network(false,"Wi-Fi 启动失败，离线互动可用");
-    pet_app_bind_transport((pet_transport_t){.control=pet_link_control,.capture=pet_link_capture,.credit=pet_link_credit,.reconnect=pet_link_reconnect,.sleep=pet_link_sleep});
-    if(pet_link_start((pet_link_callbacks_t){.config=current_config,.state=link_state,.event=link_event,.caption=link_caption,.status=link_status})!=ESP_OK)pet_app_setup_status("语音连接启动失败",0);
+    pet_app_bind_transport((pet_transport_t){.control=pet_link_control,.reader=pet_link_reader,.capture=pet_link_capture,.credit=pet_link_credit,.reconnect=pet_link_reconnect,.sleep=pet_link_sleep});
+    if(pet_link_start((pet_link_callbacks_t){.config=current_config,.state=link_state,.event=link_event,.caption=link_caption,.reader_catalog=link_catalog,.reader_page=link_reader,.status=link_status})!=ESP_OK)pet_app_setup_status("语音连接启动失败",0);
     bool asleep=false,network_asleep=false;
     for(;;){
         uint64_t now=now_ms();

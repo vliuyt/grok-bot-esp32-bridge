@@ -108,3 +108,12 @@ test('new turn and disconnect clear preview captions rather than replaying them'
   page.get('#caption-case').value='empty';page.get('#caption-case').emit('change');page.tick();
   assert.equal(page.get('#caption-window').hidden,true);
 });
+
+test('preview reader has explicit stable pages and BOOT or off closes it',async()=>{
+ const page=await harness();page.get('#caption-case').value='long';page.get('#caption-case').emit('change');page.tick();
+ page.get('#caption-window').emit('click');page.tick();assert.equal(page.get('#reader').hidden,false);
+ const first=page.get('#reader-text').textContent;assert.ok(first.length>0);assert.match(page.get('#reader-status').textContent,/1 \/ [2-9]/);
+ page.get('#reader-next').emit('click');assert.notEqual(page.get('#reader-text').textContent,first);
+ page.get('#reader-prev').emit('click');assert.equal(page.get('#reader-text').textContent,first);
+ page.window.emit('keydown',{code:'Space',target:page.get('#screen'),repeat:false});page.tick();assert.equal(page.get('#reader').hidden,true);
+});
