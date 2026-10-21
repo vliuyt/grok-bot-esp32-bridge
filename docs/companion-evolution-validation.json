@@ -2,7 +2,7 @@
   "date": "2026-10-21",
   "branch": "codex/v0.2.0-roadmap",
   "pullRequest": "https://github.com/vliuyt/grok-bot-esp32-bridge/pull/2",
-  "status": "installed_swipe_fix_awaiting_physical_trial",
+  "status": "reference_device_ui_usability_confirmed_other_voice_acceptance_pending",
   "release": false,
   "modules": [
     "voice_reliability",
@@ -95,7 +95,7 @@
     "disconnectThenNewQuestion": "pending",
     "deviceAudibleFirstAudioMs": null,
     "interruptionStopMs": null,
-    "reason": "A user-confirmed spoken reply after diagnostic installation does not establish ten rounds, interruption, reconnection or long reading. User then reported unusably quiet low volume and difficult touch targets; these usability issues are open.",
+    "reason": "The user confirmed improved volume, return-button usability and settings right swipe. These scoped confirmations do not establish ten voice rounds, interruption, reconnection, long native reading or measured latency.",
     "firstTrial": {
       "result": "failed",
       "userReport": "voice_not_connecting",
@@ -159,6 +159,11 @@
     "checks": [
       "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39610994259",
       "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39610988372"
+    ],
+    "latestVerifiedCodeHead": "24299372c305339130789f15639e98e4255be2a6",
+    "latestVerifiedCodeChecks": [
+      "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39684122790",
+      "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39684113657"
     ]
   },
   "diagnosisAfterUserFailure": {
@@ -179,7 +184,7 @@
     },
     "fixtureDb": -18.08,
     "failedDeviceInputDb": -42,
-    "nextStep": "Awaiting one human BOOT utterance with passive two-channel telemetry; no concurrent cloud probes or reconnects.",
+    "nextStep": "A subsequent spoken reply was confirmed; original intermittent failure remains unexplained. Keep full voice regression acceptance pending.",
     "closeRangeUserReport": "screen_connecting",
     "deviceTrialsObserved": {
       "turns": 4,
@@ -246,9 +251,9 @@
   "usabilityFeedback": {
     "lowVolume": "10_to_20_percent_barely_audible",
     "touch": "return_requires_5_to_10_attempts",
-    "nextStep": "reproduce_moderate_sparse_and_diagonal_swipes_in_production_UI_then_fix",
+    "nextStep": "retain_remaining_voice_reader_and_reconnection_acceptance_gates",
     "designApproved": true,
-    "status": "return_and_low_volume_confirmed_swipe_fix_awaiting_confirmation",
+    "status": "reference_device_return_volume_and_settings_swipe_confirmed",
     "offlineTests": {
       "total": 143,
       "passed": 143,
@@ -325,7 +330,7 @@
     },
     "swipeFollowup": {
       "date": "2026-10-22",
-      "status": "installed_awaiting_physical_swipe_trial",
+      "status": "settings_right_swipe_confirmed_by_user",
       "base": "a3b255e",
       "redThenGreen": true,
       "productionLvglCases": [
@@ -342,7 +347,17 @@
       },
       "volumeAndButtonLayoutChanged": false,
       "actualFailingFingerTraceCaptured": false,
-      "physicalAcceptance": "pending",
+      "physicalAcceptance": {
+        "date": "2026-10-22",
+        "result": "passed_by_user",
+        "scope": "natural_right_swipe_from_settings_page",
+        "userReport": "basically_every_time_returns",
+        "requestedRepetitions": "3_to_5",
+        "exactCompletedCountReported": false,
+        "installedSha256": "14b744b7551cedc2e6e666a27b70520ef5057daf9f15ab87270f50d3d9133ac6",
+        "readerPagePhysicalSwipe": "not_separately_confirmed",
+        "sliderDragPhysicalExclusion": "not_separately_confirmed"
+      },
       "target": {
         "bytes": 3703680,
         "sha256": "14b744b7551cedc2e6e666a27b70520ef5057daf9f15ab87270f50d3d9133ac6",
@@ -389,6 +404,14 @@
         "audioFault": false,
         "eventDrops": 0
       }
+    },
+    "acceptanceSummary": {
+      "date": "2026-10-22",
+      "returnButton": "user_confirmed_usually_one_tap",
+      "lowVolume": "user_confirmed_improved",
+      "settingsRightSwipe": "user_confirmed_usually_returns_after_followup",
+      "formalSuccessRateMeasured": false
     }
-  }
+  },
+  "updatedDate": "2026-10-22"
 }
