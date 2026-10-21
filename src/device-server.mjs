@@ -1,7 +1,7 @@
 import tls from 'node:tls';
 import { CaptionBook } from './caption-book.mjs';
 import { NativeBotSession } from './native-bot.mjs';
-import { PcmResampler, validatePcm } from './audio.mjs';
+import { PcmResampler, PcmMeter, validatePcm } from './audio.mjs';
 import { encodeFrame, FrameDecoder, PlaybackQueue } from './device-wire.mjs';
 import { petMessage,encodePetMessage,shortCaption,privateLanPeer,bridgeIdentity } from './pet-protocol.mjs';
 
@@ -19,7 +19,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     if (active || paused || stopping || !privateLanPeer(socket.remoteAddress)) { socket.destroy(); return; }
     sockets.add(socket); connections++; stats.reconnects = Math.max(0, connections - 1);
     const call = { socket, session: sessionFactory(), turn: 0, ready: false, recording: false,
-      book:new CaptionBook(),
+      book:new CaptionBook(), outputMeter:new PcmMeter(),
       up: new PcmResampler(16000, 24000), down: new PcmResampler(24000, 16000) };
     active = call; stats.state = 'connecting'; stats.fault = null;
     calls.add(call);
@@ -33,12 +33,14 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     const metadata=message=>{if(call.petGeneration&&current())send(2,call.turn,encodePetMessage({...message,generation:call.petGeneration}));};
     const catalog=()=>{if(call.capabilities?.has('caption_pages'))metadata({op:'caption_catalog',turn:call.turn,...call.book.catalog()});};
     call.playback = new PlaybackQueue(send);
+    const queueAudio = pcm => { call.outputMeter.push(pcm); call.playback.push(pcm); };
     const updateDrained = () => {
       if (!call.recording && call.playback.available === 20 && !call.playback.queue.length && !call.session.voice?.responseActive) stats.state = 'ready';
     };
     const cleanup = () => {
       if (call.closing) return call.closing;
       stats.previousVoiceTrace = call.session.voice?.trace?.snapshot() ?? null;
+      stats.previousOutputAudio = {turn:call.turn,...call.outputMeter.snapshot()};
       clearTimeout(call.timer);clearInterval(call.clockTimer);call.book.clear(); sockets.delete(socket);
       if (active === call) { active = null; stats.state = 'disconnected'; }
       diagnostic(call.ready ? 'DEVICE_CLOSED_READY' : 'DEVICE_CLOSED_OPENING');
@@ -63,7 +65,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     };
     call.session.on('audio', pcm => {
       if (!current() || call.recording) return;
-      try { call.playback.push(call.down.push(pcm)); stats.state = 'speaking'; } catch (error) { fail(error.message); }
+      try { queueAudio(call.down.push(pcm)); stats.state = 'speaking'; } catch (error) { fail(error.message); }
     });
     call.session.on('clearAudio', () => {
       if (!current()) return;
@@ -75,7 +77,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     });
     call.session.on('responseDone', () => {
       if (!current() || call.recording) return;
-      try { call.book.finish();catalog();call.playback.push(call.down.finish()); call.playback.done(); stats.replies++; updateDrained(); } catch (error) { fail(error.message); }
+      try { call.book.finish();catalog();queueAudio(call.down.finish()); call.playback.done(); stats.replies++; updateDrained(); } catch (error) { fail(error.message); }
     });
     call.session.on('state', state => {
       if (current() && call.ready && !call.recording && state === 'ready') {
@@ -152,6 +154,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
         if (turn <= call.turn) return;
         // beginTurn clears an unfinished old capture without committing it.
         call.turn = turn; call.recording = true; call.up = new PcmResampler(16000, 24000);
+        call.outputMeter = new PcmMeter();
         call.energy = 0; call.samples = 0;
         call.session.beginTurn();call.voiceTurn=call.session.voice?.turn;call.book.start(call.petGeneration,turn);call.captionItems.clear();catalog(); stats.state = 'recording'; stats.turns++;
         clearTimeout(call.timer); call.timer = setTimeout(() => fail('RECORDING_LIMIT'), 60000); call.timer.unref();
@@ -196,7 +199,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
   });
   server.on('tlsClientError', () => {});
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, host, resolve); });
-  return { port: server.address().port, snapshot: () => ({ ...stats, voiceTrace:active?.session.voice?.trace?.snapshot()??null, firstAudioMs: [...stats.firstAudioMs], playback:active?{credits:active.playback.available,packets:active.playback.queue.length,bytes:active.playback.bytes,responseActive:!!active.session.voice?.responseActive,recording:active.recording}:null }),
+  return { port: server.address().port, snapshot: () => ({ ...stats, outputAudio:active?{turn:active.turn,...active.outputMeter.snapshot()}:null, voiceTrace:active?.session.voice?.trace?.snapshot()??null, firstAudioMs: [...stats.firstAudioMs], playback:active?{credits:active.playback.available,packets:active.playback.queue.length,bytes:active.playback.bytes,responseActive:!!active.session.voice?.responseActive,recording:active.recording}:null }),
     disconnect: () => active?.socket.destroy(),
     pause: () => { paused = true; active?.socket.destroy(); }, resume: () => { paused = false; },
     close: async () => {

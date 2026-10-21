@@ -2,7 +2,7 @@
   "date": "2026-10-21",
   "branch": "codex/v0.2.0-roadmap",
   "pullRequest": "https://github.com/vliuyt/grok-bot-esp32-bridge/pull/2",
-  "status": "voice_acceptance_failed_again_investigating",
+  "status": "voice_acceptance_failed_device_speaker_inaudible_investigating",
   "release": false,
   "modules": [
     "voice_reliability",
@@ -10,8 +10,8 @@
     "device_reply_style_and_frozen_reader"
   ],
   "host": {
-    "tests": 149,
-    "passed": 149,
+    "tests": 152,
+    "passed": 152,
     "failed": 0,
     "skipped": 0,
     "scope": "local_offline_tests_after_resolving_target_dependencies"
@@ -135,6 +135,31 @@
       "observerErrors": 0,
       "cause": "undetermined",
       "threeRoundsCompleted": false
+    },
+    "screenRecoveryFollowup": {
+      "date": "2026-10-22",
+      "userInitiallyReported": "screen_connecting",
+      "deviceStateReady": true,
+      "sanitizedSnapshotHint": "hold_BOOT_to_talk",
+      "userSubsequentlyConfirmedActualScreenReady": true,
+      "persistentDisplayFreezeEstablished": false
+    },
+    "speakerFollowup": {
+      "date": "2026-10-22",
+      "result": "failed",
+      "userReport": "no_sound_heard",
+      "observedNativeCompletedReplies": 1,
+      "devicePlayedFramesCumulative": 75200,
+      "speakerEnabled": true,
+      "audioFault": false,
+      "volumeSettingInitially": 65,
+      "volumeSettingSubsequentlyObserved": 88,
+      "settingsChangedByAgent": false,
+      "nativeFirstAudioMs": 1208,
+      "deviceAudibleFirstAudioMs": null,
+      "outputSignalLevelMeasured": false,
+      "cause": "undetermined",
+      "limits": "Codec-consumed frames and native completion do not prove speaker audibility. Recognition event count includes interim status and is not a completed-turn count."
     }
   },
   "knownBoundary": "The earlier unanswered voice attempt remains unexplained. Target compilation, readiness, text and host simulation do not prove audible device acceptance.",
@@ -508,6 +533,19 @@
       "firmwareAndAudioSettingsChanged": false,
       "runtimeSourceHead": "899cdb7",
       "humanTraceTrial": "pending"
+    },
+    "outputMeter": {
+      "scope": "numeric_resampled_16kHz_downlink_RMS_peak_and_sample_count_only",
+      "perTurnReset": true,
+      "PCMRetained": false,
+      "PCMOrVolumeChanged": false,
+      "measuresSpeakerSound": false,
+      "targetFirmwareChanged": false,
+      "testsRedThenGreen": true,
+      "fullLocalTests": 152,
+      "fullLocalPassed": 152,
+      "independentReview": "pending",
+      "runtimeInstallation": "pending"
     }
   }
 }

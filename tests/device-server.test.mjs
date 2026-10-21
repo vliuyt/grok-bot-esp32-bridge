@@ -7,6 +7,26 @@ import { startDeviceServer } from '../src/device-server.mjs';
 import { encodeFrame, FrameDecoder } from '../src/device-wire.mjs';
 import {VoiceTrace} from '../src/voice-trace.mjs';
 const key = Buffer.alloc(32, 42);
+test('downlink level measures the actual resampled PCM and resets before a new recording',async()=>{
+  let session;
+  class Session extends EventEmitter {voice={responseActive:false};async open(){}beginTurn(){}sendAudio(){}endTurn(){}async close(){return{saved:true};}}
+  const until=async check=>{const end=performance.now()+2000;while(!check()){assert(performance.now()<end);await delay(5);}};
+  const server=await startDeviceServer({bot:{name:'fixture'},key,host:'127.0.0.1',port:0,sessionFactory:()=>(session=new Session())});
+  const socket=await client(server.port),frames=[];const decoder=new FrameDecoder(f=>frames.push(f));socket.on('data',c=>decoder.push(c));
+  try{
+    await until(()=>server.snapshot().state==='ready');
+    socket.write(encodeFrame(2,1,Buffer.from('press')));socket.write(encodeFrame(2,1,Buffer.from('release')));await until(()=>server.snapshot().state==='waiting');
+    const pcm=Buffer.alloc(8);for(let i=0;i<4;i++)pcm.writeInt16LE(12000,2*i);
+    session.emit('audio',pcm);session.emit('responseDone');await until(()=>frames.some(f=>f.type===3));
+    const output=server.snapshot().outputAudio;
+    assert.equal(output.turn,1);assert.equal(output.samples,3);
+    assert(Math.abs(output.rmsDb-20*Math.log10(12000/32768))<.01);
+    const delivered=Buffer.concat(frames.filter(f=>f.type===3).map(f=>f.payload));
+    assert.equal(delivered.length,6);for(let i=0;i<3;i++)assert.equal(delivered.readInt16LE(i*2),12000);
+    socket.write(encodeFrame(2,2,Buffer.from('press')));await until(()=>server.snapshot().state==='recording');
+    session.emit('audio',pcm);assert.deepEqual(server.snapshot().outputAudio,{turn:2,samples:0,rmsDb:null,peakDb:null});
+  }finally{socket.destroy();await server.close();}
+});
 test('current and previous session diagnostics survive reconnection without old content entering a new trace',async()=>{
   let session;
   class Session extends EventEmitter {
