@@ -49,7 +49,7 @@ The proactive-behavior clock is currently fixed to Shanghai time (UTC+8), with n
 
 Full acoustic interruption/reconnection, physical touch feel, authenticated BLE provisioning and battery behavior still require acceptance. Public packaging changes were host-tested; a second-device clean install has not been tested. See [validation and limitations](docs/VALIDATION.md) for precise boundaries.
 
-`npm test` uses mocks and local compiler checks, with no account access, flashing or acoustic playback. Three target-dependent tests are explicitly skipped until the firmware is built. Optional hardware benches are separate and can make sound.
+`npm test` uses mocks and local compiler checks, with no account access, flashing or acoustic playback. On this development branch, four target-dependent tests, including real LVGL rendering, are explicitly skipped until the firmware dependencies are resolved. All 108 tests passed locally without skips. Optional hardware benches are separate and can make sound.
 
 ## Contributing and licensing
 
