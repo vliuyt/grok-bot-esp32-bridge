@@ -102,3 +102,25 @@ test('a newer press cancels unfinished capture without submitting the previous t
  const server=await startDeviceServer({bot:{name:'fixture'},key,host:'127.0.0.1',port:0,sessionFactory:()=>(session=new Session())});
  const socket=await client(server.port);try{await delay(20);socket.write(encodeFrame(2,1,Buffer.from('press')));socket.write(encodeFrame(2,2,Buffer.from('press')));socket.write(encodeFrame(2,2,Buffer.from('release')));await delay(30);assert.equal(session.begun,2);assert.equal(session.ended,1);assert.equal(server.snapshot().fault,null);}finally{socket.destroy();await server.close();}
 });
+
+test('turn feedback is negotiated and late notices cannot affect newer recording',async()=>{
+  for(const negotiated of [false,true]){
+    let session;
+    class Session extends EventEmitter{
+      voice={turn:0,responseActive:false};async open(){}beginTurn(){this.voice.turn++;}sendAudio(){}endTurn(){}async close(){return{saved:true};}
+    }
+    const server=await startDeviceServer({bot:{name:'fixture'},key,host:'127.0.0.1',port:0,sessionFactory:()=>(session=new Session())});
+    const socket=await client(server.port),frames=[];const decoder=new FrameDecoder(f=>frames.push(f));socket.on('data',c=>decoder.push(c));
+    try{
+      socket.write(encodeFrame(2,0,Buffer.from(JSON.stringify({op:'hello',v:2,generation:7,...(negotiated?{capabilities:['turn_status']}:{})}))));
+      await delay(20);socket.write(encodeFrame(2,1,Buffer.from('press')));socket.write(encodeFrame(2,1,Buffer.from('release')));await delay(20);
+      session.emit('turnStatus',{turn:1,code:'short_input'});await delay(20);
+      const notices=()=>frames.map(f=>{try{return JSON.parse(f.payload);}catch{return null;}}).filter(m=>m?.op==='turn_status');
+      assert.equal(notices().length,negotiated?1:0);
+      if(negotiated)assert.deepEqual(notices()[0],{op:'turn_status',turn:1,code:'short_input',generation:7});
+      socket.write(encodeFrame(2,2,Buffer.from('press')));await delay(20);
+      session.emit('turnStatus',{turn:1,code:'no_reply'});await delay(20);
+      assert.equal(notices().length,negotiated?1:0);assert.equal(server.snapshot().state,'recording');
+    }finally{socket.destroy();await server.close();}
+  }
+});

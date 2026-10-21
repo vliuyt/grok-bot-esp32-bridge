@@ -3,7 +3,7 @@
 
 static bool readable(const pet_readability_input_t *in) {
     char first[5];
-    return in->connection==PET_CONN_READY&&
+    return in->notice==PET_NOTICE_NONE&&in->connection==PET_CONN_READY&&
         (in->dialogue==PET_DIALOGUE_IDLE||in->dialogue==PET_DIALOGUE_SPEAK)&&
         pet_caption_mode_valid(in->caption_mode)&&in->caption_mode!=PET_CAPTION_OFF&&
         pet_caption_text(PET_CAPTION_COMPACT,in->caption,first,sizeof(first))>0;
@@ -12,6 +12,10 @@ pet_readability_text_t pet_readability_text(const pet_readability_input_t *in) {
     pet_readability_text_t out={.hint=in->connection==PET_CONN_READY?"按住 BOOT 说话":"语音连接中"};
     const char *local=NULL;
     if(in->dialogue==PET_DIALOGUE_LISTEN){local="我在听";out.hint="松开 BOOT 后提交";}
+    else if(in->notice>PET_NOTICE_NONE&&in->notice<=PET_NOTICE_AUTH_REQUIRED){
+        static const char *const messages[]={"","还在等回复","正在处理任务","录音太短，请再说一次","暂时没收到回复，请再试","这次没有声音回复，请再试","没听清，请再说一次","这次回答失败，请再试","请在 Mac 检查登录"};
+        local=messages[in->notice];
+    }
     else if(in->dialogue==PET_DIALOGUE_WAIT)local=in->waiting_long?"还在想，稍等我一下":"让我想想";
     else if(in->pose.expression==PET_EXPR_HAPPY)local="好舒服呀";
     else if(in->pose.expression==PET_EXPR_CURIOUS)local="嗯？我在呢";

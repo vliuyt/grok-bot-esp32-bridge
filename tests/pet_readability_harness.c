@@ -13,6 +13,20 @@ static void safe_face(pet_pose_t pose) {
     assert(hypot(f.x+f.width/2-233,f.y+f.height/2-233)+fmax(f.width,f.height)/2<233);
 }
 int main(void) {
+    pet_state_t notice_state;pet_init(&notice_state,0);notice_state.connection=PET_CONN_READY;notice_state.generation=7;
+    pet_step(&notice_state,(pet_event_t){.kind=PET_EV_PRESS,.now_ms=1});
+    pet_step(&notice_state,(pet_event_t){.kind=PET_EV_RELEASE,.now_ms=201});
+    uint32_t notice_fx=pet_step(&notice_state,(pet_event_t){.kind=PET_EV_TURN_STATUS,.generation=7,.turn=1,.value=PET_NOTICE_NO_REPLY,.now_ms=301});
+    assert(notice_state.notice==PET_NOTICE_NO_REPLY&&notice_state.dialogue==PET_DIALOGUE_IDLE&&(notice_fx&PET_FX_CANCEL));
+    pet_step(&notice_state,(pet_event_t){.kind=PET_EV_PRESS,.now_ms=401});
+    pet_step(&notice_state,(pet_event_t){.kind=PET_EV_TURN_STATUS,.generation=7,.turn=1,.value=PET_NOTICE_NO_REPLY,.now_ms=501});
+    assert(notice_state.notice==PET_NOTICE_NONE&&notice_state.dialogue==PET_DIALOGUE_LISTEN);
+    assert(pet_notice_from_code("short_input")==PET_NOTICE_SHORT_INPUT&&pet_notice_from_code("not-a-code")==PET_NOTICE_NONE);
+    pet_readability_input_t failed={.connection=PET_CONN_READY,.caption_mode=PET_CAPTION_OFF,.notice=PET_NOTICE_SHORT_INPUT};
+    pet_readability_text_t failure=pet_readability_text(&failed);
+    assert(failure.local&&!failure.can_read&&strstr(failure.summary,"太短"));
+    failed.notice=PET_NOTICE_NO_REPLY;assert(strstr(pet_readability_text(&failed).summary,"收到回复"));
+    failed.notice=PET_NOTICE_UNRECOGNIZED;assert(strstr(pet_readability_text(&failed).summary,"听清"));
     pet_readability_input_t in={.pose={.expression=PET_EXPR_IDLE,.scale_x=1,.scale_y=1,.eye_open=1},.connection=PET_CONN_READY,.caption_mode=PET_CAPTION_FULL,.caption="你好，苹果。第二句。"};
     pet_readability_text_t text=pet_readability_text(&in);
     assert(!strcmp(text.summary,"你好，苹果。")&&text.can_read&&!text.local);

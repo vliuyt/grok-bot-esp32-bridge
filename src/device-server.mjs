@@ -51,6 +51,9 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
       if (!current()) return;
       stats.fault = /^[A-Z0-9_]+$/.test(code) ? code : 'DEVICE_CONNECTION_FAILED';
       diagnostic(stats.fault);
+      if(code==='AUTH_REQUIRED'&&call.capabilities?.has('turn_status')){
+        try{metadata({op:'turn_status',turn:call.turn,code:'auth_required'});}catch{}
+      }
       try { control('fault'); } catch {}
       void cleanup();
     };
@@ -73,6 +76,13 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
       }
     });
     call.session.on('latency', ({ firstAudioMs }) => { if (current()) { stats.firstAudioMs.push(Math.round(firstAudioMs)); if (stats.firstAudioMs.length > 100) stats.firstAudioMs.shift(); } });
+    call.session.on('turnStatus',event=>{
+      if(!current()||!call.ready||call.recording||event.turn!==call.voiceTurn)return;
+      stats.lastTurnStatus=event.code;
+      if(call.capabilities?.has('turn_status')){
+        try{metadata({op:'turn_status',turn:call.turn,code:event.code});}catch(error){fail(error.message);}
+      }
+    });
     call.session.on('taskChannel', event => { if (current()) { stats.taskReturnAvailable = event.available; stats.taskChannelStatus = event.status ?? null;
       try{metadata({op:'task_channel',available:event.available});}catch(error){fail(error.message);} } });
     call.captionItems=new Map();call.captionSequence=0;
@@ -103,8 +113,8 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
       if(action.startsWith('{')){
         const message=petMessage(payload);
         if(message?.op!=='hello'||!bridgeId||call.petGeneration)throw new Error('PET_PROTOCOL');
-        call.petGeneration=message.generation;stats.petProtocol=2;diagnostic("PET_HELLO");
-        metadata({op:'hello',v:2,bridgeId});metadata({op:'link',state:call.ready?'ready':'connecting'});
+        call.petGeneration=message.generation;call.capabilities=new Set((message.capabilities??[]).filter(c=>c==='turn_status'));stats.petProtocol=2;diagnostic("PET_HELLO");
+        metadata({op:'hello',v:2,bridgeId,...(message.capabilities?{capabilities:[...call.capabilities]}:{})});metadata({op:'link',state:call.ready?'ready':'connecting'});
         metadata({op:'clock',epochMs:Date.now()});
         call.clockTimer=setInterval(()=>{try{metadata({op:'clock',epochMs:Date.now()});}catch(error){fail(error.message);}},30000);call.clockTimer.unref();
         if(typeof stats.taskReturnAvailable==='boolean')metadata({op:'task_channel',available:stats.taskReturnAvailable});

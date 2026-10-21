@@ -48,7 +48,7 @@ static lv_obj_t *container(lv_obj_t *parent,int x,int y,int width,int height){
 }
 static pet_readability_input_t input(void){
     return (pet_readability_input_t){presented.pose,presented.dialogue,presented.connection,
-        presented.caption_mode,presented.waiting_long,presented.caption};
+        presented.caption_mode,presented.waiting_long,presented.caption,presented.notice};
 }
 static void show_page(pet_page_t next){
     pet_readability_input_t in=input();pet_page_t target=pet_readability_page(next,&in);

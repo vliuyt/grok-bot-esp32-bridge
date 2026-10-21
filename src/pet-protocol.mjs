@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { isIP } from 'node:net';
 const utf8=new TextDecoder('utf-8',{fatal:true});
 const uint=value=>Number.isInteger(value)&&value>=0&&value<=0xffffffff;
+export const TURN_STATUS_CODES=Object.freeze(['waiting','working','short_input','no_reply','empty_response','unrecognized','response_failed','auth_required']);
 export function shortCaption(text){return [...String(text).replace(/[\x00-\x1f\x7f]/g,' ').trim()].slice(0,80).join('');}
 export function bridgeIdentity(key){
   if(typeof key!=='string'||!/^[a-f0-9]{64}$/i.test(key))throw new Error('PAIRING_CONFIG');
@@ -25,7 +26,12 @@ export function petMessage(payload,{generation,turn}={}){
   switch(m.op){
     case 'hello':
       if(m.v!==2||(m.bridgeId!=null&&!/^[a-f0-9]{32}$/.test(m.bridgeId)))throw new Error('PET_PROTOCOL');
-      return {op:'hello',v:2,generation:m.generation,...(m.bridgeId?{bridgeId:m.bridgeId}:{})};
+      if(m.capabilities!=null&&(!Array.isArray(m.capabilities)||m.capabilities.length>8||m.capabilities.some(c=>typeof c!=='string'||!/^[a-z_]{1,32}$/.test(c))||new Set(m.capabilities).size!==m.capabilities.length))throw new Error('PET_PROTOCOL');
+      return {op:'hello',v:2,generation:m.generation,...(m.bridgeId?{bridgeId:m.bridgeId}:{}),...(m.capabilities?{capabilities:m.capabilities}:{})};
+    case 'turn_status':
+      if(!uint(m.turn)||!TURN_STATUS_CODES.includes(m.code))throw new Error('PET_PROTOCOL');
+      if(turn!=null&&m.turn!==turn)return null;
+      return {...common,turn:m.turn,code:m.code};
     case 'caption':
       if(!uint(m.turn)||typeof m.id!=='string'||!m.id.length||m.id.length>64||
          typeof m.text!=='string'||[...m.text].length>80||/[\x00-\x1f\x7f]/.test(m.text))throw new Error('PET_PROTOCOL');

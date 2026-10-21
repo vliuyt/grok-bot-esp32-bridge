@@ -15,6 +15,7 @@ typedef struct {
     pet_caption_mode_t caption_mode;
     bool waiting_long;
     const char *caption;
+    pet_notice_t notice;
 } pet_readability_input_t;
 typedef struct {
     char summary[PET_CAPTION_BYTES+1];

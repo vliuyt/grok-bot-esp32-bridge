@@ -9,6 +9,7 @@ typedef struct {
     pet_pose_t pose;
     pet_dialogue_t dialogue;
     pet_connection_t connection;
+    pet_notice_t notice;
     char caption[321],wifi[80],mac[80],voice[80],setup[96];
     int volume,brightness,battery,passkey;
     pet_caption_mode_t caption_mode;

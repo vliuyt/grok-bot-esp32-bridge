@@ -25,7 +25,12 @@ static uint32_t begin(pet_state_t *s,uint64_t now) {
     return PET_FX_CANCEL|PET_FX_START;
 }
 static bool voice_event(pet_event_kind_t kind) {
-    return kind==PET_EV_BUFFERED || kind==PET_EV_PLAYING || kind==PET_EV_RESPONSE_DONE || kind==PET_EV_DRAIN;
+    return kind==PET_EV_BUFFERED || kind==PET_EV_PLAYING || kind==PET_EV_RESPONSE_DONE || kind==PET_EV_DRAIN || kind==PET_EV_TURN_STATUS;
+}
+pet_notice_t pet_notice_from_code(const char *code){
+    static const char *const names[]={"","waiting","working","short_input","no_reply","empty_response","unrecognized","response_failed","auth_required"};
+    if(code)for(unsigned i=1;i<sizeof(names)/sizeof(names[0]);i++)if(!strcmp(code,names[i]))return (pet_notice_t)i;
+    return PET_NOTICE_NONE;
 }
 void pet_init(pet_state_t *s,uint64_t now) {
     memset(s,0,sizeof(*s));
@@ -46,7 +51,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
     switch(e.kind) {
     case PET_EV_PRESS:
         if(s->held) break;
-        s->held=true; s->expired=false; s->setup=false; pet_note_activity(s,e.now_ms);
+        s->held=true; s->expired=false; s->setup=false;s->notice=PET_NOTICE_NONE; pet_note_activity(s,e.now_ms);
         fx=PET_FX_WAKE|PET_FX_CANCEL;
         if(s->connection==PET_CONN_READY) fx|=begin(s,e.now_ms);
         else fx|=PET_FX_CONNECT;
@@ -61,6 +66,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         }
         break;
     case PET_EV_CANCEL:
+        s->notice=PET_NOTICE_NONE;
         fx=PET_FX_CANCEL;
         if(s->dialogue==PET_DIALOGUE_LISTEN) fx|=PET_FX_STOP;
         s->held=false; s->expired=false; s->dialogue=PET_DIALOGUE_IDLE;
@@ -76,7 +82,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         }
         s->generation=e.generation; s->connection=(pet_connection_t)e.value;
         if(e.value==PET_CONN_READY) {
-            s->connection_problem_seen=false; s->confused_until_ms=0;
+            s->connection_problem_seen=false; s->confused_until_ms=0;s->notice=PET_NOTICE_NONE;
         } else if((e.value==PET_CONN_OFFLINE || e.value==PET_CONN_UNAVAILABLE) && !s->connection_problem_seen) {
             s->connection_problem_seen=true; s->confused_until_ms=e.now_ms+2000;
             s->curious_until_ms=s->pet_until_ms=s->greet_until_ms=0;
@@ -86,6 +92,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         break;
     case PET_EV_BUFFERED:
         if(s->dialogue!=PET_DIALOGUE_LISTEN&&s->connection==PET_CONN_READY) {
+            s->notice=PET_NOTICE_NONE;
             bool sleeping=s->life!=PET_LIFE_AWAKE;
             pet_note_activity(s,e.now_ms);if(sleeping)fx|=PET_FX_WAKE;
             if(s->dialogue==PET_DIALOGUE_IDLE || (s->playback_empty&&s->response_done)) {
@@ -136,6 +143,14 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         }
         break;
     case PET_EV_TASK_CHANNEL: s->task_channel=e.value!=0; break;
+    case PET_EV_TURN_STATUS:
+        if(s->dialogue==PET_DIALOGUE_LISTEN||e.value<=PET_NOTICE_NONE||e.value>PET_NOTICE_AUTH_REQUIRED)break;
+        s->notice=(pet_notice_t)e.value;
+        if(e.value>=PET_NOTICE_SHORT_INPUT){
+            s->dialogue=PET_DIALOGUE_IDLE;s->response_cancelled=true;s->playback_empty=true;s->response_done=false;s->level=0;
+            fx|=PET_FX_CANCEL;pet_note_activity(s,e.now_ms);
+        }
+        break;
     case PET_EV_CLOCK:
         if(e.value<0 || e.value>=1440 || !e.day) break;
         if(e.day>s->day) { s->day=e.day; s->greetings_today=0; }
@@ -149,6 +164,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         if(s->dialogue==PET_DIALOGUE_WAIT && e.now_ms-s->entered_ms>=60000) {
             s->dialogue=PET_DIALOGUE_IDLE; s->response_cancelled=true;
             s->confused_until_ms=e.now_ms+2000;
+            s->notice=PET_NOTICE_NO_REPLY;
             fx|=PET_FX_CANCEL; pet_note_activity(s,e.now_ms);
         }
         if(s->dialogue==PET_DIALOGUE_IDLE && !s->held && !s->setup) {
@@ -214,7 +230,7 @@ pet_gesture_t pet_gesture(int x0,int y0,int x1,int y1) {
 }
 bool pet_event_urgent(pet_event_kind_t kind){
     /* Audio buffer/done/drain events share a FIFO: promoting only done would reorder the stream. */
-    return kind==PET_EV_PRESS||kind==PET_EV_RELEASE||kind==PET_EV_CANCEL||kind==PET_EV_LINK;
+    return kind==PET_EV_PRESS||kind==PET_EV_RELEASE||kind==PET_EV_CANCEL||kind==PET_EV_LINK||kind==PET_EV_TURN_STATUS;
 }
 
 bool pet_network_should_sleep(const pet_state_t *state){return state->life==PET_LIFE_SLEEP&&!state->usb;}

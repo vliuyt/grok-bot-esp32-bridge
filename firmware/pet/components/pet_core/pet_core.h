@@ -8,10 +8,13 @@ typedef enum { PET_DIALOGUE_IDLE, PET_DIALOGUE_LISTEN, PET_DIALOGUE_WAIT, PET_DI
 typedef enum { PET_CONN_OFFLINE, PET_CONN_CONNECTING, PET_CONN_READY, PET_CONN_UNAVAILABLE } pet_connection_t;
 typedef enum { PET_EXPR_IDLE, PET_EXPR_HAPPY, PET_EXPR_GREET, PET_EXPR_LISTEN, PET_EXPR_THINK,
                PET_EXPR_SPEAK, PET_EXPR_SLEEP, PET_EXPR_CURIOUS, PET_EXPR_CONFUSED } pet_expression_t;
+typedef enum {PET_NOTICE_NONE,PET_NOTICE_WAITING,PET_NOTICE_WORKING,PET_NOTICE_SHORT_INPUT,
+              PET_NOTICE_NO_REPLY,PET_NOTICE_EMPTY_RESPONSE,PET_NOTICE_UNRECOGNIZED,
+              PET_NOTICE_RESPONSE_FAILED,PET_NOTICE_AUTH_REQUIRED} pet_notice_t;
 typedef enum { PET_EV_TICK, PET_EV_PET, PET_EV_PRESS, PET_EV_RELEASE, PET_EV_CANCEL,
                PET_EV_LINK, PET_EV_BUFFERED, PET_EV_PLAYING, PET_EV_RESPONSE_DONE, PET_EV_DRAIN,
                PET_EV_CLOCK, PET_EV_USB, PET_EV_QUIET, PET_EV_MUTED, PET_EV_SETUP,
-               PET_EV_TASK_CHANNEL, PET_EV_TOUCH_TAP } pet_event_kind_t;
+               PET_EV_TASK_CHANNEL, PET_EV_TOUCH_TAP,PET_EV_TURN_STATUS } pet_event_kind_t;
 enum { PET_FX_NONE=0, PET_FX_START=1, PET_FX_STOP=2, PET_FX_SUBMIT=4, PET_FX_CANCEL=8,
        PET_FX_CONNECT=16, PET_FX_WAKE=32, PET_FX_SAVE_QUOTA=64 };
 typedef struct {
@@ -24,6 +27,7 @@ typedef struct {
     pet_life_t life;
     pet_dialogue_t dialogue;
     pet_connection_t connection;
+    pet_notice_t notice;
     uint64_t now_ms, last_input_ms, started_ms, pet_until_ms, greet_until_ms;
     uint64_t curious_until_ms, confused_until_ms;
     uint64_t next_greet_ms, last_greet_ms, entered_ms, clock_ms;
@@ -41,6 +45,7 @@ typedef struct {
 } pet_pose_t;
 
 void pet_init(pet_state_t *state, uint64_t now_ms);
+pet_notice_t pet_notice_from_code(const char *code);
 /* Caller serializes state; local activity preserves expression and dialogue. */
 void pet_note_activity(pet_state_t *state, uint64_t now_ms);
 uint32_t pet_step(pet_state_t *state, pet_event_t event);

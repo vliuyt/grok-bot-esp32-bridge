@@ -152,7 +152,7 @@ static void refresh(void){
     xSemaphoreTake(metadata_lock,portMAX_DELAY);
     pet_caption_current(&captions,&s,PET_CAPTION_FULL,ui.caption,sizeof(ui.caption));
     ui.caption_mode=caption_mode;ui.caption_save_failed=caption_save_failed;
-    ui.pose=pet_pose(&s,now);ui.dialogue=s.dialogue;ui.connection=s.connection;
+    ui.pose=pet_pose(&s,now);ui.dialogue=s.dialogue;ui.connection=s.connection;ui.notice=s.notice;
     ui.volume=c.volume;ui.brightness=c.brightness;ui.quiet=c.quiet;ui.speaker=c.speaker;
     ui.wifi_online=network_connected;ui.mac_online=mac_connected;ui.setup_open=s.setup;
     ui.task_channel=s.task_channel;ui.waiting_long=s.dialogue==PET_DIALOGUE_WAIT&&now-s.entered_ms>=20000;

@@ -23,3 +23,13 @@ test('pet protocol validates negotiated identity and UTF-8 without breaking lega
   assert(privateLanPeer('192.168.1.9'));assert(privateLanPeer('::ffff:10.0.0.8'));assert(privateLanPeer('127.0.0.1'));
   assert(!privateLanPeer('8.8.8.8'));assert(!privateLanPeer('192.168.1.9/evil'));assert(!privateLanPeer('198.18.0.1'));
 });
+
+test('optional voice status capability keeps legacy hello valid and status identities bounded',()=>{
+  const hello={op:'hello',v:2,generation:7,capabilities:['turn_status']};
+  assert.deepEqual(petMessage(encodePetMessage(hello)),hello);
+  const status={op:'turn_status',generation:7,turn:3,code:'short_input'};
+  assert.deepEqual(petMessage(encodePetMessage(status),{generation:7,turn:3}),status);
+  assert.equal(petMessage(encodePetMessage(status),{generation:7,turn:4}),null);
+  assert.throws(()=>encodePetMessage({...status,code:'arbitrary server text'}),/PET_PROTOCOL/);
+  assert.throws(()=>encodePetMessage({...hello,capabilities:[{}]}),/PET_PROTOCOL/);
+});

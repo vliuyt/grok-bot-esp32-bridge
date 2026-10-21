@@ -24,6 +24,7 @@ static esp_tls_t *tls;
 static atomic_uint generation,current_turn;
 static atomic_bool suspended,reset_requested,connected;
 static atomic_bool hello,native_ready;
+static bool turn_status_capable;
 static pet_link_rx_t receiver;
 static char bridge_id[33];
 static uint64_t last_received,last_ping,connected_at;
@@ -66,6 +67,11 @@ static bool metadata(const void *bytes,size_t n){
  if(!strcmp(op,"hello")){
   const char *id=string(j,"bridgeId");uint32_t version;
   if(hello||!id||strcmp(id,bridge_id)||!number(j,"v",&version)||version!=2){ok=false;goto done;}
+  cJSON *caps=cJSON_GetObjectItemCaseSensitive(j,"capabilities");
+  if(caps){
+   if(!cJSON_IsArray(caps)||cJSON_GetArraySize(caps)>8){ok=false;goto done;}
+   cJSON *cap; cJSON_ArrayForEach(cap,caps){if(!cJSON_IsString(cap)||strlen(cap->valuestring)>32){ok=false;goto done;}if(!strcmp(cap->valuestring,"turn_status"))turn_status_capable=true;}
+  }
   hello=true;if(native_ready)post(PET_EV_LINK,PET_CONN_READY);
  }else if(!hello){ok=false;}
  else if(!strcmp(op,"link")){
@@ -77,6 +83,10 @@ static bool metadata(const void *bytes,size_t n){
   uint32_t turn;const char *caption=string(j,"text");
   if(!caption||strlen(caption)>320||!number(j,"turn",&turn)){ok=false;goto done;}
   if(turn==atomic_load(&current_turn))cb.caption(g,turn,caption,cb.context);
+ }else if(!strcmp(op,"turn_status")){
+  uint32_t turn;pet_notice_t notice=pet_notice_from_code(string(j,"code"));
+  if(!turn_status_capable||notice==PET_NOTICE_NONE||!number(j,"turn",&turn)){ok=false;goto done;}
+  if(turn==atomic_load(&current_turn))cb.event((pet_event_t){.kind=PET_EV_TURN_STATUS,.now_ms=now_ms(),.generation=g,.turn=turn,.value=notice},cb.context);
  }else if(!strcmp(op,"clock")){
   cJSON *v=cJSON_GetObjectItemCaseSensitive(j,"epochMs");
   if(!cJSON_IsNumber(v)||v->valuedouble<1700000000000.0||v->valuedouble>4102444800000.0){ok=false;goto done;}
@@ -119,7 +129,7 @@ static bool connect_bridge(void){
  psk_hint_key_t psk={.key=c.key,.key_size=32,.hint="grok-esp32"};esp_tls_cfg_t cfg={.timeout_ms=5000,.psk_hint_key=&psk};
  tls=esp_tls_init();if(!tls)goto done;
  int fd;if(esp_tls_conn_new_sync(host,strlen(host),port,&cfg,tls)!=1||esp_tls_get_conn_sockfd(tls,&fd)!=ESP_OK||fcntl(fd,F_SETFL,fcntl(fd,F_GETFL,0)|O_NONBLOCK)<0)goto done;
- char greeting[128];snprintf(greeting,sizeof(greeting),"{\"op\":\"hello\",\"v\":2,\"generation\":%u}",(unsigned)atomic_load(&generation));
+ char greeting[160];snprintf(greeting,sizeof(greeting),"{\"op\":\"hello\",\"v\":2,\"generation\":%u,\"capabilities\":[\"turn_status\"]}",(unsigned)atomic_load(&generation));
  ok=send(2,0,greeting,strlen(greeting));
  done:pet_config_wipe(&c,sizeof(c));return ok;
 }
@@ -127,7 +137,7 @@ static void disconnect_bridge(void){
  atomic_store(&connected,false);if(tls){esp_tls_conn_destroy(tls);tls=NULL;}
  post(PET_EV_LINK,PET_CONN_OFFLINE);cb.status(false,cb.context);
  packet_t p;while(xQueueReceive(outgoing,&p,0)==pdTRUE)pet_config_wipe(&p,sizeof(p));
- memset(&receiver,0,sizeof(receiver));hello=native_ready=false;
+ memset(&receiver,0,sizeof(receiver));hello=native_ready=false;turn_status_capable=false;
 }
 static void link_task(void *unused){
  (void)unused;unsigned failures=0;
