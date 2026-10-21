@@ -502,7 +502,12 @@
         "rootFullRegression": 149,
         "reReview": false
       },
-      "runtimeInstallation": "ready_for_scoped_update_after_review_fix"
+      "runtimeInstallation": "installed_and_ready",
+      "runtimeModulesUpdated": 3,
+      "pairingAndUnrelatedSourcesPreserved": true,
+      "firmwareAndAudioSettingsChanged": false,
+      "runtimeSourceHead": "899cdb7",
+      "humanTraceTrial": "pending"
     }
   }
 }
