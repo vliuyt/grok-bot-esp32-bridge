@@ -168,3 +168,19 @@ test('negotiated reader reconstructs a frozen native story and rejects stale pag
   socket.write(encodeFrame(2,2,Buffer.from('cancel')));await delay(20);
  }finally{socket.destroy();await server.close();}
 });
+
+test('timer-originated clearAudio handles catalog backpressure without escaping',async()=>{
+ let session,peer;
+ class Session extends EventEmitter{async open(){}async close(){return{saved:true};}}
+ const original=tls.Server.prototype.emit;
+ tls.Server.prototype.emit=function(name,...args){if(name==='secureConnection')peer=args[0];return original.call(this,name,...args);};
+ let server,socket;
+ try{
+  server=await startDeviceServer({bot:{name:'fixture'},key,host:'127.0.0.1',port:0,sessionFactory:()=>(session=new Session())});socket=await client(server.port);
+  socket.write(encodeFrame(2,0,Buffer.from(JSON.stringify({op:'hello',v:2,generation:7,capabilities:['caption_pages']}))));await delay(25);
+  Object.defineProperty(peer,'writableLength',{configurable:true,get:()=>128*1024+1});
+  let escaped;
+  await new Promise(resolve=>setTimeout(()=>{try{session.emit('clearAudio');}catch(error){escaped=error.message;}resolve();},0));
+  assert.equal(escaped,undefined);assert.equal(server.snapshot().fault,'DEVICE_PIPE_OVERFLOW');assert.equal(server.snapshot().state,'disconnected');
+ }finally{tls.Server.prototype.emit=original;socket?.destroy();await server?.close();}
+});

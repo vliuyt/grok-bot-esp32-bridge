@@ -182,6 +182,16 @@ int main(int argc,char **argv){
     lv_obj_t *prev=lv_obj_get_parent(find(pages[page],"上一段")),*next_button=lv_obj_get_parent(find(pages[page],"下一段"));
     assert(lv_obj_get_width(prev)>=132&&lv_obj_get_height(prev)>=48);
     assert(lv_obj_get_width(next_button)>=132&&lv_obj_get_height(next_button)>=48);
+    lv_obj_scroll_to_y(reader_box,30,LV_ANIM_OFF);frame(&v);
+    for(unsigned phase=0;phase<3;phase++){
+        v.notice=phase==0?PET_NOTICE_WORKING:PET_NOTICE_NONE;
+        v.dialogue=phase==2?PET_DIALOGUE_SPEAK:PET_DIALOGUE_WAIT;
+        frame(&v);only_page(PET_PAGE_READING);
+        assert(!strcmp(lv_label_get_text(reader_text),v.reader.text));assert(v.reader.version==6);
+        assert(lv_obj_get_scroll_y(reader_box)==30);
+    }
+    v.notice=PET_NOTICE_NONE;v.dialogue=PET_DIALOGUE_IDLE;lv_obj_scroll_to_y(reader_box,0,LV_ANIM_OFF);frame(&v);
+    artifact("firmware-paged-reading");
     assert(lv_obj_has_state(prev,LV_STATE_DISABLED));click("下一段");assert(last_reader_action==PET_UI_READER_NEXT);
     v.reader.pending=true;frame(&v);assert(!strcmp(lv_label_get_text(reader_text),v.reader.text));assert(find(pages[page],"正在加载"));
     v.reader.pending=false;v.reader.failed=true;frame(&v);click("点此重试");assert(last_reader_action==PET_UI_READER_RETRY);
@@ -189,7 +199,7 @@ int main(int argc,char **argv){
     assert(!lv_obj_has_state(prev,LV_STATE_DISABLED));click("上一段");assert(last_reader_action==PET_UI_READER_PREV);
     uint64_t first_raw=raw_hash();export_now();memcpy(previous,exported,sizeof(previous));
     v.reader.page=2;strcpy(v.reader.text,"第三段的不同私密文字");frame(&v);assert(raw_hash()!=first_raw);export_now();assert(!memcmp(previous,exported,sizeof(previous)));
-    artifact("firmware-paged-reading");click("返回");assert(last_reader_action==PET_UI_READER_CLOSE);
+    click("返回");assert(last_reader_action==PET_UI_READER_CLOSE);
     v.reader.active=false;frame(&v);only_page(PET_PAGE_HOME);
     puts("PET_UI_RENDER_OK");return 0;
 }

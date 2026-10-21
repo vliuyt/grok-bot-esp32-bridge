@@ -66,9 +66,11 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     });
     call.session.on('clearAudio', () => {
       if (!current()) return;
-      call.book.clear();catalog();
-      call.playback.reset(call.turn); call.down = new PcmResampler(24000, 16000);
-      try { control('clear'); } catch (error) { fail(error.message); }
+      try{
+        call.book.clear();catalog();
+        call.playback.reset(call.turn);call.down=new PcmResampler(24000,16000);
+        control('clear');
+      }catch(error){fail(error.message);}
     });
     call.session.on('responseDone', () => {
       if (!current() || call.recording) return;

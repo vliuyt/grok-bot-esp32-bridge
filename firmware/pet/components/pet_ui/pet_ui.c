@@ -52,8 +52,15 @@ static pet_readability_input_t input(void){
     return (pet_readability_input_t){presented.pose,presented.dialogue,presented.connection,
         presented.caption_mode,presented.waiting_long,presented.caption,presented.notice};
 }
+static bool frozen_reader_valid(void){
+    bool progress=presented.notice==PET_NOTICE_NONE||presented.notice==PET_NOTICE_WAITING||
+        presented.notice==PET_NOTICE_WORKING||presented.notice==PET_NOTICE_PROGRESS;
+    return presented.reader.active&&presented.reader.enabled&&presented.reader.available&&
+        presented.connection==PET_CONN_READY&&presented.dialogue!=PET_DIALOGUE_LISTEN&&
+        pet_caption_mode_valid(presented.caption_mode)&&presented.caption_mode!=PET_CAPTION_OFF&&progress;
+}
 static void show_page(pet_page_t next){
-    pet_readability_input_t in=input();pet_page_t target=pet_readability_page(next,&in);
+    pet_readability_input_t in=input();pet_page_t target=next==PET_PAGE_READING&&frozen_reader_valid()?PET_PAGE_READING:pet_readability_page(next,&in);
     if(target!=page){touching=false;if(page==PET_PAGE_READING)action(PET_UI_READER_CLOSE,0);}
     page=target;
     for(int i=0;i<PET_PAGE_COUNT;i++)lv_obj_set_flag(pages[i],LV_OBJ_FLAG_HIDDEN,i!=(int)page);
@@ -196,8 +203,8 @@ static void draw(lv_timer_t *timer){
     text(voice_hint,copy.hint);
     lv_obj_set_flag(caption_box,LV_OBJ_FLAG_HIDDEN,!copy.summary[0]);lv_obj_set_flag(caption_box,LV_OBJ_FLAG_CLICKABLE,copy.can_read);
     bool paged=presented.reader.capable&&presented.reader.available;
-    const char *full=pet_readability_page(PET_PAGE_READING,&in)==PET_PAGE_READING?
-        (paged&&presented.reader.active&&presented.reader.text[0]?presented.reader.text:presented.caption):"";
+    const char *full=frozen_reader_valid()&&presented.reader.text[0]?presented.reader.text:
+        pet_readability_page(PET_PAGE_READING,&in)==PET_PAGE_READING?presented.caption:"";
     lv_obj_set_flag(reader_nav,LV_OBJ_FLAG_HIDDEN,!paged);
     char status[96];
     if(!paged)snprintf(status,sizeof(status),"小糖说");

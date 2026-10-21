@@ -134,6 +134,9 @@ export class RealtimeSession extends EventEmitter {
   injectUpdate(update) {
     if (this.state === 'closed') return;
     if (this.state === 'recording') { this.updates.push(update); return; }
+    // Native async updates have no response ID/turn correlation contract. Once
+    // sent, a later BOOT must rebuild this session before accepting a new turn.
+    this.unscopedAsync=true;
     this.send({ type: 'async_update.add', event_id: `task-${update.id}`, async_update: {
       topic: 'work_landed', payload: [{ message: { type: 'text', content: update.text }, timestampMs: this.now() }]
     } });
@@ -147,7 +150,7 @@ export class RealtimeSession extends EventEmitter {
   }
   ownsResponse(id) { return Boolean(id) && id === this.responseId && !this.cancelled.has(id) && !['recording', 'closed'].includes(this.state); }
   stopPlayback() {
-    const ambiguous=!!this.responseRequested&&!this.responseId;
+    const ambiguous=(!!this.responseRequested&&!this.responseId)||!!this.unscopedAsync;
     this.monitor.clear(this.turn);
     this.pendingTools.clear(); this.pendingResponse = false; this.responseRequested = false;
     if (this.responseId) this.cancelled.add(this.responseId);

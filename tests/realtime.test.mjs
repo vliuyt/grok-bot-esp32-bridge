@@ -211,3 +211,20 @@ test('a failed response is terminal even when its tool later succeeds',async()=>
   socket.receive({type:'response.output_audio.delta',response_id:'first',delta:'AQA='});
   assert.equal(socket.sent.filter(e=>e.type==='response.create').length,1);assert.equal(audio.length,0);voice.close();
 });
+
+test('a new BOOT cannot relabel delayed unscoped native task audio or text',async()=>{
+ const {socket,voice}=fixture(),audio=[],transcripts=[];
+ voice.on('audio',a=>audio.push(a));voice.on('transcript',t=>transcripts.push(t));
+ const opening=voice.open({credential,plan});socket.receive({type:'session.updated'});await opening;
+ voice.beginTurn();voice.sendAudio(Buffer.alloc(9600));voice.endTurn();
+ socket.receive({type:'response.created',response:{id:'first'}});
+ socket.receive({type:'response.output_audio.delta',response_id:'first',delta:'AQA='});
+ socket.receive({type:'response.done',response:{id:'first',status:'completed'}});
+ voice.injectUpdate({id:'old-task',text:'fixture old task result'});
+ audio.length=0;
+ assert.throws(()=>voice.beginTurn(),/reconnect|closed/i);
+ socket.receive({type:'response.created',response:{id:'delayed-task'}});
+ socket.receive({type:'response.output_audio_transcript.done',response_id:'delayed-task',item_id:'old',transcript:'old result'});
+ socket.receive({type:'response.output_audio.delta',response_id:'delayed-task',delta:'AgA='});
+ assert.equal(voice.state,'closed');assert.equal(audio.length,0);assert.equal(transcripts.length,0);
+});
