@@ -246,9 +246,9 @@
   "usabilityFeedback": {
     "lowVolume": "10_to_20_percent_barely_audible",
     "touch": "return_requires_5_to_10_attempts",
-    "nextStep": "human_return_swipe_and_low_volume_confirmation",
+    "nextStep": "reproduce_moderate_sparse_and_diagonal_swipes_in_production_UI_then_fix",
     "designApproved": true,
-    "status": "installed_awaiting_user_volume_touch_swipe_trial",
+    "status": "return_and_low_volume_confirmed_swipe_failed_under_investigation",
     "offlineTests": {
       "total": 143,
       "passed": 143,
@@ -265,7 +265,13 @@
     "volumeStorageUnchanged": true,
     "maximumOutputUnchanged": true,
     "coordinateCalibrationChanged": false,
-    "physicalAcceptance": "pending",
+    "physicalAcceptance": {
+      "date": "2026-10-22",
+      "installedSha256": "b916003687860294c6bbb746ab466c6109b59d55f45a9cea8cf506f6c7c6f9f8",
+      "returnButton": "user_confirmed_usually_one_tap",
+      "lowVolume": "user_confirmed_improved",
+      "rightSwipe": "user_reported_low_success_rate"
+    },
     "target": {
       "bytes": 3703632,
       "sha256": "b916003687860294c6bbb746ab466c6109b59d55f45a9cea8cf506f6c7c6f9f8",
