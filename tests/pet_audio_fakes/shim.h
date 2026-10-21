@@ -18,12 +18,12 @@ typedef int esp_err_t;
 typedef void* SemaphoreHandle_t;
 typedef void* esp_codec_dev_handle_t;
 typedef struct {int sample_rate,channel,bits_per_sample;} esp_codec_dev_sample_info_t;
-static int writes,amp_on,credits,mutex_takes;
+static int writes,amp_on,credits,mutex_takes,read_left,read_right;
 static inline int esp_codec_dev_open(void *a,void*b){(void)a;(void)b;return 0;}
 static inline int esp_codec_dev_close(void *a){(void)a;return 0;}
 static inline int esp_codec_dev_set_out_vol(void*a,int b){(void)a;(void)b;return 0;}
 static inline int esp_codec_dev_set_in_gain(void*a,float b){(void)a;(void)b;return 0;}
-static inline int esp_codec_dev_read(void*a,void*b,int n){(void)a;(void)b;(void)n;return 0;}
+static inline int esp_codec_dev_read(void*a,void*b,int n){(void)a;int16_t *pcm=b;for(int i=0;i<n/4;i++){int sign=i%2?1:-1;pcm[2*i]=(int16_t)(sign*read_left);pcm[2*i+1]=(int16_t)(sign*read_right);}return 0;}
 static inline int esp_codec_dev_write(void*a,void*b,int n){(void)a;(void)b;(void)n;writes++;return 0;}
 static inline int64_t esp_timer_get_time(void){return 1000000;}
 static inline void *heap_caps_calloc(size_t a,size_t b,int c){(void)c;return calloc(a,b);}

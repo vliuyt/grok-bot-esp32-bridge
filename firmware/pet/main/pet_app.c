@@ -193,11 +193,11 @@ int pet_app_status(char *out,size_t cap,bool compact){
             s.connection==PET_CONN_READY?"true":"false",a.recording?"true":"false",(unsigned)s.turn,(unsigned)a.played_frames,(unsigned)s.generation,a.queued);
     }else {
         xSemaphoreTake(metadata_lock,portMAX_DELAY);bool wifi=network_connected;xSemaphoreGive(metadata_lock);
-        n=snprintf(out,cap,"{\"board\":\"Waveshare ESP32-S3-Touch-AMOLED-1.43C\",\"app\":\"grok-pet\",\"device\":{\"volume\":%u,\"speaker\":%s,\"mic_gain\":%u,\"wifi\":{\"state\":\"%s\"},\"link\":{\"paired\":%s,\"state\":\"%s\"},\"hatch\":{\"state\":\"%s\"}},\"pet\":{\"life\":%d,\"dialogue\":%d,\"generation\":%u,\"turn\":%u,\"heap\":%u,\"psram\":%u,\"audioFault\":%s,\"uptimeMs\":%llu,\"connection\":%d,\"linkFlags\":%u,\"loopMs\":%llu,\"phase\":%u,\"urgentDepth\":%u,\"emergencyReasons\":%u,\"eventDrops\":%u,\"stackConsole\":%u,\"stackNetwork\":%u}}",
+        n=snprintf(out,cap,"{\"board\":\"Waveshare ESP32-S3-Touch-AMOLED-1.43C\",\"app\":\"grok-pet\",\"device\":{\"volume\":%u,\"speaker\":%s,\"mic_gain\":%u,\"wifi\":{\"state\":\"%s\"},\"link\":{\"paired\":%s,\"state\":\"%s\"},\"hatch\":{\"state\":\"%s\"}},\"pet\":{\"life\":%d,\"dialogue\":%d,\"generation\":%u,\"turn\":%u,\"heap\":%u,\"psram\":%u,\"audioFault\":%s,\"uptimeMs\":%llu,\"connection\":%d,\"linkFlags\":%u,\"loopMs\":%llu,\"phase\":%u,\"urgentDepth\":%u,\"emergencyReasons\":%u,\"eventDrops\":%u,\"stackConsole\":%u,\"stackNetwork\":%u,\"micLeftDb\":%d,\"micRightDb\":%d}}",
             c.volume,c.speaker?"true":"false",c.mic_gain,wifi?"connected":"disconnected",c.bridge_paired?"true":"false",
             s.connection==PET_CONN_READY?"Online":"Connecting",s.connection==PET_CONN_READY?"Connected":"Waiting",
             s.life,s.dialogue,(unsigned)s.generation,(unsigned)s.turn,(unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
-            (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM),a.fault?"true":"false",(unsigned long long)now_ms(),s.connection,pet_link_flags(),(unsigned long long)s.now_ms,atomic_load(&phase),(unsigned)uxQueueMessagesWaiting(urgent),atomic_load(&emergency_reasons),atomic_load(&event_drops),pet_console_stack_free(),pet_network_stack_free());
+            (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM),a.fault?"true":"false",(unsigned long long)now_ms(),s.connection,pet_link_flags(),(unsigned long long)s.now_ms,atomic_load(&phase),(unsigned)uxQueueMessagesWaiting(urgent),atomic_load(&emergency_reasons),atomic_load(&event_drops),pet_console_stack_free(),pet_network_stack_free(),a.mic_left_db,a.mic_right_db);
     }
     pet_config_wipe(&c,sizeof(c));return n;
 }

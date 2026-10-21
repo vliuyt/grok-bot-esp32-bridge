@@ -11,7 +11,7 @@ typedef struct {
     void (*fault)(void *context);
     void *context;
 } pet_audio_callbacks_t;
-typedef struct {unsigned queued;uint32_t played_frames,captured_frames;bool recording,powered,fault;} pet_audio_status_t;
+typedef struct {unsigned queued;uint32_t played_frames,captured_frames;bool recording,powered,fault;int mic_left_db,mic_right_db;} pet_audio_status_t;
 esp_err_t pet_audio_start(const pet_config_t *config,pet_audio_callbacks_t callbacks);
 void pet_audio_begin(uint32_t generation,uint32_t turn);
 void pet_audio_finish(void);

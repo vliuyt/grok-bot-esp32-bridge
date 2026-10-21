@@ -27,5 +27,11 @@ int main(void){
  assert(pet_audio_push(1,1,pet_audio_receive_epoch(),pcm,sizeof(pcm))==1);
  assert(pet_pcm_pop(queue,&in_flight));in_flight.epoch=pet_audio_receive_epoch();playback_block(&in_flight);
  assert(writes==writes_before+1);
+ pet_audio_begin(1,2);read_left=64;read_right=8192;capture_block();
+ pet_audio_status_t mic=pet_audio_status();
+ assert(mic.mic_left_db<=-50&&mic.mic_right_db>=-13&&mic.mic_right_db<=-12);
+ assert(mic.mic_right_db-mic.mic_left_db>=40);
+ pet_audio_begin(1,3);read_left=read_right=0;capture_block();mic=pet_audio_status();
+ assert(mic.mic_left_db==-100&&mic.mic_right_db==-100);
  free(queue);puts("SAME_TURN_CLEAR_OK");return 0;
 }
