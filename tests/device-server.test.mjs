@@ -5,7 +5,31 @@ import { EventEmitter, once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { startDeviceServer } from '../src/device-server.mjs';
 import { encodeFrame, FrameDecoder } from '../src/device-wire.mjs';
+import {VoiceTrace} from '../src/voice-trace.mjs';
 const key = Buffer.alloc(32, 42);
+test('current and previous session diagnostics survive reconnection without old content entering a new trace',async()=>{
+  let session;
+  class Session extends EventEmitter {
+    voice={trace:new VoiceTrace(),turn:0};async open(){}async close(){return{saved:true};}
+  }
+  const until=async check=>{const end=performance.now()+2000;while(!check()){assert(performance.now()<end);await delay(5);}};
+  const server=await startDeviceServer({bot:{name:'fixture'},key,host:'127.0.0.1',port:0,sessionFactory:()=>(session=new Session())});
+  let socket;
+  try{
+    socket=await client(server.port);await until(()=>server.snapshot().state==='ready');
+    session.voice.trace.received({type:'input_audio_buffer.committed',item_id:'private-id'},1);
+    assert.equal(server.snapshot().voiceTrace.events.length,1);
+    socket.destroy();await until(()=>server.snapshot().state==='disconnected');
+    assert.equal(server.snapshot().voiceTrace,null);
+    assert.equal(server.snapshot().previousVoiceTrace.events[0].item,1);
+    socket=await client(server.port);await until(()=>server.snapshot().state==='ready');
+    assert.equal(server.snapshot().voiceTrace.events.length,0);
+    assert.equal(server.snapshot().previousVoiceTrace.events.length,1);
+    assert(!JSON.stringify(server.snapshot()).includes('private-id'));
+    server.snapshot().voiceTrace.events.push({event:'mutated'});
+    assert.equal(server.snapshot().voiceTrace.events.length,0);
+  }finally{socket?.destroy();await server.close();}
+});
 test('pet hello negotiates metadata and captions only for the current spoken turn',async()=>{
   let session;
   class Session extends EventEmitter {

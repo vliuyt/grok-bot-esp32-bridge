@@ -1,10 +1,12 @@
 import { EventEmitter } from 'node:events';
 import { validatePcm } from './audio.mjs';
 import {createTurnMonitor} from './voice-turn.mjs';
+import {VoiceTrace} from './voice-trace.mjs';
 
 export class RealtimeSession extends EventEmitter {
   constructor({ socketFactory = (url, protocols) => new WebSocket(url, protocols), now = Date.now,setTimer=setTimeout,clearTimer=clearTimeout } = {}) {
     super(); this.socketFactory = socketFactory; this.now = now; this.state = 'idle';
+    this.trace = new VoiceTrace({now});
     this.turn = 0; this.cancelled = new Set(); this.toolCalls = new Set(); this.pendingTools = new Set(); this.updates = [];
     this.inputTurns=[];this.inputItems=new Map();
     this.monitor=createTurnMonitor({now,setTimer,clearTimer,onStatus:event=>this.emit('turnStatus',event),onExpire:turn=>{
@@ -39,9 +41,11 @@ export class RealtimeSession extends EventEmitter {
   send(frame) {
     if (this.state === 'closed' || this.socket?.readyState !== 1) throw new Error('Voice connection unavailable');
     this.socket.send(JSON.stringify(frame));
+    this.trace.sent(frame, this.turn);
   }
   receive(message, { voice, language }) {
     if (this.state === 'closed') return;
+    this.trace.received(message, this.turn);
     switch (message.type) {
       case 'session.created':
         this.send({ type: 'session.update', session: {

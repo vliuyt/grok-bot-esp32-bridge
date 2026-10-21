@@ -2,6 +2,7 @@
 
 ## Unreleased — v0.2.0 work in progress
 
+- Add bounded, content-free native voice event diagnostics in Mac memory, including the last disconnected session. Preserve an observed 2026-10-22 unanswered human trial as failed; diagnostics do not change audio behavior or establish a fix. Expanded local regression: 148/148, zero skips.
 - Follow up a failed physical swipe trial: recognize moderate rightward motion before release, tolerate a slight diagonal and repeated release coordinates, preserve slider/vertical-scroll exclusions, and allow at most one back navigation per finger. The user confirmed the prior volume and return-button improvements; the subsequent reference-device settings-page trial confirmed that right swipes now basically return every time. This is qualitative feedback, not a measured success rate or full reader/voice acceptance.
 - Remap the on-screen volume percentage to approximate signal amplitude while preserving stored codec settings, mute, maximum output and upgrade loudness. Enlarge return, footer and reader targets, add immediate pressed/disabled feedback, and support right-swipe back without stealing slider drags or vertical reading scroll. Cancel stale held controls on page changes. Physical usability acceptance remains separate from real LVGL pointer tests.
 - Explain short input, delayed/failed/empty replies, authentication needs and disconnections with controlled per-turn feedback. Cancel stale tools/audio and coordinate device watchdogs with real progress.

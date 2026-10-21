@@ -38,6 +38,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     };
     const cleanup = () => {
       if (call.closing) return call.closing;
+      stats.previousVoiceTrace = call.session.voice?.trace?.snapshot() ?? null;
       clearTimeout(call.timer);clearInterval(call.clockTimer);call.book.clear(); sockets.delete(socket);
       if (active === call) { active = null; stats.state = 'disconnected'; }
       diagnostic(call.ready ? 'DEVICE_CLOSED_READY' : 'DEVICE_CLOSED_OPENING');
@@ -195,7 +196,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
   });
   server.on('tlsClientError', () => {});
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, host, resolve); });
-  return { port: server.address().port, snapshot: () => ({ ...stats, firstAudioMs: [...stats.firstAudioMs], playback:active?{credits:active.playback.available,packets:active.playback.queue.length,bytes:active.playback.bytes,responseActive:!!active.session.voice?.responseActive,recording:active.recording}:null }),
+  return { port: server.address().port, snapshot: () => ({ ...stats, voiceTrace:active?.session.voice?.trace?.snapshot()??null, firstAudioMs: [...stats.firstAudioMs], playback:active?{credits:active.playback.available,packets:active.playback.queue.length,bytes:active.playback.bytes,responseActive:!!active.session.voice?.responseActive,recording:active.recording}:null }),
     disconnect: () => active?.socket.destroy(),
     pause: () => { paused = true; active?.socket.destroy(); }, resume: () => { paused = false; },
     close: async () => {

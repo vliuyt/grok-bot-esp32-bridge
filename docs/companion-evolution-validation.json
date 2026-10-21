@@ -2,7 +2,7 @@
   "date": "2026-10-21",
   "branch": "codex/v0.2.0-roadmap",
   "pullRequest": "https://github.com/vliuyt/grok-bot-esp32-bridge/pull/2",
-  "status": "reference_device_ui_usability_confirmed_other_voice_acceptance_pending",
+  "status": "voice_acceptance_failed_again_investigating",
   "release": false,
   "modules": [
     "voice_reliability",
@@ -10,8 +10,8 @@
     "device_reply_style_and_frozen_reader"
   ],
   "host": {
-    "tests": 143,
-    "passed": 143,
+    "tests": 148,
+    "passed": 148,
     "failed": 0,
     "skipped": 0,
     "scope": "local_offline_tests_after_resolving_target_dependencies"
@@ -95,7 +95,7 @@
     "disconnectThenNewQuestion": "pending",
     "deviceAudibleFirstAudioMs": null,
     "interruptionStopMs": null,
-    "reason": "The user confirmed improved volume, return-button usability and settings right swipe. These scoped confirmations do not establish ten voice rounds, interruption, reconnection, long native reading or measured latency.",
+    "reason": "The 2026-10-22 human three-round trial stopped after the first unanswered turn. Input reached Mac but no recognized input, native reply or device playback was observed. UI confirmations remain separate.",
     "firstTrial": {
       "result": "failed",
       "userReport": "voice_not_connecting",
@@ -112,7 +112,30 @@
       "readyAfterRebuild": true,
       "cause": "undetermined"
     },
-    "singlePostDiagnosticReply": "passed_by_user"
+    "singlePostDiagnosticReply": "passed_by_user",
+    "latestTrial": {
+      "date": "2026-10-22",
+      "result": "failed",
+      "userReport": "voice_not_connecting",
+      "firmwareSha256": "14b744b7551cedc2e6e666a27b70520ef5057daf9f15ab87270f50d3d9133ac6",
+      "method": "passive_half_second_status_sampling_human_BOOT_no_parallel_cloud_probes_or_manual_reconnect",
+      "volumeSetting": 65,
+      "micGain": 30,
+      "observedBridgeTurns": 1,
+      "recognizedInputDelta": 0,
+      "nativeReplyDelta": 0,
+      "playedFrames": 0,
+      "inputDb": -44,
+      "nativeInputBytes": 305280,
+      "reconnectDelta": 1,
+      "fault": "VOICE_TURN_UNCERTAIN",
+      "readyAfterRebuild": true,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "observerErrors": 0,
+      "cause": "undetermined",
+      "threeRoundsCompleted": false
+    }
   },
   "knownBoundary": "The earlier unanswered voice attempt remains unexplained. Target compilation, readiness, text and host simulation do not prove audible device acceptance.",
   "silentDeviceStatus": {
@@ -413,5 +436,63 @@
       "formalSuccessRateMeasured": false
     }
   },
-  "updatedDate": "2026-10-22"
+  "updatedDate": "2026-10-22",
+  "diagnosis20261022": {
+    "appVersion": "0.75.0",
+    "appObservedMuteHandling": "server_vad_with_500ms_silence_flush",
+    "deviceAndRuntimeSettingsChanged": false,
+    "realAudioRetained": false,
+    "silentFixedFixture": {
+      "fixture": "public_greeting_trimmed_to_4.66_seconds",
+      "toolsExecuted": 0,
+      "playback": false,
+      "dbMinus44": {
+        "trials": 3,
+        "paddingMs": [
+          0,
+          500,
+          0
+        ],
+        "recognized": [
+          false,
+          false,
+          false
+        ],
+        "audioReturned": [
+          true,
+          true,
+          true
+        ]
+      },
+      "dbMinus24": {
+        "trials": 2,
+        "paddingMs": [
+          0,
+          500
+        ],
+        "recognized": [
+          true,
+          true
+        ],
+        "audioReturned": [
+          true,
+          true
+        ]
+      },
+      "limits": "Fixed clean speech is not the human microphone signal. Returned audio alone does not prove recognition; padding did not establish the human failure cause. No gain or protocol behavior change follows from this comparison."
+    },
+    "nextStep": "bounded_content_free_protocol_trace_before_one_human_trial",
+    "protocolDiagnostics": {
+      "implementation": "bounded_content_free_in_memory_only",
+      "eventsPerSession": 96,
+      "identifierAliasesPerSession": 64,
+      "retainedSessions": "current_and_previous_closed",
+      "audioBehaviorChanged": false,
+      "localTests": 148,
+      "localPassed": 148,
+      "localSkipped": 0,
+      "independentReview": "pending",
+      "runtimeInstallation": "pending"
+    }
+  }
 }

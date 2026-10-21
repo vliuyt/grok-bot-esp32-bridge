@@ -15,6 +15,18 @@ function fixture(options={}) {
   const voice = new RealtimeSession({ socketFactory: () => socket, now: () => 1800000000000,...options });
   return { socket, voice };
 }
+test('a native error remains in the privacy-safe trace after closing the session',async()=>{
+  const {socket,voice}=fixture();const opening=voice.open({credential,plan});
+  socket.receive({type:'session.updated'});await opening;
+  voice.beginTurn();voice.sendAudio(Buffer.alloc(9600));voice.endTurn();
+  socket.receive({type:'input_audio_buffer.committed',item_id:'private-item'});
+  socket.receive({type:'error',error:{type:'server_error',code:'private-code',message:'private-message'}});
+  assert.equal(voice.state,'closed');
+  const trace=voice.trace.snapshot();
+  assert.equal(trace.events.at(-1).event,'error');
+  assert(trace.events.some(e=>e.event==='client.response.create'));
+  assert(!JSON.stringify(trace).includes('private'));
+});
 test('configures native instructions and tools and waits for session acknowledgement', async () => {
   const { socket, voice } = fixture(); let ready = false;
   const opening = voice.open({ credential, plan }).then(() => { ready = true; });
