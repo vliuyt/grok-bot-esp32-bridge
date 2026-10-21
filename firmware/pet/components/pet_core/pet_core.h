@@ -28,6 +28,8 @@ typedef struct {
     pet_dialogue_t dialogue;
     pet_connection_t connection;
     pet_notice_t notice;
+    float warmth;
+    uint64_t warmth_at_ms;
     uint64_t now_ms, last_input_ms, started_ms, pet_until_ms, greet_until_ms;
     uint64_t curious_until_ms, confused_until_ms;
     uint64_t next_greet_ms, last_greet_ms, entered_ms, clock_ms;
@@ -46,6 +48,7 @@ typedef struct {
 
 void pet_init(pet_state_t *state, uint64_t now_ms);
 pet_notice_t pet_notice_from_code(const char *code);
+float pet_warmth(const pet_state_t *state,uint64_t now_ms);
 /* Caller serializes state; local activity preserves expression and dialogue. */
 void pet_note_activity(pet_state_t *state, uint64_t now_ms);
 uint32_t pet_step(pet_state_t *state, pet_event_t event);

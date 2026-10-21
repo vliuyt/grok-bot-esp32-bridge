@@ -12,6 +12,15 @@ void pet_note_activity(pet_state_t *s,uint64_t now) {
     s->life=PET_LIFE_AWAKE;
     s->last_input_ms=now;
 }
+float pet_warmth(const pet_state_t *s,uint64_t now){
+    if(!(s->warmth>0))return 0;
+    uint64_t elapsed=now>s->warmth_at_ms?now-s->warmth_at_ms:0;
+    if(elapsed>=60000)return 0;
+    return fminf(s->warmth,100)*(1-(float)elapsed/60000);
+}
+static void warm(pet_state_t *s,uint64_t now,float amount){
+    s->warmth=fminf(100,pet_warmth(s,now)+amount);s->warmth_at_ms=now;
+}
 static uint32_t begin(pet_state_t *s,uint64_t now) {
     if(s->expired) return PET_FX_NONE;
     s->turn++;
@@ -120,15 +129,17 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         if(s->response_done) { s->dialogue=PET_DIALOGUE_IDLE; s->level=0; pet_note_activity(s,e.now_ms); }
         break;
     case PET_EV_PET:
+        warm(s,e.now_ms,35);
         pet_note_activity(s,e.now_ms); fx|=PET_FX_WAKE;
-        if(s->dialogue==PET_DIALOGUE_IDLE) {
+        if(s->dialogue==PET_DIALOGUE_IDLE&&e.now_ms>=s->confused_until_ms) {
             s->pet_until_ms=e.now_ms+1800;
             s->curious_until_ms=s->confused_until_ms=s->greet_until_ms=0;
         }
         break;
     case PET_EV_TOUCH_TAP:
+        warm(s,e.now_ms,10);
         pet_note_activity(s,e.now_ms); fx|=PET_FX_WAKE;
-        if(s->dialogue==PET_DIALOGUE_IDLE) {
+        if(s->dialogue==PET_DIALOGUE_IDLE&&e.now_ms>=s->confused_until_ms) {
             s->curious_until_ms=e.now_ms+2000;
             s->pet_until_ms=s->confused_until_ms=s->greet_until_ms=0;
         }
@@ -152,6 +163,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         if(e.value==PET_NOTICE_WORKING&&s->dialogue==PET_DIALOGUE_WAIT)s->entered_ms=e.now_ms;
         if(e.value>=PET_NOTICE_SHORT_INPUT){
             s->dialogue=PET_DIALOGUE_IDLE;s->response_cancelled=true;s->playback_empty=true;s->response_done=false;s->level=0;
+            s->confused_until_ms=e.now_ms+2000;
             fx|=PET_FX_CANCEL;pet_note_activity(s,e.now_ms);
         }
         break;
@@ -219,6 +231,10 @@ pet_pose_t pet_pose(const pet_state_t *s,uint64_t now) {
         p.invitation=!s->quiet;
     } else {
         p.scale_y=1+sinf(t*1.3f)*.014f; p.offset_y=sinf(t*1.3f)*3;
+        float warmth=pet_warmth(s,now)/100;
+        p.scale_y+=sinf(t*2)*.012f*warmth;p.offset_y-=warmth*2;
+        p.look_x=sinf(t*.65f)*3*warmth;p.rotation=sinf(t*1.1f)*2*warmth;
+        p.eye_open=1-.15f*warmth;
         if((now+(s->seed%2000))%6200<130) p.eye_open=.08f;
     }
     return p;

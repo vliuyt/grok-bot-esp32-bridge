@@ -35,15 +35,16 @@ static void json_string(const char *text){
     putchar('"');
 }
 int main(void) {
-    const char *names[]={"idle","happy","greet","listen","think","speak","sleep","curious","confused"};
+    const char *names[]={"idle","happy","greet","listen","think","speak","sleep","curious","confused","warm_idle"};
     printf("{\"schema\":1,\"stepMs\":33,\"width\":466,\"height\":466,\"states\":{");
-    for(unsigned n=0;n<9;n++) {
+    for(unsigned n=0;n<10;n++) {
         pet_state_t s;uint64_t start=prepare(&s,names[n]);
         printf("%s\"%s\":[",n?",":"",names[n]);
         for(unsigned i=0;i<=120;i++) {
             uint64_t now=start+i*33;
             if(!strcmp(names[n],"speak"))event(&s,PET_EV_PLAYING,now,180+(i*97)%750);
             event(&s,PET_EV_TICK,now,0);
+            if(!strcmp(names[n],"warm_idle")){s.warmth=100;s.warmth_at_ms=now;}
             pet_pose_t p=pet_pose(&s,now);pet_face_t f=pet_face_geometry(p);
             printf("%s{\"expression\":%d,\"screenOn\":%s,\"dim\":%s,\"x\":%d,\"y\":%d,\"width\":%d,\"height\":%d,\"rotation\":%d,\"eyes\":[",
                    i?",":"",p.expression,p.screen_on?"true":"false",p.dim?"true":"false",f.x,f.y,f.width,f.height,f.rotation);
@@ -75,5 +76,10 @@ int main(void) {
         }
         printf("]}");
     }
+    printf("],\"moodCases\":[");
+    pet_state_t mood;pet_init(&mood,0);event(&mood,PET_EV_PET,100,0);
+    printf("{\"events\":[{\"action\":\"stroke\",\"at\":100}],\"at\":30100,\"warmth\":%.3f},",(double)pet_warmth(&mood,30100));
+    event(&mood,PET_EV_TOUCH_TAP,30100,0);
+    printf("{\"events\":[{\"action\":\"stroke\",\"at\":100},{\"action\":\"tap\",\"at\":30100}],\"at\":30100,\"warmth\":%.3f}",(double)pet_warmth(&mood,30100));
     puts("]}");
 }

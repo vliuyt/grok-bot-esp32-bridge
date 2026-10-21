@@ -69,3 +69,16 @@ test('committed preview frames match the real core and renderer geometry',()=>{
     assert.ok(Object.values(frames.states).every(samples=>samples.length===121));
   } finally {rmSync(dir,{recursive:true,force:true});}
 });
+
+test('preview remembers petting warmth without prolonging voice or transient captions',async()=>{
+  const {createController}=await import('../preview/companion/controller.mjs');
+  const pet=createController();pet.send('stroke',100);
+  assert.equal(pet.read(100).warmth,35);assert.equal(pet.read(30100).warmth,17.5);
+  assert.equal(pet.read(30100).mode,'idle');pet.send('tap',30100);
+  assert.equal(pet.read(30100).warmth,27.5);assert.equal(pet.read(90100).warmth,0);
+  pet.send('press',90200);pet.send('stroke',90300);
+  assert.equal(pet.read(90300).mode,'listen');assert.equal(pet.read(90300).warmth,35);
+  pet.send('disconnect',90400);pet.send('stroke',90500);assert.equal(pet.read(90500).mode,'confused');
+  const cases=JSON.parse(readFileSync('preview/companion/states.json','utf8')).moodCases;
+  for(const sample of cases){const example=createController();for(const event of sample.events)example.send(event.action,event.at);assert.equal(example.read(sample.at).warmth,sample.warmth);}
+});

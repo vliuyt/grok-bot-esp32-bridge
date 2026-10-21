@@ -11,6 +11,23 @@ static void ready(pet_state_t *s,uint64_t now) {
 static void clock_at(pet_state_t *s,uint64_t now,int minute) {
     pet_step(s,(pet_event_t){.kind=PET_EV_CLOCK,.now_ms=now,.value=minute,.day=20261018});
 }
+static void lasting_mood(void){
+    pet_state_t s;pet_init(&s,0);
+    event(&s,PET_EV_PET,100,0);assert(fabsf(pet_warmth(&s,100)-35)<.01f);
+    assert(fabsf(pet_warmth(&s,30100)-17.5f)<.01f);
+    event(&s,PET_EV_TOUCH_TAP,30100,0);assert(fabsf(pet_warmth(&s,30100)-27.5f)<.01f);
+    assert(pet_warmth(&s,90100)==0);
+    for(unsigned i=0;i<10;i++)event(&s,PET_EV_PET,90100,0);
+    assert(pet_warmth(&s,90100)==100&&pet_warmth(&s,120100)==50);
+    assert(pet_warmth(&s,90000)==100&&pet_warmth(&s,UINT64_MAX)==0);
+    assert(pet_pose(&s,94000).expression==PET_EXPR_IDLE);
+    uint64_t last=s.last_input_ms;event(&s,PET_EV_TICK,120100,0);assert(s.last_input_ms==last);
+    event(&s,PET_EV_TICK,210100,0);assert(s.life==PET_LIFE_SLEEP);
+    pet_init(&s,0);ready(&s,1);event(&s,PET_EV_PRESS,2,0);event(&s,PET_EV_PET,3,0);
+    assert(s.dialogue==PET_DIALOGUE_LISTEN&&pet_pose(&s,3).expression==PET_EXPR_LISTEN&&pet_warmth(&s,3)==35);
+    event(&s,PET_EV_RELEASE,203,0);event(&s,PET_EV_TURN_STATUS,204,PET_NOTICE_NO_REPLY);
+    event(&s,PET_EV_PET,205,0);assert(pet_pose(&s,205).expression==PET_EXPR_CONFUSED);
+}
 /* Numeric fallbacks let this behavioral regression fail against the v0.1.1 core. */
 #ifndef PET_EXPRESSION_INPUT_VERSION
 #define PET_EV_TOUCH_TAP ((pet_event_kind_t)17)
@@ -81,6 +98,7 @@ static void companion_feedback(void) {
     assert(s.dialogue==PET_DIALOGUE_IDLE);
 }
 int main(void) {
+    lasting_mood();
     companion_feedback();
     assert(pet_delay_ticks(1,100)==1&&pet_delay_ticks(2,100)==1&&pet_delay_ticks(5,1000)==5);
     pet_state_t s;pet_init(&s,0);

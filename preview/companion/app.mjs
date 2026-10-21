@@ -65,7 +65,12 @@ function roundRect(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill(
 function draw(state,time) {
   const frames=data.states[state.mode];
   const index=reduced.matches?0:Math.floor(Math.max(0,time-state.since)/data.stepMs)%frames.length;
-  const face=frames[index];
+  let face=frames[index];
+  if(state.mode==='idle'&&state.warmth>0&&data.states.warm_idle){
+    const warm=data.states.warm_idle[index%data.states.warm_idle.length],amount=state.warmth/100;
+    const blend=(base,target)=>Object.fromEntries(Object.entries(base).map(([key,value])=>[key,typeof value==='number'?value+(target[key]-value)*amount:value]));
+    face={...blend(face,warm),eyes:face.eyes.map((eye,i)=>blend(eye,warm.eyes[i]))};
+  }
   ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,466,466);
   ctx.fillStyle='#101010';ctx.fillRect(0,0,466,466);
   ctx.save();ctx.translate(face.x+face.width/2,face.y+face.height/2-(captionMode===0?22:0));
