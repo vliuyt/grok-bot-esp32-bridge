@@ -40,7 +40,9 @@ int main(void) {
     for(unsigned n=0;n<10;n++) {
         pet_state_t s;uint64_t start=prepare(&s,names[n]);
         printf("%s\"%s\":[",n?",":"",names[n]);
-        for(unsigned i=0;i<=120;i++) {
+        bool idle=!strcmp(names[n],"idle")||!strcmp(names[n],"warm_idle");
+        if(idle)start=0;
+        for(unsigned i=0;i<=(idle?1818u:120u);i++) {
             uint64_t now=start+i*33;
             if(!strcmp(names[n],"speak"))event(&s,PET_EV_PLAYING,now,180+(i*97)%750);
             event(&s,PET_EV_TICK,now,0);

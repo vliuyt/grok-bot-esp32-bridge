@@ -1,6 +1,6 @@
 # 情绪延续 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans for inline execution, or superpowers:subagent-driven-development if the user selects that method. A fresh final independent review is required. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans for inline execution, or superpowers:subagent-driven-development if the user selects that method. A fresh final independent review is required. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 在现有即时表情后增加一分钟、可积累并自然衰减的安静余韵。
 
@@ -31,8 +31,10 @@
 
 **Interfaces:** state追加`warmth`和`warmth_at_ms`；`pet_warmth(const pet_state_t*,uint64_t now_ms)`返回0–100当前值，按60秒线性衰减。事件先算旧值再饱和增加并更新时间。余韵只影响IDLE pose的小幅呼吸、眼神和身体参数，保持原expression值；原pet_step、pet_pose签名不变。
 
-- [ ] 写失败测试：+35/+10、上限100、30秒减半/60秒归零、半途再摸按衰减值累积；倒退时间无新增能量，uint64边界不溢出；通话与错误优先，余韵不阻止90/120秒电池休眠；有真实字幕时仍可点读。
-- [ ] `node --test tests/pet-core.test.mjs tests/pet-preview.test.mjs tests/pet-readability.test.mjs` Expected: 新行为FAIL。
-- [ ] 实现模型与受限pose；更新预览控制器和真实core导出固定例，禁止背景自动音频。每次interaction仍只触发现有一次wake。
-- [ ] 同命令和`npm test` Expected: PASS；运行`npm run preview:export`同步真实参数。真实LVGL字幕及快照检查通过后提交`feat: retain gentle petting mood between interactions`。
-- [ ] 独立C/预览审查完整差异，重要项以失败测试修复。实屏手感与音频回归留到统一安装后人工确认。
+- [x] 写失败测试：+35/+10、上限100、30秒减半/60秒归零、半途再摸按衰减值累积；倒退时间无新增能量，uint64边界不溢出；通话与错误优先，余韵不阻止90/120秒电池休眠；有真实字幕时仍可点读。
+- [x] `node --test tests/pet-core.test.mjs tests/pet-preview.test.mjs tests/pet-readability.test.mjs` Expected: 新行为FAIL。
+- [x] 实现模型与受限pose；更新预览控制器和真实core导出固定例，禁止背景自动音频。每次interaction仍只触发现有一次wake。
+- [x] 同命令和`npm test` Expected: PASS；运行`npm run preview:export`同步真实参数。真实LVGL字幕及快照检查通过后提交`feat: retain gentle petting mood between interactions`。
+- [x] 独立C/预览审查完整差异，重要项以失败测试修复。实屏手感与音频回归留到统一安装后人工确认。
+
+Implementation and independent reviews complete. Two preview findings fixed RED→GREEN. Target/LVGL and physical motion checks remain in final integration, not claimed here.

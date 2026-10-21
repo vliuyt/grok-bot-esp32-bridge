@@ -37,7 +37,9 @@ export function createController() {
   }
   function select(mode,now) {
     if(!modes.has(mode))throw new Error('Unknown mode');
-    state.held=false;enter(mode,now);return read(now);
+    state.held=false;
+    if(mode==='happy'||mode==='curious'){warmthLevel=mode==='happy'?35:10;warmthAt=now;}
+    enter(mode,now);return read(now);
   }
   return {send,select,read};
 }

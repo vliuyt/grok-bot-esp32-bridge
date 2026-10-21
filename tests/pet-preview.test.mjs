@@ -66,7 +66,7 @@ test('committed preview frames match the real core and renderer geometry',()=>{
     assert.equal(frames.states.confused[0].expression,8);
     assert.equal(frames.states.curious[61].expression,0);
     assert.equal(frames.states.happy[55].expression,0);
-    assert.ok(Object.values(frames.states).every(samples=>samples.length===121));
+    assert.ok(Object.entries(frames.states).every(([name,samples])=>samples.length===(['idle','warm_idle'].includes(name)?1819:121)));
   } finally {rmSync(dir,{recursive:true,force:true});}
 });
 
@@ -81,4 +81,26 @@ test('preview remembers petting warmth without prolonging voice or transient cap
   pet.send('disconnect',90400);pet.send('stroke',90500);assert.equal(pet.read(90500).mode,'confused');
   const cases=JSON.parse(readFileSync('preview/companion/states.json','utf8')).moodCases;
   for(const sample of cases){const example=createController();for(const event of sample.events)example.send(event.action,event.at);assert.equal(example.read(sample.at).warmth,sample.warmth);}
+});
+
+test('warm idle samples remain continuous across the old short animation boundary',async()=>{
+  const {sampleFace}=await import('../preview/companion/face.mjs');
+  const frames=JSON.parse(readFileSync('preview/companion/states.json','utf8'));
+  const state={mode:'idle',since:1800,warmth:90};
+  const before=sampleFace(frames,state,5792),after=sampleFace(frames,state,5793);
+  assert.ok(Math.abs(before.rotation-after.rotation)<=1,'No artificial four-second head snap');
+  for(const time of [6000,12000,30000,59000]){
+    const a=sampleFace(frames,state,time-1),b=sampleFace(frames,state,time);
+    assert.ok(Math.abs(a.rotation-b.rotation)<=1);
+  }
+});
+
+test('fixed happy and curious examples retain the same mood as touch',async()=>{
+  const {createController}=await import('../preview/companion/controller.mjs');
+  for(const [mode,action,duration] of [['happy','stroke',1800],['curious','tap',2000]]){
+    const fixed=createController(),touch=createController();
+    fixed.select(mode,100);touch.send(action,100);
+    assert.equal(fixed.read(100+duration).warmth,touch.read(100+duration).warmth);
+    assert.equal(fixed.read(100+duration).mode,'idle');
+  }
 });
