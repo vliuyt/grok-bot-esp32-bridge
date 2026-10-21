@@ -2,7 +2,7 @@
   "date": "2026-10-21",
   "branch": "codex/v0.2.0-roadmap",
   "pullRequest": "https://github.com/vliuyt/grok-bot-esp32-bridge/pull/2",
-  "status": "installed_voice_trial_failed_under_investigation",
+  "status": "installed_usability_update_awaiting_physical_acceptance",
   "release": false,
   "modules": [
     "voice_reliability",
@@ -246,9 +246,9 @@
   "usabilityFeedback": {
     "lowVolume": "10_to_20_percent_barely_audible",
     "touch": "return_requires_5_to_10_attempts",
-    "nextStep": "independent_review_then_build_backup_guarded_install_and_physical_trial",
+    "nextStep": "human_return_swipe_and_low_volume_confirmation",
     "designApproved": true,
-    "status": "implemented_host_tests_passed_review_and_target_pending",
+    "status": "installed_awaiting_user_volume_touch_swipe_trial",
     "offlineTests": {
       "total": 143,
       "passed": 143,
@@ -265,6 +265,57 @@
     "volumeStorageUnchanged": true,
     "maximumOutputUnchanged": true,
     "coordinateCalibrationChanged": false,
-    "physicalAcceptance": "pending"
+    "physicalAcceptance": "pending",
+    "target": {
+      "bytes": 3703632,
+      "sha256": "b916003687860294c6bbb746ab466c6109b59d55f45a9cea8cf506f6c7c6f9f8",
+      "sourceSha256": "9897d3ed3e5bc02798db20881d18dd71631302b7733725745c2b446144637948",
+      "dependenciesSha256": "0133de3853f8ce1dd8ef3937b73bf0bb357782c96e83423b14e4ab7cbd8f6499",
+      "slotBytes": 4063232
+    },
+    "preInstall": {
+      "volumeCodecSetting": 100,
+      "speaker": true,
+      "connection": 2,
+      "audioFault": false,
+      "eventDrops": 0
+    },
+    "review": {
+      "base": "0c9d333",
+      "head": "04bc594",
+      "independent": true,
+      "verdict": "approve",
+      "critical": 0,
+      "important": 0,
+      "minor": [
+        {
+          "issue": "adjacent_settings_rows_transparent_hit_edges_overlap_2px",
+          "deferred": true,
+          "visibleButtonBodiesOverlap": false
+        }
+      ],
+      "independentHarnessRuns": [
+        "volume",
+        "buttons",
+        "swipe",
+        "full_ui"
+      ],
+      "physicalClaims": false
+    },
+    "freshComplete8MiBBackupVerified": true,
+    "previousBackupArchivedAndVerified": true,
+    "installation": {
+      "result": "PET_INSTALL_VERIFIED",
+      "applicationOnly": true,
+      "bootMetadataCompared": true,
+      "readbackVerified": true,
+      "volumeCodecSettingBefore": 100,
+      "volumeCodecSettingAfter": 100,
+      "screenVolumePercentAfter": 100,
+      "currentLoudnessPreserved": true,
+      "nativeAndTaskReady": true,
+      "audioFault": false,
+      "eventDrops": 0
+    }
   }
 }
