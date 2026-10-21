@@ -1,6 +1,6 @@
 # 设备对话与长字幕 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans for inline execution, or superpowers:subagent-driven-development if the user selects that method. A fresh final independent review is required. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans for inline execution, or superpowers:subagent-driven-development if the user selects that method. A fresh final independent review is required. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 给设备会话自然简短的闲聊风格，并可靠阅读超过旧320字节窗口的回答。
 
@@ -33,8 +33,8 @@
 
 **Interfaces:** `companionPlan(plan)`返回新对象，保留tools与其他字段，向instructions追加设备建议，不原地修改。NativeBotSession增加可选`replyStyle`，默认null；仅startDeviceServer默认sessionFactory传`replyStyle:'companion'`。
 
-- [ ] 失败测试：原plan不变、原身份指令仍在、工具对象保持、未启用风格的会话instructions完全不变；设备默认启用，用户明确长回答要求在建议中优先。
-- [ ] `node --test tests/companion-style.test.mjs tests/native-bot.test.mjs tests/device-server.test.mjs` Expected: FAIL，再实现纯转换与设备注入，Expected: PASS。`npm test`全绿后提交`feat: tune device conversations without changing the bot persona`。
+- [x] 失败测试：原plan不变、原身份指令仍在、工具对象保持、未启用风格的会话instructions完全不变；设备默认启用，用户明确长回答要求在建议中优先。
+- [x] `node --test tests/companion-style.test.mjs tests/native-bot.test.mjs tests/device-server.test.mjs` Expected: FAIL，再实现纯转换与设备注入，Expected: PASS。`npm test`全绿后提交`feat: tune device conversations without changing the bot persona`。
 
 ### Task 2: 当前轮缓存与固定分段
 
@@ -44,8 +44,8 @@
 
 协议新增`caption_catalog`与`caption_page`下行、`caption_read`上行；每条含generation、turn，页请求含request:uint32、page:uint16；page=0且version=0打开新快照，后续请求需匹配返回version。目录给出available/responding/truncated，实际页数在open返回；错误用受控`unavailable/stale/busy`，不回传请求原文。
 
-- [ ] 写失败测试：超过320字节可完整还原；24KiB边界按codepoint截断并标记；同item替换不追加；多个片段顺序稳定；新轮/clear拒旧turn；冻结后更新正文不改旧快照，重新open版本变化；NUL/转义/emoji/空文本、无效UTF-8及满帧预算；连续open仅保留一个快照。
-- [ ] `node --test tests/caption-book.test.mjs tests/pet-protocol.test.mjs` Expected: FAIL，再实现缓存和严格编码验证，Expected: PASS；`npm test`后提交`feat: keep bounded native reply pages in Mac memory`。
+- [x] 写失败测试：超过320字节可完整还原；24KiB边界按codepoint截断并标记；同item替换不追加；多个片段顺序稳定；新轮/clear拒旧turn；冻结后更新正文不改旧快照，重新open版本变化；NUL/转义/emoji/空文本、无效UTF-8及满帧预算；连续open仅保留一个快照。
+- [x] `node --test tests/caption-book.test.mjs tests/pet-protocol.test.mjs` Expected: FAIL，再实现缓存和严格编码验证，Expected: PASS；`npm test`后提交`feat: keep bounded native reply pages in Mac memory`。
 
 ### Task 3: 端到端阅读和大按钮
 
@@ -53,10 +53,10 @@
 
 **Interfaces:** 沿用前一计划capabilities并协商`caption_pages`。link新增固定容量`pet_reader_page_t`（text[321]、generation/turn/version/request、page/pages、状态），回调只复制，不调用LVGL。UI动作追加`PET_UI_READER_OPEN/PREV/NEXT/RETRY/CLOSE`，由app分配请求号、限流、匹配结果并更新view。reader上行JSON通过现有outgoing队列发送；旧端无能力时保持本地原片段滚动。
 
-- [ ] 先写失败测试：TLS真实帧协商/页请求/回复；旧端只收旧caption，新端连旧桥接不发页请求；超过旧窗口的固定中文故事翻段可还原；新轮、返回、超时、乱序和伪造身份页不改变当前文字；只有一个在途请求，超时只重试页面；正文增长不跳页。
-- [ ] 新增真实LVGL点击场景：大尺寸上一段/下一段、段号、加载/重试与返回；分页按钮各至少132×48，保留独立返回与BOOT提示，避免圆边裁切。各段仍可上下滚动，按BOOT回HOME。
-- [ ] 加强脱敏像素用例：切换不同主屏正文/阅读段/配对码后普通快照像素一致；不脱敏时有差异。字幕OFF或断开清目录、页、请求身份。新中文文案检查字形，必要时仅更新受控字库并核对来源。
-- [ ] 对应测试Expected: 新行为FAIL；接入Book、协商、请求门禁和页面，Expected: PASS。`npm test`、公开文件检查全绿后提交`feat: read native replies in bounded device pages`。
+- [x] 先写失败测试：TLS真实帧协商/页请求/回复；旧端只收旧caption，新端连旧桥接不发页请求；超过旧窗口的固定中文故事翻段可还原；新轮、返回、超时、乱序和伪造身份页不改变当前文字；只有一个在途请求，超时只重试页面；正文增长不跳页。
+- [x] 新增真实LVGL点击场景：大尺寸上一段/下一段、段号、加载/重试与返回；分页按钮各至少132×48，保留独立返回与BOOT提示，避免圆边裁切。各段仍可上下滚动，按BOOT回HOME。
+- [x] 加强脱敏像素用例：切换不同主屏正文/阅读段/配对码后普通快照像素一致；不脱敏时有差异。字幕OFF或断开清目录、页、请求身份。新中文文案检查字形，必要时仅更新受控字库并核对来源。
+- [x] 对应测试Expected: 新行为FAIL；接入Book、协商、请求门禁和页面，Expected: PASS。`npm test`、公开文件检查全绿后提交`feat: read native replies in bounded device pages`。
 
 ### Task 4: 整体验证、目标构建、安装和开发同步
 
@@ -67,3 +67,5 @@
 - [ ] 真实设备读取状态，核对同一设备，保存新的完整8MiB备份和有效恢复记录；保护安装器仅写原应用槽并验证，Expected: PET_INSTALL_VERIFIED。未获得可用串口或备份校验失败则保留固件，不冒险写入。
 - [ ] 无声核对状态、页面和重启保留；有使用者参与时低音量BOOT完成十轮、上下文/计算、长回答分页、播放中打断与断线后新问题；记录首段和停声时间，不自动出声，不重复任务。缺真人/声学证据项保持pending。
 - [ ] 更新开发介绍和验收记录，公开检查通过后推送同一开发分支与草稿PR并等待CI；不发布正式版。主机、云端跳过项和实机成绩分别记录。
+
+Implementation and fresh independent reviews complete; Important fixes verified RED→GREEN with143/143 tests. Guarded application installation and silent readiness passed. Human acoustic/pagination trials, long soak and exact remote CI status remain governed by docs/companion-evolution-validation.json.

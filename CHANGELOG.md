@@ -2,6 +2,15 @@
 
 ## Unreleased — v0.2.0 work in progress
 
+- Explain short input, delayed/failed/empty replies, authentication needs and disconnections with controlled per-turn feedback. Cancel stale tools/audio and coordinate device watchdogs with real progress.
+- Renew an expired gateway route once for safe reads/presence, including verified 404 recovery. Coalesce renewal and never replay uncertain task or call-record writes. This does not establish the cause of the earlier unanswered voice attempt.
+- Retain capped petting warmth for sixty seconds while preserving voice, error and sleep priorities; no extra audio or NVS writes.
+- Add device-only concise Chinese chat guidance while preserving the Bot persona, voice, tools and explicit long-answer requests.
+- Keep at most 24 KiB of current native reply text plus one 24 KiB frozen snapshot in Mac memory. Negotiate optional caption pages up to 300 UTF-8 bytes over unchanged 1024-byte metadata frames.
+- Add large round-screen page navigation, bounded one-at-a-time reads, explicit page retry, stale reply rejection and reader-content snapshot redaction. Keep BOOT as the only voice input.
+- Add real production LVGL paging/privacy checks, C reader/parser tests and TLS reader integration. Initial expanded local suite: 143/143, zero skips; target build fits the original slot. Final acceptance is tracked in `docs/companion-evolution-validation.json`.
+
+
 - Add curious tap and confused connection/timeout feedback while preserving classic pink appearance and BOOT voice priority.
 - Keep thinking visible throughout waiting; cancelled or timed-out turns reject late audio.
 - Add a silent interactive expression preview with frames exported from the firmware core and shared face geometry.

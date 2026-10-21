@@ -23,3 +23,21 @@
 ## 测试
 
 纯 Node／C mock 检查覆盖线协议、失效轮次、录音收尾、播放清空、任务去重与失败退避。修改任一侧格式时必须同时更新兼容测试；旧客户端不能被迫接收它未协商的宠物元数据。
+
+## 可选通话反馈与长字幕（v0.2开发分支）
+
+v2 hello可带`capabilities`，双方取交集，最多8个短字符串。`turn_status`启用受控等待／失败通知；`turn_progress`单独协商，只有真实进展才续设备等待时限。旧端不会收到未协商消息。
+
+`caption_pages`启用下列元数据，均带非零uint32 `generation`和uint32 `turn`：
+
+| op | 字段 |
+|---|---|
+| `caption_catalog` | `available`, `responding`, `truncated` 布尔值 |
+| `caption_read` | `request`:非零uint32；`version`:uint32；`page`:uint16 |
+| `caption_page` | 同请求身份；成功时`version`非零、`pages`、`text`、`responding`、`truncated`；失败时`error`只允许`unavailable/stale/busy` |
+
+`version=0,page=0`打开新快照；后续请求使用返回版本。一次只有一个请求，设备1秒限流、3秒超时，重试只读页面。返回或新轮后晚到页被丢弃。Mac最多保存当前正文24KiB和一个24KiB冻结快照，按原生item替换去重；清理取消／断线时释放，不写磁盘。保留换行与tab，移除NUL及其他控制字符，拒绝损坏UTF-8。页面正文最多300字节，JSON编码后整帧仍不超过1024字节。
+
+旧`caption`继续用于主屏与旧固件。普通快照隐藏主屏正文、阅读正文／段号／导航及配对码；公开画面只用固定例文。
+
+原生`async_update.add`没有已证实的响应关联标识；发送后将会话视为存在无标签异步响应的可能。跨越到下一次BOOT前安全重建，可能需要显式重试。不能把迟到正文或音频归给新问题。

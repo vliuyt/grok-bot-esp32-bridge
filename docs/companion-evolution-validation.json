@@ -1,0 +1,142 @@
+{
+  "date": "2026-10-21",
+  "branch": "codex/v0.2.0-roadmap",
+  "pullRequest": "https://github.com/vliuyt/grok-bot-esp32-bridge/pull/2",
+  "status": "implemented_and_installed_manual_acceptance_pending",
+  "release": false,
+  "modules": [
+    "voice_reliability",
+    "quiet_petting_mood",
+    "device_reply_style_and_frozen_reader"
+  ],
+  "host": {
+    "tests": 143,
+    "passed": 143,
+    "failed": 0,
+    "skipped": 0,
+    "scope": "local_offline_tests_after_resolving_target_dependencies"
+  },
+  "target": {
+    "built": true,
+    "idf": "6.0.1",
+    "bytes": 3699008,
+    "slotBytes": 4063232,
+    "sha256": "1241772b2304033383394f68845cbde5fabcdd5901dc586c4ed53baf7309cbde",
+    "sourceAndDependencyBindingVerified": true,
+    "softwareDrawWorkers": 1,
+    "applicationOnlyOffset": 131072,
+    "sourceSha256": "b9151cb851690dcafb0439439463455e2b242d996ef00b6d4857e542c7dd7f0c",
+    "dependenciesSha256": "0133de3853f8ce1dd8ef3937b73bf0bb357782c96e83423b14e4ab7cbd8f6499"
+  },
+  "backup": {
+    "freshComplete8MiBVerified": true,
+    "previousBackupArchivedAndVerified": true,
+    "sameBoardIdentityVerified": true,
+    "recoveryLayoutVerified": true,
+    "privateFilesPublished": false
+  },
+  "installation": {
+    "status": "PET_INSTALL_VERIFIED",
+    "applicationOnly": true,
+    "bootMetadataCompared": true,
+    "applicationReadbackVerified": true,
+    "settingsObserved": {
+      "volume": 100,
+      "speaker": true
+    },
+    "extraRebootTest": "not_run_during_pending_user_trial"
+  },
+  "runtime": {
+    "status": "ready",
+    "credentialsAndPairingPreserved": true,
+    "nativeAndTaskReady": true,
+    "old404LoopNoLongerObserved": true,
+    "updatedModules": 8,
+    "unrelatedRuntimeSourcesPreserved": true
+  },
+  "offlineEvidence": {
+    "redThenGreen": [
+      "safe_gateway_renewal",
+      "turn_progress_and_stale_tool_isolation",
+      "firmware_notices",
+      "petting_warmth_and_preview_review_regressions",
+      "device_only_style",
+      "caption_book_utf8_and_versioning",
+      "tls_reader_negotiation_and_frozen_story",
+      "c_reader_lifecycle",
+      "real_lvgl_navigation_and_privacy",
+      "browser_reader_controls"
+    ],
+    "realLvgl": "production_UI_compiled_on_host_with_fixed_examples",
+    "snapshotPrivacy": "home_caption_reader_text_page_metadata_navigation_and_pairing_code_hidden",
+    "browser": "fixed_long_example_open_next_previous_return_verified_silently",
+    "targetStackFramesBytes": {
+      "app_main": 2720,
+      "link_task": 2256,
+      "receive": 1536,
+      "pet_json_parse": 2080,
+      "pet_reader_parse": 48
+    },
+    "image": "paged-reader-preview.png"
+  },
+  "gatewayObservation": {
+    "oldServiceTaskHistoryStatus": 404,
+    "freshNormalLoginBrokerStatus": 200,
+    "freshRosterStatus": 200,
+    "freshTargetHistoryStatus": 200,
+    "establishesOriginalUnansweredVoiceCause": false
+  },
+  "manualAcceptance": {
+    "pettingOnPhysicalScreen": "pending",
+    "tenLowVolumeChineseRounds": "pending",
+    "contextAndSpokenCalculation": "pending",
+    "longNativeAnswerPhysicalPagination": "pending",
+    "interruptAndRejectOldAudio": "pending",
+    "disconnectThenNewQuestion": "pending",
+    "deviceAudibleFirstAudioMs": null,
+    "interruptionStopMs": null,
+    "reason": "No automated sound at night; requires the user to lower volume and press BOOT. Previous-build success does not certify these changes."
+  },
+  "knownBoundary": "The earlier unanswered voice attempt remains unexplained. Target compilation, readiness, text and host simulation do not prove audible device acceptance.",
+  "silentDeviceStatus": {
+    "connection": "ready",
+    "turn": 0,
+    "heap": 50139,
+    "psram": 8039748,
+    "audioFault": false,
+    "eventDrops": 0,
+    "emergencyReasons": 0,
+    "stackConsole": 6924,
+    "stackNetwork": 4864,
+    "runtimeScope": "startup_status_only_no_voice_no_soak_no_link_task_highwater"
+  },
+  "review": {
+    "scopeBase": "51a3105",
+    "scopeHead": "204c986",
+    "freshIndependentSeats": [
+      "C_firmware_UI",
+      "JavaScript_native_bridge_preview"
+    ],
+    "importantFindings": 3,
+    "fixedCommit": "8f6a943",
+    "fixedWithFailingThenPassingTests": true,
+    "fullRegressionAfterFix": {
+      "total": 143,
+      "pass": 143,
+      "skip": 0,
+      "fail": 0
+    },
+    "reReview": false,
+    "deferredMinors": []
+  },
+  "tradeoffs": [
+    "Unscoped native async task updates cause a safe native-session rebuild at the next BOOT; a reconnect and explicit retry may be required.",
+    "Same-turn native caption items retain first-arrival ordering; deliberately reversed completion is not established by the available native contract.",
+    "No real voice/style/touch/stop-time acceptance claimed for this image; no overnight automated sound or soak."
+  ],
+  "github": {
+    "status": "pending_push_and_ci",
+    "draft": true,
+    "release": false
+  }
+}

@@ -10,6 +10,10 @@ This independent community prototype is not affiliated with xAI, Grok Bot, Meta 
 
 The `codex/v0.2.0-roadmap` development branch adds livelier expressions, caption modes, grayscale Noto Sans SC fonts, a 28px home summary, a 30px reading page and larger settings targets. On 2026-10-21, the reference-device user confirmed legibility, touch targets, native voice, real captions, scrolling and return. Settings survived a silent reboot and the connection recovered. Ten-round, interruption and active-call reconnect regressions remain pending; the first unanswered voice attempt has no established root cause. See the [device acceptance record](docs/readability-device-validation.json). This is not a new release or precompiled firmware package.
 
+The same branch now implements bounded turn feedback and safe route renewal, a quiet one-minute petting afterglow, device-only concise reply advice, and paged native reply reading. Tap a real caption, use large Previous/Next buttons, and scroll within each page. Each reader freezes one answer version; new BOOT turns, cancellation and disconnect invalidate it. The initial expanded suite passes 143 local checks, including real LVGL and target dependencies; see the [current evidence record](docs/companion-evolution-validation.json) for final review, installation and human acceptance status. These changes are not a new release.
+
+![Fixed public reading example rendered by the production LVGL UI on the host](docs/paged-reader-preview.png)
+
 To inspect this development work, switch to that branch after cloning. Run `npm run preview` for the silent interactive preview; device installation still requires the documented backup and build steps.
 
 ## Architecture and features
@@ -49,7 +53,7 @@ The proactive-behavior clock is currently fixed to Shanghai time (UTC+8), with n
 
 Full acoustic interruption/reconnection, physical touch feel, authenticated BLE provisioning and battery behavior still require acceptance. Public packaging changes were host-tested; a second-device clean install has not been tested. See [validation and limitations](docs/VALIDATION.md) for precise boundaries.
 
-`npm test` uses mocks and local compiler checks, with no account access, flashing or acoustic playback. On this development branch, four target-dependent tests, including real LVGL rendering, are explicitly skipped until the firmware dependencies are resolved. All 108 tests passed locally without skips. Optional hardware benches are separate and can make sound.
+`npm test` uses mocks and local compiler checks, with no account access, flashing or acoustic playback. On this development branch, five target-dependent tests, including real LVGL rendering, are explicitly skipped until the firmware dependencies are resolved. All 143 tests passed locally without skips. Optional hardware benches are separate and can make sound.
 
 ## Contributing and licensing
 
