@@ -118,6 +118,8 @@ test('turn feedback is negotiated and late notices cannot affect newer recording
       const notices=()=>frames.map(f=>{try{return JSON.parse(f.payload);}catch{return null;}}).filter(m=>m?.op==='turn_status');
       assert.equal(notices().length,negotiated?1:0);
       if(negotiated)assert.deepEqual(notices()[0],{op:'turn_status',turn:1,code:'short_input',generation:7});
+      session.emit('turnStatus',{turn:1,code:'progress'});await delay(20);
+      assert.equal(notices().length,negotiated?1:0,'progress needs a separate capability');
       socket.write(encodeFrame(2,2,Buffer.from('press')));await delay(20);
       session.emit('turnStatus',{turn:1,code:'no_reply'});await delay(20);
       assert.equal(notices().length,negotiated?1:0);assert.equal(server.snapshot().state,'recording');

@@ -33,3 +33,7 @@ test('new turns, cancellation and close invalidate old timers and events',()=>{
   assert.deepEqual(f.expired,[]);f.monitor.start(3);f.monitor.close();f.tick(200000);
   assert.deepEqual(f.expired,[]);assert.equal(f.status.length,1);
 });
+test('real progress can renew a device watchdog without pretending an audio reply arrived',()=>{
+  const f=fixture();f.monitor.start(1);f.tick(20000);f.monitor.note(1,'recognized');
+  assert.deepEqual(f.status.at(-1),{turn:1,code:'progress'});assert.deepEqual(f.expired,[]);
+});

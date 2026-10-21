@@ -136,7 +136,7 @@ test('an empty or failed response is a recoverable per-turn outcome',async()=>{
     voice.beginTurn();voice.sendAudio(Buffer.alloc(9600));voice.endTurn();
     socket.receive({type:'response.created',response:{id:'reply',metadata:{bridge_turn:'1'}}});
     socket.receive({type:'response.done',response:{id:'reply',status}});
-    assert.deepEqual(notices,[{turn:1,code}]);assert.equal(voice.state,'ready');voice.close();
+    assert.deepEqual(notices.filter(e=>e.code!=='progress'),[{turn:1,code}]);assert.equal(voice.state,'ready');voice.close();
   }
 });
 test('late recognition retains the committed input turn instead of becoming the next turn',async()=>{
@@ -172,4 +172,42 @@ test('a tool finishing before response.done leaves its continuation monitored',a
   socket.receive({type:'response.created',response:{id:'continuation'}});
   for(;;){const next=[...timers].sort((a,b)=>a[1].at-b[1].at)[0];if(!next||next[1].at>30000)break;now=next[1].at;timers.delete(next[0]);next[1].fn();}
   assert(notices.some(e=>e.code==='no_reply'));voice.close();
+});
+
+test('interrupting a tool continuation before its identity arrives cannot adopt old audio',async()=>{
+  const {socket,voice}=fixture();
+  const opening=voice.open({credential,plan,onTool:async()=>({ok:true})});socket.receive({type:'session.updated'});await opening;
+  try{
+    voice.beginTurn();voice.sendAudio(Buffer.alloc(9600));voice.endTurn();
+    socket.receive({type:'response.created',response:{id:'first'}});
+    socket.receive({type:'response.function_call_arguments.done',response_id:'first',call_id:'one',name:'recall_text_messages',arguments:'{}'});
+    await new Promise(r=>setImmediate(r));socket.receive({type:'response.done',response:{id:'first',status:'completed'}});
+    assert.equal(socket.sent.filter(e=>e.type==='response.create').length,2);
+    assert.throws(()=>voice.beginTurn(),/reconnect|closed/i);
+    assert.equal(voice.state,'closed');
+  }finally{voice.close();}
+});
+
+test('an old tool rejection cannot fault a new recording',async()=>{
+  const {socket,voice}=fixture(),faults=[];let rejectTool;
+  voice.on('fault',e=>faults.push(e.code));
+  const opening=voice.open({credential,plan,onTool:()=>new Promise((resolve,reject)=>{rejectTool=reject;})});socket.receive({type:'session.updated'});await opening;
+  voice.beginTurn();voice.sendAudio(Buffer.alloc(9600));voice.endTurn();
+  socket.receive({type:'response.created',response:{id:'first'}});
+  socket.receive({type:'response.function_call_arguments.done',response_id:'first',call_id:'one',name:'recall_text_messages',arguments:'{}'});
+  voice.beginTurn();rejectTool(new Error('fixture failed'));await new Promise(r=>setImmediate(r));
+  assert.equal(voice.state,'recording');assert.deepEqual(faults,[]);voice.close();
+});
+
+test('a failed response is terminal even when its tool later succeeds',async()=>{
+  const {socket,voice}=fixture(),audio=[];let finish;
+  voice.on('audio',a=>audio.push(a));
+  const opening=voice.open({credential,plan,onTool:()=>new Promise(resolve=>{finish=resolve;})});socket.receive({type:'session.updated'});await opening;
+  voice.beginTurn();voice.sendAudio(Buffer.alloc(9600));voice.endTurn();
+  socket.receive({type:'response.created',response:{id:'first'}});
+  socket.receive({type:'response.function_call_arguments.done',response_id:'first',call_id:'one',name:'recall_text_messages',arguments:'{}'});
+  socket.receive({type:'response.done',response:{id:'first',status:'failed'}});
+  finish({ok:true});await new Promise(r=>setImmediate(r));
+  socket.receive({type:'response.output_audio.delta',response_id:'first',delta:'AQA='});
+  assert.equal(socket.sent.filter(e=>e.type==='response.create').length,1);assert.equal(audio.length,0);voice.close();
 });

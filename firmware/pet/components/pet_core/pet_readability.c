@@ -12,8 +12,8 @@ pet_readability_text_t pet_readability_text(const pet_readability_input_t *in) {
     pet_readability_text_t out={.hint=in->connection==PET_CONN_READY?"按住 BOOT 说话":"语音连接中"};
     const char *local=NULL;
     if(in->dialogue==PET_DIALOGUE_LISTEN){local="我在听";out.hint="松开 BOOT 后提交";}
-    else if(in->notice>PET_NOTICE_NONE&&in->notice<=PET_NOTICE_AUTH_REQUIRED){
-        static const char *const messages[]={"","还在等回复","正在处理任务","录音太短，请再说一次","暂时没收到回复，请再试","这次没有声音回复，请再试","没听清，请再说一次","这次回答失败，请再试","请在 Mac 检查登录"};
+    else if(in->notice>PET_NOTICE_NONE&&in->notice<=PET_NOTICE_CONNECTION_LOST&&in->notice!=PET_NOTICE_PROGRESS){
+        static const char *const messages[]={"","还在等回复","正在处理任务","录音太短，请再说一次","暂时没收到回复，请再试","这次没有声音回复，请再试","没听清，请再说一次","这次回答失败，请再试","请在 Mac 检查登录","","连接断开，正在恢复"};
         local=messages[in->notice];
     }
     else if(in->dialogue==PET_DIALOGUE_WAIT)local=in->waiting_long?"还在想，稍等我一下":"让我想想";

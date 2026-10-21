@@ -28,7 +28,7 @@ static bool voice_event(pet_event_kind_t kind) {
     return kind==PET_EV_BUFFERED || kind==PET_EV_PLAYING || kind==PET_EV_RESPONSE_DONE || kind==PET_EV_DRAIN || kind==PET_EV_TURN_STATUS;
 }
 pet_notice_t pet_notice_from_code(const char *code){
-    static const char *const names[]={"","waiting","working","short_input","no_reply","empty_response","unrecognized","response_failed","auth_required"};
+    static const char *const names[]={"","waiting","working","short_input","no_reply","empty_response","unrecognized","response_failed","auth_required","progress"};
     if(code)for(unsigned i=1;i<sizeof(names)/sizeof(names[0]);i++)if(!strcmp(code,names[i]))return (pet_notice_t)i;
     return PET_NOTICE_NONE;
 }
@@ -76,6 +76,8 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
     case PET_EV_LINK:
         if(e.generation<s->generation || e.value<PET_CONN_OFFLINE || e.value>PET_CONN_UNAVAILABLE) break;
         if(e.generation!=s->generation || e.value!=PET_CONN_READY) {
+            if(s->notice==PET_NOTICE_WAITING||s->notice==PET_NOTICE_WORKING||
+               (s->connection==PET_CONN_READY&&s->dialogue!=PET_DIALOGUE_IDLE&&s->notice!=PET_NOTICE_AUTH_REQUIRED))s->notice=PET_NOTICE_CONNECTION_LOST;
             if(s->dialogue==PET_DIALOGUE_LISTEN) fx|=PET_FX_STOP;
             fx|=PET_FX_CANCEL;
             s->dialogue=PET_DIALOGUE_IDLE; s->playback_empty=true; s->level=0;
@@ -144,8 +146,10 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         break;
     case PET_EV_TASK_CHANNEL: s->task_channel=e.value!=0; break;
     case PET_EV_TURN_STATUS:
-        if(s->dialogue==PET_DIALOGUE_LISTEN||e.value<=PET_NOTICE_NONE||e.value>PET_NOTICE_AUTH_REQUIRED)break;
+        if(s->dialogue==PET_DIALOGUE_LISTEN||e.value<=PET_NOTICE_NONE||e.value>PET_NOTICE_PROGRESS)break;
+        if(e.value==PET_NOTICE_PROGRESS){if(s->dialogue==PET_DIALOGUE_WAIT)s->entered_ms=e.now_ms;break;}
         s->notice=(pet_notice_t)e.value;
+        if(e.value==PET_NOTICE_WORKING&&s->dialogue==PET_DIALOGUE_WAIT)s->entered_ms=e.now_ms;
         if(e.value>=PET_NOTICE_SHORT_INPUT){
             s->dialogue=PET_DIALOGUE_IDLE;s->response_cancelled=true;s->playback_empty=true;s->response_done=false;s->level=0;
             fx|=PET_FX_CANCEL;pet_note_activity(s,e.now_ms);

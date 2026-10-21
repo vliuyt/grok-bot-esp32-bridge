@@ -27,6 +27,7 @@ export function createTurnMonitor({now=Date.now,setTimer=setTimeout,clearTimer=c
       if(kind==='tool_started'){state.tools++;onStatus({turn,code:'working'});}
       if(kind==='tool_completed'&&state.tools)state.tools--;
       if(kind==='done'&&!state.tools){clear(turn);return;}
+      if(['recognized','response','tool_completed'].includes(kind))onStatus({turn,code:'progress'});
       if(kind==='audio'){clearTimer(state.wait);state.wait=undefined;}
       state.at=Math.max(state.at,now());arm(state);
     },

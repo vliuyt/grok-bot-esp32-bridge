@@ -78,6 +78,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     call.session.on('latency', ({ firstAudioMs }) => { if (current()) { stats.firstAudioMs.push(Math.round(firstAudioMs)); if (stats.firstAudioMs.length > 100) stats.firstAudioMs.shift(); } });
     call.session.on('turnStatus',event=>{
       if(!current()||!call.ready||call.recording||event.turn!==call.voiceTurn)return;
+      if(event.code==='progress'&&!call.capabilities?.has('turn_progress'))return;
       stats.lastTurnStatus=event.code;
       if(call.capabilities?.has('turn_status')){
         try{metadata({op:'turn_status',turn:call.turn,code:event.code});}catch(error){fail(error.message);}
@@ -113,7 +114,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
       if(action.startsWith('{')){
         const message=petMessage(payload);
         if(message?.op!=='hello'||!bridgeId||call.petGeneration)throw new Error('PET_PROTOCOL');
-        call.petGeneration=message.generation;call.capabilities=new Set((message.capabilities??[]).filter(c=>c==='turn_status'));stats.petProtocol=2;diagnostic("PET_HELLO");
+        call.petGeneration=message.generation;call.capabilities=new Set((message.capabilities??[]).filter(c=>['turn_status','turn_progress'].includes(c)));stats.petProtocol=2;diagnostic("PET_HELLO");
         metadata({op:'hello',v:2,bridgeId,...(message.capabilities?{capabilities:[...call.capabilities]}:{})});metadata({op:'link',state:call.ready?'ready':'connecting'});
         metadata({op:'clock',epochMs:Date.now()});
         call.clockTimer=setInterval(()=>{try{metadata({op:'clock',epochMs:Date.now()});}catch(error){fail(error.message);}},30000);call.clockTimer.unref();

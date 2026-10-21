@@ -27,6 +27,17 @@ int main(void) {
     assert(failure.local&&!failure.can_read&&strstr(failure.summary,"太短"));
     failed.notice=PET_NOTICE_NO_REPLY;assert(strstr(pet_readability_text(&failed).summary,"收到回复"));
     failed.notice=PET_NOTICE_UNRECOGNIZED;assert(strstr(pet_readability_text(&failed).summary,"听清"));
+    pet_init(&notice_state,0);notice_state.connection=PET_CONN_READY;notice_state.generation=7;
+    pet_step(&notice_state,(pet_event_t){.kind=PET_EV_PRESS,.now_ms=1});
+    pet_step(&notice_state,(pet_event_t){.kind=PET_EV_RELEASE,.now_ms=201});
+    pet_step(&notice_state,(pet_event_t){.kind=PET_EV_TURN_STATUS,.generation=7,.turn=1,.value=PET_NOTICE_WORKING,.now_ms=59201});
+    pet_step(&notice_state,(pet_event_t){.kind=PET_EV_TICK,.now_ms=60201});assert(notice_state.dialogue==PET_DIALOGUE_WAIT);
+    pet_step(&notice_state,(pet_event_t){.kind=PET_EV_TURN_STATUS,.generation=7,.turn=1,.value=PET_NOTICE_PROGRESS,.now_ms=110000});
+    pet_step(&notice_state,(pet_event_t){.kind=PET_EV_TICK,.now_ms=119201});assert(notice_state.dialogue==PET_DIALOGUE_WAIT&&notice_state.notice==PET_NOTICE_WORKING);
+    pet_step(&notice_state,(pet_event_t){.kind=PET_EV_LINK,.generation=8,.value=PET_CONN_OFFLINE,.now_ms=120000});
+    pet_step(&notice_state,(pet_event_t){.kind=PET_EV_TICK,.now_ms=160000});
+    failed.notice=notice_state.notice;failed.connection=notice_state.connection;
+    assert(strstr(pet_readability_text(&failed).summary,"断开"));
     pet_readability_input_t in={.pose={.expression=PET_EXPR_IDLE,.scale_x=1,.scale_y=1,.eye_open=1},.connection=PET_CONN_READY,.caption_mode=PET_CAPTION_FULL,.caption="你好，苹果。第二句。"};
     pet_readability_text_t text=pet_readability_text(&in);
     assert(!strcmp(text.summary,"你好，苹果。")&&text.can_read&&!text.local);

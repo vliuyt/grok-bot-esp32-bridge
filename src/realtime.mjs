@@ -75,7 +75,7 @@ export class RealtimeSession extends EventEmitter {
           this.responseActive = false;
           this.monitor.note(this.turn,'done');
           if(message.response?.status==='failed'){
-            this.monitor.clear(this.turn);this.pendingResponse=false;
+            this.stopPlayback();
             this.emit('turnStatus',{turn:this.turn,code:'response_failed'});
           }else if(!this.responseHasAudio&&!this.responseHadTool&&!this.pendingTools.size&&!this.pendingResponse){
             this.emit('turnStatus',{turn:this.turn,code:'empty_response'});
@@ -141,6 +141,7 @@ export class RealtimeSession extends EventEmitter {
   requestResponse() {
     if (this.responseActive || this.responseRequested || this.pendingTools.size) { this.pendingResponse = true; return; }
     this.monitor.start(this.turn);
+    this.responseId=undefined;
     this.responseRequested = true;
     this.send({ type: 'response.create', response: { metadata: { bridge_turn: String(this.turn) } } });
   }
@@ -163,7 +164,10 @@ export class RealtimeSession extends EventEmitter {
       if (!this.plan.tools.some(tool => tool.name === message.name)) throw new Error();
       const input = JSON.parse(message.arguments);
       output = await this.onTool({ name: message.name, input, callId: id });
-    } catch { output = { error: 'Tool failed; do not automatically retry an uncertain task.' }; this.emit('fault', { code: 'TOOL_FAILED' }); }
+    } catch {
+      if(!this.ownsResponse(message.response_id)||turn!==this.turn){this.pendingTools.delete(id);return;}
+      output = { error: 'Tool failed; do not automatically retry an uncertain task.' }; this.emit('fault', { code: 'TOOL_FAILED' });
+    }
     this.pendingTools.delete(id);
     if (this.state === 'closed' || this.state === 'recording' || this.cancelled.has(message.response_id) || turn !== this.turn) return;
     this.monitor.note(turn,'tool_completed');

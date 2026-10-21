@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { isIP } from 'node:net';
 const utf8=new TextDecoder('utf-8',{fatal:true});
 const uint=value=>Number.isInteger(value)&&value>=0&&value<=0xffffffff;
-export const TURN_STATUS_CODES=Object.freeze(['waiting','working','short_input','no_reply','empty_response','unrecognized','response_failed','auth_required']);
+export const TURN_STATUS_CODES=Object.freeze(['waiting','working','short_input','no_reply','empty_response','unrecognized','response_failed','auth_required','progress']);
 export function shortCaption(text){return [...String(text).replace(/[\x00-\x1f\x7f]/g,' ').trim()].slice(0,80).join('');}
 export function bridgeIdentity(key){
   if(typeof key!=='string'||!/^[a-f0-9]{64}$/i.test(key))throw new Error('PAIRING_CONFIG');
