@@ -10,8 +10,8 @@
     "device_reply_style_and_frozen_reader"
   ],
   "host": {
-    "tests": 148,
-    "passed": 148,
+    "tests": 149,
+    "passed": 149,
     "failed": 0,
     "skipped": 0,
     "scope": "local_offline_tests_after_resolving_target_dependencies"
@@ -488,11 +488,21 @@
       "identifierAliasesPerSession": 64,
       "retainedSessions": "current_and_previous_closed",
       "audioBehaviorChanged": false,
-      "localTests": 148,
-      "localPassed": 148,
+      "localTests": 149,
+      "localPassed": 149,
       "localSkipped": 0,
-      "independentReview": "pending",
-      "runtimeInstallation": "pending"
+      "independentReview": {
+        "scope": "5e822ea..12bd764",
+        "privacyImportant": 1,
+        "importantFix": "per_session_random_HMAC_alias_keys_no_raw_ID_retention",
+        "fixRedThenGreen": true,
+        "integrationFindings": 0,
+        "integrationIndependentTests": 32,
+        "privacyIndependentTests": 3,
+        "rootFullRegression": 149,
+        "reReview": false
+      },
+      "runtimeInstallation": "ready_for_scoped_update_after_review_fix"
     }
   }
 }

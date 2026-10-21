@@ -1,3 +1,5 @@
+import {createHmac, randomBytes} from 'node:crypto';
+
 const RECEIVED = new Set([
   'input_audio_buffer.cleared', 'input_audio_buffer.speech_started',
   'input_audio_buffer.speech_stopped', 'input_audio_buffer.committed',
@@ -15,15 +17,21 @@ const ERROR_CODES = new Set([
   'invalid_value', 'invalid_request_error', 'server_error'
 ]);
 
-// Session-local aliases explain ordering without retaining audio, text or account IDs.
+export function voiceTraceAliasKey(id, key) {
+  if (typeof id !== 'string' || !id.length || id.length > 256) return null;
+  return createHmac('sha256', key).update(id, 'utf16le').digest('hex');
+}
+
+// Only session-keyed digests are retained in the alias table; snapshots expose numbers.
 export class VoiceTrace {
-  #events = []; #aliases = new Map(); #dropped = 0; #aliasLimit = false;
+  #events = []; #aliases = new Map(); #dropped = 0; #aliasLimit = false; #aliasKey = randomBytes(32);
   constructor({now = Date.now} = {}) { this.now = now; this.startedAt = now(); }
   #alias(id) {
-    if (typeof id !== 'string' || !id.length || id.length > 256) return null;
-    if (this.#aliases.has(id)) return this.#aliases.get(id);
+    const key = voiceTraceAliasKey(id, this.#aliasKey);
+    if (key === null) return null;
+    if (this.#aliases.has(key)) return this.#aliases.get(key);
     if (this.#aliases.size >= 64) { this.#aliasLimit = true; return null; }
-    const alias = this.#aliases.size + 1; this.#aliases.set(id, alias); return alias;
+    const alias = this.#aliases.size + 1; this.#aliases.set(key, alias); return alias;
   }
   #add(event, turn, details = {}) {
     const elapsed = this.now() - this.startedAt;

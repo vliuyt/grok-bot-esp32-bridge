@@ -1,6 +1,16 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {VoiceTrace} from '../src/voice-trace.mjs';
+import {VoiceTrace,voiceTraceAliasKey} from '../src/voice-trace.mjs';
+
+test('retained alias keys conceal original identifiers and cannot be linked between sessions',()=>{
+  const key=Buffer.alloc(32,1),otherKey=Buffer.alloc(32,2),id='private-item';
+  const digest=voiceTraceAliasKey(id,key);
+  assert.match(digest,/^[a-f0-9]{64}$/);assert(!digest.includes(id));
+  assert.equal(digest,voiceTraceAliasKey(id,key));
+  assert.notEqual(digest,voiceTraceAliasKey(id,otherKey));
+  assert.notEqual(voiceTraceAliasKey('\ud800',key),voiceTraceAliasKey('\ud801',key));
+  assert.equal(voiceTraceAliasKey('x'.repeat(257),key),null);
+});
 
 test('trace distinguishes commit, partial recognition, final recognition and response without retaining content',()=>{
   let now=100;const trace=new VoiceTrace({now:()=>now});
