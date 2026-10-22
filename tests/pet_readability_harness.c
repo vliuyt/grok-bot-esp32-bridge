@@ -54,6 +54,14 @@ int main(void) {
     in.dialogue=PET_DIALOGUE_LISTEN;text=pet_readability_text(&in);
     assert(text.local&&!strcmp(text.summary,"我在听")&&!strcmp(text.hint,"松开 BOOT 后提交"));
     assert(pet_readability_page(PET_PAGE_READING,&in)==PET_PAGE_HOME);
+    in.dialogue=PET_DIALOGUE_IDLE;in.release_before_recording=true;
+    assert(strstr(pet_readability_text(&in).summary,"松开"));
+    assert(strstr(pet_readability_text(&in).hint,"重新"));
+    in.connection=PET_CONN_CONNECTING;
+    assert(strstr(pet_readability_text(&in).hint,"尚未录音"));
+    in.notice=PET_NOTICE_AUTH_REQUIRED;
+    assert(strstr(pet_readability_text(&in).summary,"登录"));
+    in.notice=PET_NOTICE_NONE;in.release_before_recording=false;in.connection=PET_CONN_READY;
     in.dialogue=PET_DIALOGUE_WAIT;in.waiting_long=true;
     assert(!strcmp(pet_readability_text(&in).summary,"还在想，稍等我一下"));
     in.waiting_long=false;assert(!strcmp(pet_readability_text(&in).summary,"让我想想"));

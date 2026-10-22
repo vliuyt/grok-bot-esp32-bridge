@@ -55,12 +55,17 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
      * Clamp time, but preserve events; identity guards reject stale audio/links. */
     if(e.now_ms<s->now_ms)e.now_ms=s->now_ms;
     s->now_ms=e.now_ms;
-    if(voice_event(e.kind) && (e.generation!=s->generation || e.turn!=s->turn || s->response_cancelled)) return PET_FX_NONE;
+    bool connection_auth=e.kind==PET_EV_TURN_STATUS&&e.value==PET_NOTICE_AUTH_REQUIRED&&
+        e.generation==s->generation&&e.turn==0&&s->connection!=PET_CONN_READY&&s->dialogue==PET_DIALOGUE_IDLE;
+    if(e.kind==PET_EV_TURN_STATUS&&e.value==PET_NOTICE_AUTH_REQUIRED&&e.turn==0&&!connection_auth)return PET_FX_NONE;
+    if(voice_event(e.kind) && !connection_auth && (e.generation!=s->generation || e.turn!=s->turn || s->response_cancelled)) return PET_FX_NONE;
     uint32_t fx=PET_FX_NONE;
     switch(e.kind) {
     case PET_EV_PRESS:
         if(s->held) break;
-        s->held=true; s->expired=false; s->setup=false;s->notice=PET_NOTICE_NONE; pet_note_activity(s,e.now_ms);
+        s->held=true; s->expired=false; s->setup=false;
+        if(s->connection==PET_CONN_READY||s->notice!=PET_NOTICE_AUTH_REQUIRED)s->notice=PET_NOTICE_NONE;
+        pet_note_activity(s,e.now_ms);
         fx=PET_FX_WAKE|PET_FX_CANCEL;
         if(s->connection==PET_CONN_READY) fx|=begin(s,e.now_ms);
         else fx|=PET_FX_CONNECT;
@@ -98,8 +103,8 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
             s->connection_problem_seen=true; s->confused_until_ms=e.now_ms+2000;
             s->curious_until_ms=s->pet_until_ms=s->greet_until_ms=0;
         }
-        if(s->connection==PET_CONN_READY && s->held && !s->expired && s->dialogue==PET_DIALOGUE_IDLE)
-            fx|=begin(s,e.now_ms);
+        /* Connection recovery cannot resume a partly spoken utterance.
+         * A fresh physical press after release owns the next complete turn. */
         break;
     case PET_EV_BUFFERED:
         if(s->dialogue!=PET_DIALOGUE_LISTEN&&s->connection==PET_CONN_READY) {
@@ -164,7 +169,8 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         if(e.value>=PET_NOTICE_SHORT_INPUT){
             s->dialogue=PET_DIALOGUE_IDLE;s->response_cancelled=true;s->playback_empty=true;s->response_done=false;s->level=0;
             s->confused_until_ms=e.now_ms+2000;
-            fx|=PET_FX_CANCEL;pet_note_activity(s,e.now_ms);
+            fx|=PET_FX_CANCEL;
+            if(!connection_auth)pet_note_activity(s,e.now_ms);
         }
         break;
     case PET_EV_CLOCK:

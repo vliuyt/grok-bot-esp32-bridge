@@ -54,7 +54,7 @@ static lv_obj_t *container(lv_obj_t *parent,int x,int y,int width,int height){
 }
 static pet_readability_input_t input(void){
     return (pet_readability_input_t){presented.pose,presented.dialogue,presented.connection,
-        presented.caption_mode,presented.waiting_long,presented.caption,presented.notice};
+        presented.caption_mode,presented.waiting_long,presented.caption,presented.notice,presented.release_before_recording};
 }
 static bool frozen_reader_valid(void){
     bool progress=presented.notice==PET_NOTICE_NONE||presented.notice==PET_NOTICE_WAITING||

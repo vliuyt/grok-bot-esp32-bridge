@@ -16,6 +16,7 @@ typedef struct {
     bool waiting_long;
     const char *caption;
     pet_notice_t notice;
+    bool release_before_recording;
 } pet_readability_input_t;
 typedef struct {
     char summary[PET_CAPTION_BYTES+1];

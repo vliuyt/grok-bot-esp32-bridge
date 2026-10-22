@@ -17,6 +17,10 @@ pet_readability_text_t pet_readability_text(const pet_readability_input_t *in) {
         static const char *const messages[]={"","还在等回复","正在处理任务","录音太短，请再说一次","暂时没收到回复，请再试","这次没有声音回复，请再试","没听清，请再说一次","这次回答失败，请再试","请在 Mac 检查登录","","连接断开，正在恢复"};
         local=messages[in->notice];
     }
+    else if(in->release_before_recording){
+        local=in->connection==PET_CONN_READY?"已就绪，请松开再按":"连接恢复后再说";
+        out.hint=in->connection==PET_CONN_READY?"松开后重新按住 BOOT":"尚未录音，请先松开";
+    }
     else if(in->dialogue==PET_DIALOGUE_WAIT)local=in->waiting_long?"还在想，稍等我一下":"让我想想";
     else if(in->pose.expression==PET_EXPR_HAPPY)local="好舒服呀";
     else if(in->pose.expression==PET_EXPR_CURIOUS)local="嗯？我在呢";

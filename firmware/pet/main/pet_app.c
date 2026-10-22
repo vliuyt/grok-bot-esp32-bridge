@@ -178,6 +178,7 @@ static void refresh(void){
     pet_reader_sync(&reader,&s,caption_mode,now);ui.reader=reader;
     ui.caption_mode=caption_mode;ui.caption_save_failed=caption_save_failed;
     ui.pose=pet_pose(&s,now);ui.dialogue=s.dialogue;ui.connection=s.connection;ui.notice=s.notice;
+    ui.release_before_recording=s.held&&s.dialogue!=PET_DIALOGUE_LISTEN;
     ui.volume=c.volume;ui.brightness=c.brightness;ui.quiet=c.quiet;ui.speaker=c.speaker;
     ui.wifi_online=network_connected;ui.mac_online=mac_connected;ui.setup_open=s.setup;
     ui.task_channel=s.task_channel;ui.waiting_long=s.dialogue==PET_DIALOGUE_WAIT&&now-s.entered_ms>=20000;

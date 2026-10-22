@@ -97,7 +97,40 @@ static void companion_feedback(void) {
     event(&s,PET_EV_BUFFERED,127100,0);
     assert(s.dialogue==PET_DIALOGUE_IDLE);
 }
+static void first_complete_utterance(void){
+    pet_state_t s;pet_init(&s,0);
+    uint32_t fx=event(&s,PET_EV_PRESS,10,0);assert((fx&PET_FX_CONNECT)&&!(fx&PET_FX_START));
+    fx=pet_step(&s,(pet_event_t){.kind=PET_EV_LINK,.generation=1,.value=PET_CONN_READY,.now_ms=1000});
+    assert(!(fx&PET_FX_START)&&s.dialogue==PET_DIALOGUE_IDLE);
+    fx=event(&s,PET_EV_RELEASE,1200,0);assert(!(fx&PET_FX_SUBMIT));
+    fx=event(&s,PET_EV_PRESS,1300,0);assert(fx&PET_FX_START);
+    fx=pet_step(&s,(pet_event_t){.kind=PET_EV_LINK,.generation=2,.value=PET_CONN_OFFLINE,.now_ms=1500});
+    assert((fx&PET_FX_CANCEL)&&(fx&PET_FX_STOP));
+    fx=pet_step(&s,(pet_event_t){.kind=PET_EV_LINK,.generation=3,.value=PET_CONN_READY,.now_ms=2000});
+    assert(!(fx&PET_FX_START)&&s.dialogue==PET_DIALOGUE_IDLE);
+    fx=event(&s,PET_EV_RELEASE,2100,0);assert(!(fx&PET_FX_SUBMIT));
+    assert(event(&s,PET_EV_PRESS,2200,0)&PET_FX_START);
+    pet_init(&s,0);ready(&s,1);assert(event(&s,PET_EV_PRESS,2,0)&PET_FX_START);
+}
+static void connection_auth_notice(void){
+    pet_state_t s;pet_init(&s,0);ready(&s,1);event(&s,PET_EV_PRESS,2,0);event(&s,PET_EV_RELEASE,202,0);
+    pet_step(&s,(pet_event_t){.kind=PET_EV_LINK,.generation=2,.value=PET_CONN_CONNECTING,.now_ms=300});
+    uint64_t activity=s.last_input_ms;
+    pet_step(&s,(pet_event_t){.kind=PET_EV_TURN_STATUS,.generation=2,.turn=0,.value=PET_NOTICE_AUTH_REQUIRED,.now_ms=301});
+    assert(s.notice==PET_NOTICE_AUTH_REQUIRED&&s.last_input_ms==activity);
+    event(&s,PET_EV_TICK,120203,0);assert(s.life==PET_LIFE_SLEEP);
+    ready(&s,120300);assert(s.notice==PET_NOTICE_NONE);
+    pet_step(&s,(pet_event_t){.kind=PET_EV_TURN_STATUS,.generation=2,.turn=0,.value=PET_NOTICE_AUTH_REQUIRED,.now_ms=120301});
+    assert(s.notice==PET_NOTICE_NONE);
+    pet_step(&s,(pet_event_t){.kind=PET_EV_TURN_STATUS,.generation=s.generation,.turn=0,.value=PET_NOTICE_AUTH_REQUIRED,.now_ms=120302});
+    assert(s.notice==PET_NOTICE_NONE); /* A ready call cannot inherit pre-ready authorization errors. */
+    pet_init(&s,0);ready(&s,1);
+    pet_step(&s,(pet_event_t){.kind=PET_EV_TURN_STATUS,.generation=s.generation,.turn=0,.value=PET_NOTICE_AUTH_REQUIRED,.now_ms=2});
+    assert(s.notice==PET_NOTICE_NONE);
+}
 int main(void) {
+    first_complete_utterance();
+    connection_auth_notice();
     lasting_mood();
     companion_feedback();
     assert(pet_delay_ticks(1,100)==1&&pet_delay_ticks(2,100)==1&&pet_delay_ticks(5,1000)==5);
@@ -129,7 +162,8 @@ int main(void) {
     assert(!(fx&PET_FX_SUBMIT)&&s.dialogue==PET_DIALOGUE_IDLE);
     pet_step(&s,(pet_event_t){.kind=PET_EV_LINK,.now_ms=59000,.generation=s.generation+1,.value=PET_CONN_OFFLINE});
     fx=event(&s,PET_EV_PRESS,60000,0);assert(!(fx&PET_FX_START));
-    ready(&s,61000);assert(s.dialogue==PET_DIALOGUE_LISTEN);
+    ready(&s,61000);assert(s.dialogue==PET_DIALOGUE_IDLE);
+    event(&s,PET_EV_RELEASE,61010,0);assert(event(&s,PET_EV_PRESS,61100,0)&PET_FX_START);
     fx=event(&s,PET_EV_CANCEL,62000,0);assert(fx&PET_FX_STOP);
     pet_step(&s,(pet_event_t){.kind=PET_EV_PLAYING,.now_ms=63000,.generation=s.generation-1,.turn=s.turn,.value=900});
     assert(s.dialogue==PET_DIALOGUE_IDLE);
