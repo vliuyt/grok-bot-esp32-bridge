@@ -2,7 +2,7 @@
   "date": "2026-10-22",
   "baseCommit": "9c63beba1b4ce3b81145fac155e5fe528a4d1027",
   "scope": "First native voice turn after long idle",
-  "status": "investigating_server_idle_error",
+  "status": "installed_awaiting_natural_idle_recovery",
   "baseline": {
     "tests": 157,
     "passed": 157,
@@ -10,13 +10,26 @@
     "failureAfterLastInputMs": 900307
   },
   "silentReproduction": {
-    "idleErrorsAtMs": [902498, 902589],
+    "idleErrorsAtMs": [
+      902498,
+      902589,
+      905360
+    ],
     "errorType": "server_error",
-    "errorSignals": ["idle", "timeout", "session"],
+    "errorSignals": [
+      "idle",
+      "timeout",
+      "session"
+    ],
     "asrTimeoutHypothesis": "rejected",
-    "rootCause": "Client closes on every protocol error; server close behavior under investigation.",
+    "rootCause": "The native service closes the idle voice socket after about15 minutes. Previously this also destroyed device TLS; its original 45-second deadline prevented keeping the old TLS during native recovery.",
     "humanAudioOrTasksInitiated": false,
-    "rawErrorOrContentRetained": false
+    "rawErrorOrContentRetained": false,
+    "serverClose": {
+      "code": 1001,
+      "afterErrorMs": 2168,
+      "locallyInitiated": false
+    }
   },
   "diagnosticChecks": {
     "tests": 161,
@@ -24,7 +37,11 @@
     "failed": 0,
     "skipped": 0,
     "independentReview": "approved",
-    "bounds": {"events": 96, "aliases": 64, "signals": 11},
+    "bounds": {
+      "events": 96,
+      "aliases": 64,
+      "signals": 11
+    },
     "snapshotArrayMutationRegression": "passed"
   },
   "macRuntime": {
@@ -33,13 +50,72 @@
     "restart": "verified_with_native_and_task_ready"
   },
   "firmware": {
-    "changed": false,
-    "installedSHA256": "c54fe0cc0fd3c7a637437fadcc1f5d5133453102d24cc8e3e0f7f7ba3060fa48"
+    "changed": true,
+    "reason": "A native reconnection on old TLS needs a new bounded45-second deadline.",
+    "bytes": 3707392,
+    "sha256": "bf5895888b5ef963f90bcced74552010e677ca380b173000e5baed0b460afd2f",
+    "sourceSha256": "1386d131fdecaa0b3844514a86ef435200b973d32addd95955dcaf3b4c81ffc8",
+    "dependenciesSha256": "0133de3853f8ce1dd8ef3937b73bf0bb357782c96e83423b14e4ab7cbd8f6499",
+    "sdkconfigSha256": "32e2986dca5293a5eafb31f6161663dade9763182de65b1bcb5ce938441b95a3",
+    "offset": 131072,
+    "remainingSlotBytes": 355840
   },
   "humanAcceptance": {
     "firstReplyAfter15Minutes": "pending",
     "firstReplyAfter1Hour": "pending",
     "firstReplyAfterOvernight": "pending",
     "boundary": "Connection readiness and silent diagnostics do not prove physical speech or speaker output."
+  },
+  "updated": "2026-10-23",
+  "recovery": {
+    "scope": "Only negotiated native_resume firmware, fully settled input/ASR/response/tasks and drained playback.",
+    "attemptsPerExpiry": 1,
+    "freshCredential": true,
+    "originalConversationConfirmationRequired": true,
+    "sameNativeCall": true,
+    "replayInputOrTasks": false,
+    "silentAudioKeepalive": false,
+    "periodicForcedReconnect": false,
+    "historyBounds": {
+      "responses": 1024,
+      "cancelledResponses": 1024,
+      "tools": 1000
+    },
+    "failure": "Authentication keeps its explicit login notice; other failures close through the existing safe path."
+  },
+  "checks": {
+    "tests": 191,
+    "passed": 191,
+    "failed": 0,
+    "skipped": 0,
+    "realTLS": true,
+    "productionWatchdogC": true,
+    "targetBuild": "ESP-IDF6.0.1",
+    "independentReview": {
+      "cppChecks": 5,
+      "typescriptChecks": 57,
+      "generalChecks": 77,
+      "remainingImportantFindings": 0
+    },
+    "reviewRegressionsFixed": [
+      "matching conversation confirmation before ready",
+      "tool/response fences across new sockets",
+      "fixed authentication-required notice",
+      "retired and oversized observer frames"
+    ]
+  },
+  "installation": {
+    "fullBackupBytes": 8388608,
+    "previousApplicationVerified": true,
+    "applicationOnlyWriteAndReadback": true,
+    "previousBackupsPreserved": true,
+    "audioSettingsPreserved": true,
+    "wifiConnected": true,
+    "pairingPreserved": true,
+    "nativeAndTaskReady": true,
+    "resumableConversationAvailable": true,
+    "audioFault": false,
+    "newEventDrops": 0,
+    "audioOrTaskInitiated": false
   }
 }

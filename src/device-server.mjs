@@ -7,7 +7,7 @@ import { encodeFrame, FrameDecoder, PlaybackQueue } from './device-wire.mjs';
 import { petMessage,encodePetMessage,shortCaption,privateLanPeer,bridgeIdentity } from './pet-protocol.mjs';
 
 export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', port = 8790,bridgeId,
-  sessionFactory = () => new NativeBotSession({ backend, bot, replyStyle:'companion' }) }) {
+  sessionFactory = options => new NativeBotSession({ backend, bot, replyStyle:'companion',...options }) }) {
   if (!Buffer.isBuffer(key) || key.length !== 32) throw new Error('INVALID_PAIRING_KEY');
   bridgeId ??= bridgeIdentity(key.toString('hex'));
   let active, connections = 0, paused = false, stopping = false;
@@ -19,7 +19,8 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     pskCallback: (_socket, identity) => identity === 'grok-esp32' ? key : null }, socket => {
     if (active || paused || stopping || !privateLanPeer(socket.remoteAddress)) { socket.destroy(); return; }
     sockets.add(socket); connections++; stats.reconnects = Math.max(0, connections - 1);
-    const call = { socket, session: sessionFactory(), turn: 0, ready: false, recording: false,
+    const call = { socket, session: sessionFactory({canRecoverIdle:()=>current()&&call.ready&&!call.recording&&
+      call.capabilities?.has('native_resume')&&call.playback.available===20&&!call.playback.queue.length}), turn: 0, ready: false, recording: false,
       book:new CaptionBook(), outputMeter:new PcmMeter(), inputMeter:new PcmMeter(), inputGain:new DeviceInputGain(),
       up: new PcmResampler(16000, 24000), down: new PcmResampler(24000, 16000) };
     active = call; stats.state = 'connecting'; stats.fault = null;
@@ -82,6 +83,19 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
       if (!current() || call.recording) return;
       try { call.book.finish();catalog();queueAudio(call.down.finish()); call.playback.done(); stats.replies++; updateDrained(); } catch (error) { fail(error.message); }
     });
+    call.session.on('voiceRecovery',event=>{
+      if(!current())return;
+      try{
+        if(event.phase==='started'){
+          call.ready=false;stats.state='connecting';stats.previousVoiceTrace=event.trace;
+          stats.nativeRecoveries=(stats.nativeRecoveries??0)+1;diagnostic('NATIVE_IDLE_RECOVERY');
+          metadata({op:'link',state:'connecting'});
+        }else if(event.phase==='ready'){
+          observeVoice();call.ready=true;stats.state='ready';stats.lastNativeRecoveryMs=event.elapsedMs;
+          diagnostic('NATIVE_IDLE_RECOVERED');control('ready');metadata({op:'link',state:'ready'});
+        }
+      }catch(error){fail(error.message);}
+    });
     call.session.on('state', state => {
       if (current() && call.ready && !call.recording && state === 'ready') {
         try { call.playback.done(); stats.state = 'ready'; } catch (error) { fail(error.message); }
@@ -141,7 +155,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
           return;
         }
         if(message?.op!=='hello'||!bridgeId||call.petGeneration)throw new Error('PET_PROTOCOL');
-        call.petGeneration=message.generation;call.capabilities=new Set((message.capabilities??[]).filter(c=>['turn_status','turn_progress','caption_pages'].includes(c)));stats.petProtocol=2;diagnostic("PET_HELLO");
+        call.petGeneration=message.generation;call.capabilities=new Set((message.capabilities??[]).filter(c=>['turn_status','turn_progress','caption_pages','native_resume'].includes(c)));stats.petProtocol=2;diagnostic("PET_HELLO");
         metadata({op:'hello',v:2,bridgeId,...(message.capabilities?{capabilities:[...call.capabilities]}:{})});metadata({op:'link',state:call.ready?'ready':'connecting'});
         metadata({op:'clock',epochMs:Date.now()});
         call.clockTimer=setInterval(()=>{try{metadata({op:'clock',epochMs:Date.now()});}catch(error){fail(error.message);}},30000);call.clockTimer.unref();
@@ -179,11 +193,14 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     socket.setNoDelay(true); socket.setTimeout(30000, () => fail('DEVICE_TIMEOUT'));
     socket.on('data', chunk => { try { decoder.push(chunk); } catch (error) { fail(error.message); } });
     socket.on('error', () => { void cleanup(); }); socket.on('close', () => { void cleanup(); });
-    call.opening = (async () => {
-      try {
-        await call.session.open(); if (!current()) return;
-        call.session.voice?.socket?.addEventListener('message', event => {
-          if (!current()) return;
+    const observedVoices=new WeakSet();
+    const observeVoice=()=>{
+        const voice=call.session.voice;
+        if(!voice?.socket||observedVoices.has(voice))return;
+        observedVoices.add(voice);
+        voice.socket.addEventListener('message', event => {
+          if (!current()||call.session.recovering||voice.state==='closed'||call.session.voice!==voice||
+            typeof event.data!=='string'||event.data.length>2*1024*1024) return;
           try { const message=JSON.parse(event.data),{type}=message;
             if (typeof type === 'string' && /^[a-z_.]{1,100}$/.test(type)) stats.nativeEvents[type] = (stats.nativeEvents[type] ?? 0) + 1;
             if(type==='response.output_audio.delta')stats.nativeAudioMatch={state:call.session.voice.state,hasResponseId:typeof message.response_id==='string',owned:message.response_id===call.session.voice.responseId,cancelled:call.session.voice.cancelled.has(message.response_id),keys:Object.keys(message).filter(key=>key!=='delta')};
@@ -196,6 +213,11 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
             }
           } catch {}
         });
+    };
+    call.opening = (async () => {
+      try {
+        await call.session.open(); if (!current()) return;
+        observeVoice();
         call.ready = true; stats.state = 'ready'; diagnostic('NATIVE_READY'); control('ready');metadata({op:'link',state:'ready'});
       }
       catch (error) { fail(error.code ?? error.message); }
@@ -203,7 +225,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
   });
   server.on('tlsClientError', () => {});
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, host, resolve); });
-  return { port: server.address().port, snapshot: () => ({ ...stats, inputAudio:active?{turn:active.turn,...active.inputMeter.snapshot()}:null, outputAudio:active?{turn:active.turn,...active.outputMeter.snapshot()}:null, voiceTrace:active?.session.voice?.trace?.snapshot()??null, firstAudioMs: [...stats.firstAudioMs], playback:active?{credits:active.playback.available,packets:active.playback.queue.length,bytes:active.playback.bytes,responseActive:!!active.session.voice?.responseActive,recording:active.recording}:null }),
+  return { port: server.address().port, snapshot: () => ({ ...stats, nativeResumable:typeof active?.session.voice?.conversationId==='string', inputAudio:active?{turn:active.turn,...active.inputMeter.snapshot()}:null, outputAudio:active?{turn:active.turn,...active.outputMeter.snapshot()}:null, voiceTrace:active?.session.voice?.trace?.snapshot()??null, firstAudioMs: [...stats.firstAudioMs], playback:active?{credits:active.playback.available,packets:active.playback.queue.length,bytes:active.playback.bytes,responseActive:!!active.session.voice?.responseActive,recording:active.recording}:null }),
     disconnect: () => active?.socket.destroy(),
     pause: () => { paused = true; active?.socket.destroy(); }, resume: () => { paused = false; },
     close: async () => {

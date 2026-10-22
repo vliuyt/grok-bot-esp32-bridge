@@ -2,7 +2,8 @@
 
 ## Unreleased — v0.2.0 work in progress
 
-- Investigate repeated native idle errors after roughly 15 minutes with fixed error signals and input-idle timing. Keep diagnostic snapshots bounded and detached; retain no error text, audio or credentials. 161 local checks pass. Recovery and physical long-idle acceptance remain pending; see `docs/idle-first-use-validation.json`.
+- Recover a fully settled native idle expiry with one fresh credential and confirmed original conversation, preserving paired device TLS. Negotiate `native_resume`, restart the firmware's bounded native-ready deadline, require a fresh BOOT, and retain call-wide response/tool fences. Preserve authentication notices and reject retired diagnostic frames. 191 local checks, independent C/JS reviews, full backup and application-slot readback pass; real idle recovery and physical first replies remain separately tracked in `docs/idle-first-use-validation.json`.
+- Diagnose the native idle close using fixed error signals and input-idle timing, with bounded detached snapshots and no error text, audio or credentials. Three silent reproductions included a server-initiated 1001 close 2,168 ms after the error; the earlier ASR-timeout hypothesis was rejected.
 
 - Require release and a fresh BOOT press after a connection recovers; never resume a partial utterance. Show explicit not-recording/release guidance and accept authentication notices only for the current not-ready connection. Idle native service errors remain unresolved.
 - React locally on touch-down and movement, follow the finger with bounded gaze, relax during strokes, gently dodge three taps within a total 900ms window, and stretch briefly on waking. Cancel contact on page changes, BOOT and lost contact; preserve voice priority and existing petting warmth. Include 900/901ms and fast-stroke regressions.

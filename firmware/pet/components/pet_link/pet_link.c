@@ -1,5 +1,6 @@
 #include "pet_link.h"
 #include "pet_link_wire.h"
+#include "pet_link_watchdog.h"
 #include "pet_reader_wire.h"
 #include "pet_network.h"
 #include "pet_audio.h"
@@ -28,7 +29,8 @@ static atomic_bool hello,native_ready;
 static bool turn_status_capable,turn_progress_capable,caption_pages_capable;
 static pet_link_rx_t receiver;
 static char bridge_id[33];
-static uint64_t last_received,last_ping,connected_at;
+static uint64_t last_received,last_ping;
+static pet_link_watchdog_t watchdog;
 typedef struct {uint32_t generation,turn;uint16_t bytes;uint8_t type;uint8_t data[640];} packet_t;
 static uint64_t now_ms(void){return (uint64_t)esp_timer_get_time()/1000;}
 static bool post(pet_event_kind_t kind,int value){return cb.event((pet_event_t){.kind=kind,.now_ms=now_ms(),.generation=atomic_load(&generation),.turn=atomic_load(&current_turn),.value=value},cb.context);}
@@ -81,7 +83,7 @@ static bool metadata(const void *bytes,size_t n){
  }else if(!hello){ok=false;}
  else if(!strcmp(op,"link")){
   const char *state=string(j,"state");if(!state){ok=false;goto done;}
-  native_ready=!strcmp(state,"ready");post(PET_EV_LINK,native_ready?PET_CONN_READY:!strcmp(state,"connecting")?PET_CONN_CONNECTING:PET_CONN_UNAVAILABLE);
+  pet_link_watchdog_ready(&watchdog,&native_ready,!strcmp(state,"ready"),now_ms());post(PET_EV_LINK,native_ready?PET_CONN_READY:!strcmp(state,"connecting")?PET_CONN_CONNECTING:PET_CONN_UNAVAILABLE);
  }else if(!strcmp(op,"task_channel")){
   cJSON *v=cJSON_GetObjectItemCaseSensitive(j,"available");if(!cJSON_IsBool(v)){ok=false;goto done;}post(PET_EV_TASK_CHANNEL,cJSON_IsTrue(v));
  }else if(!strcmp(op,"caption")){
@@ -121,7 +123,7 @@ static bool receive(uint8_t type,uint32_t turn,const void *bytes,size_t n,void *
  }
  if(n&&((const char *)bytes)[0]=='{')return metadata(bytes,n);
  if(n==4&&!memcmp(bytes,"pong",4))return true;
- if(n==5&&!memcmp(bytes,"ready",5)){native_ready=true;if(hello)post(PET_EV_LINK,PET_CONN_READY);return true;}
+ if(n==5&&!memcmp(bytes,"ready",5)){pet_link_watchdog_ready(&watchdog,&native_ready,true,now_ms());if(hello)post(PET_EV_LINK,PET_CONN_READY);return true;}
  if(turn!=current)return true;
  if(n==5&&!memcmp(bytes,"clear",5)){pet_audio_flush_playback(g,turn);return true;}
  if(n==4&&!memcmp(bytes,"done",4)){pet_audio_done(g,turn);return true;}
@@ -142,7 +144,7 @@ static bool connect_bridge(void){
  psk_hint_key_t psk={.key=c.key,.key_size=32,.hint="grok-esp32"};esp_tls_cfg_t cfg={.timeout_ms=5000,.psk_hint_key=&psk};
  tls=esp_tls_init();if(!tls)goto done;
  int fd;if(esp_tls_conn_new_sync(host,strlen(host),port,&cfg,tls)!=1||esp_tls_get_conn_sockfd(tls,&fd)!=ESP_OK||fcntl(fd,F_SETFL,fcntl(fd,F_GETFL,0)|O_NONBLOCK)<0)goto done;
- char greeting[192];snprintf(greeting,sizeof(greeting),"{\"op\":\"hello\",\"v\":2,\"generation\":%u,\"capabilities\":[\"turn_status\",\"turn_progress\",\"caption_pages\"]}",(unsigned)atomic_load(&generation));
+ char greeting[192];snprintf(greeting,sizeof(greeting),"{\"op\":\"hello\",\"v\":2,\"generation\":%u,\"capabilities\":[\"turn_status\",\"turn_progress\",\"caption_pages\",\"native_resume\"]}",(unsigned)atomic_load(&generation));
  ok=send(2,0,greeting,strlen(greeting));
  done:pet_config_wipe(&c,sizeof(c));return ok;
 }
@@ -150,7 +152,7 @@ static void disconnect_bridge(void){
  atomic_store(&connected,false);if(tls){esp_tls_conn_destroy(tls);tls=NULL;}
  post(PET_EV_LINK,PET_CONN_OFFLINE);cb.status(false,cb.context);
  packet_t p;while(xQueueReceive(outgoing,&p,0)==pdTRUE)pet_config_wipe(&p,sizeof(p));
- memset(&receiver,0,sizeof(receiver));hello=native_ready=false;turn_status_capable=turn_progress_capable=caption_pages_capable=false;
+ memset(&receiver,0,sizeof(receiver));hello=false;pet_link_watchdog_begin(&watchdog,&native_ready,0);turn_status_capable=turn_progress_capable=caption_pages_capable=false;
 }
 static void link_task(void *unused){
  (void)unused;unsigned failures=0;
@@ -159,7 +161,7 @@ static void link_task(void *unused){
   atomic_fetch_add(&generation,1);atomic_store(&current_turn,0);atomic_store(&reset_requested,false);post(PET_EV_LINK,PET_CONN_CONNECTING);
   if(!connect_bridge()){disconnect_bridge();if(failures<6)failures++;}
   else{
-   atomic_store(&connected,true);cb.status(true,cb.context);last_received=last_ping=connected_at=now_ms();
+   atomic_store(&connected,true);cb.status(true,cb.context);last_received=last_ping=now_ms();pet_link_watchdog_begin(&watchdog,&native_ready,last_received);
    bool ok=true;
    while(ok&&!atomic_load(&reset_requested)&&!atomic_load(&suspended)&&pet_network_online()&&!cb.state(cb.context).setup){
     uint8_t input[1024];ssize_t n=esp_tls_conn_read(tls,input,sizeof(input));
@@ -171,7 +173,7 @@ static void link_task(void *unused){
      pet_config_wipe(&packet,sizeof(packet));
     }
     uint64_t now=now_ms();if(now-last_ping>=5000){ok=ok&&send(2,atomic_load(&current_turn),"ping",4);last_ping=now;}
-    if(now-last_received>20000||(!native_ready&&now-connected_at>45000))break;
+    if(pet_link_watchdog_expired(&watchdog,&native_ready,last_received,now))break;
     vTaskDelay(pet_delay_ticks(2,configTICK_RATE_HZ));
    }
    bool was_ready=hello&&native_ready;disconnect_bridge();

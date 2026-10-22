@@ -28,6 +28,8 @@
 
 v2 hello可带`capabilities`，双方取交集，最多8个短字符串。`turn_status`启用受控等待／失败通知；`turn_progress`单独协商，只有真实进展才续设备等待时限。旧端不会收到未协商消息。
 
+`native_resume`表示固件支持同一TLS上的原生语音重连窗口：进入未就绪时重新开始45秒期限，重复connecting不续期，20秒无收包期限不变。Mac仅在协商此能力、设备播放已排空且原生输入／识别／响应／任务全部结束时，才对已识别的长闲置超时尝试一次续接。期间发送link:connecting，忽略BOOT输入；新凭证连接完成配置并确认原conversation后才发ready。连接中按住的BOOT必须松开重按，不提交半句。旧固件保持原来的断线恢复路径。
+
 `caption_pages`启用下列元数据，均带非零uint32 `generation`和uint32 `turn`：
 
 | op | 字段 |
