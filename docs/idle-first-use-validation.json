@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-22",
+  "baseCommit": "9c63beba1b4ce3b81145fac155e5fe528a4d1027",
+  "scope": "First native voice turn after long idle",
+  "status": "investigating_server_idle_error",
+  "baseline": {
+    "tests": 157,
+    "passed": 157,
+    "skipped": 0,
+    "failureAfterLastInputMs": 900307
+  },
+  "silentReproduction": {
+    "idleErrorsAtMs": [902498, 902589],
+    "errorType": "server_error",
+    "errorSignals": ["idle", "timeout", "session"],
+    "asrTimeoutHypothesis": "rejected",
+    "rootCause": "Client closes on every protocol error; server close behavior under investigation.",
+    "humanAudioOrTasksInitiated": false,
+    "rawErrorOrContentRetained": false
+  },
+  "diagnosticChecks": {
+    "tests": 161,
+    "passed": 161,
+    "failed": 0,
+    "skipped": 0,
+    "independentReview": "approved",
+    "bounds": {"events": 96, "aliases": 64, "signals": 11},
+    "snapshotArrayMutationRegression": "passed"
+  },
+  "macRuntime": {
+    "priorRuntime": "Dynamic library missing; restart could not execute Node.",
+    "repair": "Only this bridge service now uses an existing working Node24.19.0; no global package changes.",
+    "restart": "verified_with_native_and_task_ready"
+  },
+  "firmware": {
+    "changed": false,
+    "installedSHA256": "c54fe0cc0fd3c7a637437fadcc1f5d5133453102d24cc8e3e0f7f7ba3060fa48"
+  },
+  "humanAcceptance": {
+    "firstReplyAfter15Minutes": "pending",
+    "firstReplyAfter1Hour": "pending",
+    "firstReplyAfterOvernight": "pending",
+    "boundary": "Connection readiness and silent diagnostics do not prove physical speech or speaker output."
+  }
+}

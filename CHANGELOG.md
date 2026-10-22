@@ -2,6 +2,8 @@
 
 ## Unreleased — v0.2.0 work in progress
 
+- Investigate repeated native idle errors after roughly 15 minutes with fixed error signals and input-idle timing. Keep diagnostic snapshots bounded and detached; retain no error text, audio or credentials. 161 local checks pass. Recovery and physical long-idle acceptance remain pending; see `docs/idle-first-use-validation.json`.
+
 - Require release and a fresh BOOT press after a connection recovers; never resume a partial utterance. Show explicit not-recording/release guidance and accept authentication notices only for the current not-ready connection. Idle native service errors remain unresolved.
 - React locally on touch-down and movement, follow the finger with bounded gaze, relax during strokes, gently dodge three taps within a total 900ms window, and stretch briefly on waking. Cancel contact on page changes, BOOT and lost contact; preserve voice priority and existing petting warmth. Include 900/901ms and fast-stroke regressions.
 - Smooth eyes and body by elapsed time in the UI thread; settle speech motion after actual playback-level updates stop. Local157/157 passed with zero skips; independent reviews found one important tap-window defect and one minor fast-stroke defect, both reproduced and fixed. See `docs/companion-polish-validation.json` for target, installation and physical acceptance boundaries.
