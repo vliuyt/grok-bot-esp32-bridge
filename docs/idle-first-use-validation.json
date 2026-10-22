@@ -2,7 +2,7 @@
   "date": "2026-10-22",
   "baseCommit": "9c63beba1b4ce3b81145fac155e5fe528a4d1027",
   "scope": "First native voice turn after long idle",
-  "status": "first_live_recovery_failed_v2_installed_under_observation",
+  "status": "silent_native_recovery_passed_awaiting_physical_first_reply",
   "baseline": {
     "tests": 157,
     "passed": 157,
@@ -98,13 +98,23 @@
       },
       {
         "implementation": "bounded vocabulary alignment and boolean eligibility diagnostics",
-        "result": "installed_under_natural_idle_observation",
+        "result": "native_recovered_ready_same_device_tls",
         "changes": [
           "Align conversation, inactive, silence and deadline terms with diagnostic vocabulary",
           "Expose only signature, settled, socket-open and firmware-capability booleans"
         ],
         "localChecks": 192,
-        "humanAudioOrTasksInitiated": false
+        "humanAudioOrTasksInitiated": false,
+        "errorAtMs": 903724,
+        "inputIdleMs": 903715,
+        "recoveryMs": 2420,
+        "nativeRecoveries": 1,
+        "deviceReconnects": 0,
+        "fault": null,
+        "samples": 446,
+        "observerErrors": 0,
+        "originalConversationConfirmed": true,
+        "nativeAndTaskReady": true
       }
     ]
   },
@@ -128,7 +138,18 @@
       "tool/response fences across new sockets",
       "fixed authentication-required notice",
       "retired and oversized observer frames"
-    ]
+    ],
+    "ci": {
+      "sourceCommit": "e9b4c998cbf54cd95df2f2f3cc74d7d4567adadf",
+      "pushRun": 39815850165,
+      "prRun": 39815856212,
+      "conclusion": "success",
+      "tests": 192,
+      "passed": 187,
+      "failed": 0,
+      "skipped": 5,
+      "skipReason": "Target build, cJSON and LVGL dependencies are verified locally; absent on clean CI."
+    }
   },
   "installation": {
     "fullBackupBytes": 8388608,
