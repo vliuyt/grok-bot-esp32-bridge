@@ -2,7 +2,7 @@
   "date": "2026-10-21",
   "branch": "codex/v0.2.0-roadmap",
   "pullRequest": "https://github.com/vliuyt/grok-bot-esp32-bridge/pull/2",
-  "status": "device_input_gain_installed_waiting_for_human_acceptance_after_continuous_failure",
+  "status": "five_audible_rounds_confirmed_arithmetic_routing_installed_human_result_pending",
   "release": false,
   "modules": [
     "voice_reliability",
@@ -90,13 +90,13 @@
   "manualAcceptance": {
     "pettingOnPhysicalScreen": "pending",
     "tenLowVolumeChineseRounds": "not_passed",
-    "contextAndSpokenCalculation": "pending",
+    "contextAndSpokenCalculation": "failed_spoken_5400_for_123_times_45_before_task_routing",
     "longNativeAnswerPhysicalPagination": "pending",
     "interruptAndRejectOldAudio": "pending",
     "disconnectThenNewQuestion": "pending",
     "deviceAudibleFirstAudioMs": null,
     "interruptionStopMs": null,
-    "reason": "The user confirmed one clear audible round, then reported an abnormal three-round attempt. Passive diagnostics show the second requested round committed input but never finalized recognition or started a response, followed by 30-second safe recovery. Continuous acceptance remains failed; earlier silent-speaker failure is also retained.",
+    "reason": "Five consecutive audible post-input-gain rounds are explicitly confirmed. The next semantic trial failed: normal native records confirm123×45 was recognized, no tool was called, and the assistant answered5400. Device-only exact-calculation task guidance is now installed after one silent native task/result/audio control, but human confirmation of5535 is pending. Earlier no-recognition/silent-speaker failures and ten-round/interruption/reconnect limits remain retained.",
     "firstTrial": {
       "result": "failed",
       "userReport": "voice_not_connecting",
@@ -211,6 +211,85 @@
       "thirdRequestedRoundAfterRebuildNativeReply": true,
       "semanticAnswersConfirmedByUser": false,
       "rootCause": "undetermined"
+    },
+    "postInputGainSingleTrial": {
+      "date": "2026-10-22",
+      "result": "clear_audible_reply_confirmed_by_user",
+      "deviceTurn": 15,
+      "nativeTurn": 1,
+      "volumeSetting": 88,
+      "approximateScreenPercent": 50,
+      "micGain": 30,
+      "rawInputDb": -38,
+      "processedInputRmsDbFS": -32.76,
+      "finalRecognition": true,
+      "completedNativeReply": true,
+      "outputSamples16kHz": 45760,
+      "outputRmsDbFS": -21.92,
+      "outputPeakDbFS": -5.21,
+      "devicePlayedFrameDelta": 45760,
+      "nativeFirstAudioMs": 1126,
+      "deviceAudibleFirstAudioMs": null,
+      "reconnects": 0,
+      "observerErrors": 0,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "allEarlierFailureCausesEstablished": false
+    },
+    "postInputGainObservedSequence": {
+      "observedNativeTurns": 5,
+      "finalRecognitionTurns": 5,
+      "completedNativeResponses": 5,
+      "allOutputFrameCountsConsumed": true,
+      "nativeFirstAudioMsRange": [
+        1053,
+        1237
+      ],
+      "reconnects": 0,
+      "observerErrors": 0,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "allFiveHearingConfirmedByUser": true,
+      "semanticAnswersConfirmedByUser": false,
+      "requestedFiveHearingConfirmation": "user_confirmed_all_five_clear",
+      "scope": "passive_metadata_only_no_parallel_cloud_probes_manual_reconnect_or_automatic_PTT",
+      "confirmedAudibleRounds": 5,
+      "volumeSetting": 88,
+      "approximateScreenVolumePercent": 50,
+      "nativeSessionContinuous": true,
+      "contextCalculationNextThreeTrial": "requested_pending"
+    },
+    "tenComfortableVolumeChineseRounds": {
+      "confirmedAudible": 5,
+      "target": 10,
+      "status": "paused_after_semantic_calculation_failure",
+      "volumeSetting": 88,
+      "approximateScreenPercent": 50,
+      "earlierFailuresRetained": true
+    },
+    "postInputGainContextCalculationTrial": {
+      "date": "2026-10-22",
+      "result": "failed_calculation",
+      "userReportedSpokenResult": 5400,
+      "expectedResult": 5535,
+      "normalNativeRecordCheck": {
+        "inputContains123": true,
+        "inputContains45": true,
+        "inputOperationMultiplication": true,
+        "assistantResult": 5400,
+        "toolCalls": 0,
+        "extraRawTranscriptOrAudioSaved": false
+      },
+      "subsequentThreeNativeResponsesCompleted": true,
+      "precedingShortInput": {
+        "nativeInputBytes": 11520,
+        "durationMs": 240,
+        "nextBOOTTriggeredSafeSessionRebuild": true,
+        "relationToWrongCalculationEstablished": false
+      },
+      "contextAnswerSeparatelyConfirmed": false,
+      "rootCauseOfWrongMath": "native_voice_answered_directly_without_verified_calculation",
+      "rootCauseOfEarlierNoASRAndSilentSpeakerFailures": "not_established"
     }
   },
   "knownBoundary": "The earlier unanswered voice attempt remains unexplained. Target compilation, readiness, text and host simulation do not prove audible device acceptance.",
@@ -557,7 +636,7 @@
       },
       "limits": "Fixed clean speech is not the human microphone signal. Returned audio alone does not prove recognition; padding did not establish the human failure cause. No gain or protocol behavior change follows from this comparison."
     },
-    "nextStep": "one_human_BOOT_trial_with_passive_input_output_levels_no_parallel_call_or_manual_reconnect",
+    "nextStep": "one_human_BOOT_calculation_trial_no_parallel_voice_probe_or_manual_reconnect",
     "protocolDiagnostics": {
       "implementation": "bounded_content_free_in_memory_only",
       "eventsPerSession": 96,
@@ -694,7 +773,7 @@
         "reReview": false
       },
       "runtimeInstallation": "installed_ready_with_native_and_task_channels",
-      "humanAcceptance": "pending",
+      "humanAcceptance": "five_consecutive_clear_audible_rounds_confirmed_by_user_context_and_calculation_pending",
       "previousFailuresRootCauseEstablished": false,
       "limits": "Improves a reproduced low-input recognition weakness, without establishing the cause of every earlier human no-reply or silent-speaker failure. Digital gain also raises input noise and cannot repair poor signal-to-noise ratio.",
       "runtimeModulesUpdated": 2,
@@ -709,6 +788,57 @@
         "deviceReady": true,
         "audioFault": false
       }
+    },
+    "preciseArithmetic": {
+      "sourceHead": "27e40288c7d5b9bd439bbd12a2df98997a033582",
+      "scope": "device_only_advice_routes_exact_math_through_existing_native_send_task",
+      "nativeToolsPersonaAndVoicePreserved": true,
+      "newToolOrSpeechService": false,
+      "promptGuidanceNotHardExecutionGate": true,
+      "recordedFailure": {
+        "input123": true,
+        "input45": true,
+        "multiplication": true,
+        "answer5400": true,
+        "toolCalls": 0
+      },
+      "silentNativeControl": {
+        "validTrials": 1,
+        "toolsSubmitted": 1,
+        "boundedFixedTaskRequest": true,
+        "taskReturns": 1,
+        "finalInputHas123": true,
+        "finalInputHas45": true,
+        "result5535WithNativeAudio": true,
+        "incorrect5400": false,
+        "faults": 0,
+        "playback": false,
+        "fixedAudioGeneratedLocally": true,
+        "realUserAudioOrExtraTranscriptRetained": false,
+        "limit": "One fixed task probe verifies routing and result/audio return; it is not hardware or universal model-compliance acceptance."
+      },
+      "invalidProbeExcluded": {
+        "count": 1,
+        "reason": "empty_fixture_from_sandbox_system_voice_access",
+        "tasksSubmitted": 0
+      },
+      "localTests": 156,
+      "localPassed": 156,
+      "localSkipped": 0,
+      "independentReview": {
+        "scope": "462c533..27e4028",
+        "critical": 0,
+        "important": 0,
+        "minor": 0,
+        "boundary": "Task acknowledgement still permits model continuation; waiting for verified result is prompt guidance."
+      },
+      "runtimeInstallation": "installed_native_and_task_ready",
+      "updatedModules": 1,
+      "pairingAndUnrelatedSourcesPreserved": true,
+      "firmwareOrAudioSettingsChanged": false,
+      "gracefulRestart": true,
+      "humanAcceptance": "pending",
+      "knownTaskBoundary": "Unscoped native task updates can require a safe session rebuild before the next BOOT turn."
     }
   }
 }
