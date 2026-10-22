@@ -2,7 +2,7 @@
   "date": "2026-10-21",
   "branch": "codex/v0.2.0-roadmap",
   "pullRequest": "https://github.com/vliuyt/grok-bot-esp32-bridge/pull/2",
-  "status": "spoken_calculation_and_same_call_memory_passed_long_answer_and_full_voice_acceptance_pending",
+  "status": "functional_physical_trials_passed_continuous_ten_rounds_and_acoustic_timing_pending",
   "release": false,
   "modules": [
     "voice_reliability",
@@ -88,15 +88,15 @@
     "establishesOriginalUnansweredVoiceCause": false
   },
   "manualAcceptance": {
-    "pettingOnPhysicalScreen": "pending",
+    "pettingOnPhysicalScreen": "passed_by_user_qualitative_afterglow_and_natural_recovery",
     "tenLowVolumeChineseRounds": "not_passed",
     "contextAndSpokenCalculation": "passed_by_user_in_separate_bounded_trials",
-    "longNativeAnswerPhysicalPagination": "pending",
-    "interruptAndRejectOldAudio": "pending",
+    "longNativeAnswerPhysicalPagination": "passed_by_user",
+    "interruptAndRejectOldAudio": "passed_by_user_old_story_stopped_clear_new_reply_no_old_audio_return",
     "disconnectThenNewQuestion": "passed_for_expected_post_task_rebuild_network_loss_not_injected",
     "deviceAudibleFirstAudioMs": null,
     "interruptionStopMs": null,
-    "reason": "Five audible baseline rounds, one correct spoken5535 task result, and two same-call memory rounds are explicitly confirmed. The task result had one tool and one async return;3native response fragments are one question. The next humanBOOT caused the disclosed safe task-boundary rebuild, after which both memory questions were clear and the code correct. This verifies post-rebuild new questions, not network-loss injection or cross-session memory. Long native pagination, ten continuous rounds, active playback interruption and acoustic latency remain pending; all earlier failures are retained.",
+    "reason": "The user confirmed five audible baseline rounds, correct spoken task result5535, two same-call memory rounds, complete67.18s long-answer paging/scroll/back, active BOOT interruption without old audio returning, and natural petting afterglow. Expected post-task rebuild and subsequent new questions passed. A fresh continuous ten-round run and exact acoustic timings remain pending. Idle native server_error and a separate160ms unanswered input/safe rebuild are retained, so successes across sessions are not combined into ten rounds.",
     "firstTrial": {
       "result": "failed",
       "userReport": "voice_not_connecting",
@@ -267,7 +267,8 @@
       "approximateScreenPercent": 50,
       "earlierFailuresRetained": true,
       "additionalConfirmedAudibleTaskRound": 1,
-      "additionalConfirmedMemoryRounds": 2
+      "additionalConfirmedMemoryRounds": 2,
+      "latestRun": "requested_fresh_ten_rounds_human_BOOT_from_generation46_device_turn33"
     },
     "postInputGainContextCalculationTrial": {
       "date": "2026-10-22",
@@ -382,6 +383,95 @@
       "observerErrorsDuringTwoMemoryRounds": 0,
       "networkLossFaultInjectionTested": false,
       "doesNotProveOldCallContextSurvivesRebuild": true
+    },
+    "longNativeAnswerFollowup": {
+      "date": "2026-10-22",
+      "sourceHead": "27e4028",
+      "userConfirmedFullAudio": true,
+      "userConfirmedMultiplePages": true,
+      "nextPreviousScrollReturn": "all_confirmed_normal",
+      "deviceGeneration": 44,
+      "deviceTurn": 29,
+      "nativeTurn": 3,
+      "finalRecognition": true,
+      "nativeCompleted": true,
+      "inputBytes": 330240,
+      "rawInputDb": -43,
+      "outputSamples16kHz": 1074880,
+      "outputPcmDurationSeconds": 67.18,
+      "outputRmsDbFS": -24.09,
+      "outputPeakDbFS": -4.44,
+      "devicePlayedFrameDelta": 1074880,
+      "nativeFirstAudioMs": 1017,
+      "deviceAudibleFirstAudioMs": null,
+      "reconnectsDuringStory": 0,
+      "playbackDrained": true,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "exactPageCountNotMeasured": true
+    },
+    "interruptionFollowup": {
+      "date": "2026-10-22",
+      "sourceHead": "27e4028",
+      "method": "human_BOOT_passive_half_second_metadata_only_no_parallel_probes_or_manual_reconnect",
+      "userConfirmedOldStoryStoppedImmediately": true,
+      "userConfirmedClearNewShortReply": true,
+      "userConfirmedOldAudioDidNotReturn": true,
+      "deviceGeneration": 46,
+      "interruptedDeviceTurn": 32,
+      "newDeviceTurn": 33,
+      "oldOutputSamples16kHz": 603840,
+      "oldPlayedFramesBeforeStory": 2108000,
+      "playedFramePlateauAfterObservedNewRecording": 2193953,
+      "oldConsumedFramesBeforeInterruption": 85953,
+      "oldUnplayedFramesDiscarded": 517887,
+      "oldFramesAddedDuringObservedNewRecordingAndWaiting": 0,
+      "newOutputSamples16kHz": 20320,
+      "newOutputRmsDbFS": -21.2,
+      "newOutputPeakDbFS": -5.38,
+      "newPlayedFrameDelta": 20320,
+      "newPlaybackDrained": true,
+      "nativeFirstAudioMs": 803,
+      "deviceAudibleFirstAudioMs": null,
+      "interruptionStopMs": null,
+      "reconnectsDuringSuccessfulInterruption": 0,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "observerErrors": 0,
+      "limits": "Half-second status sampling and codec counts do not measure exact acoustic stopping time. Earlier idle error and short-input rebuild are separately retained."
+    },
+    "pettingAfterglowFollowup": {
+      "date": "2026-10-22",
+      "userConfirmedAfterglow": true,
+      "userConfirmedNaturalReturnToCalm": true,
+      "physicalDurationSeconds": null,
+      "scope": "qualitative_human_touch_and_screen_observation",
+      "limits": "Exact physical duration and motion amplitude were not measured; fixed-clock host tests cover the nominal sixty-second envelope."
+    },
+    "idleAndShortInputFollowup": {
+      "date": "2026-10-22",
+      "idleServiceError": {
+        "nativeSessionElapsedMs": 1076331,
+        "errorType": "server_error",
+        "errorCode": "other",
+        "deviceGeneration": 44,
+        "deviceTurn": 29,
+        "newHumanInputAtError": false,
+        "agentInitiatedReconnect": false,
+        "observedRecoverySeconds": 7.606,
+        "recoveredReady": true,
+        "cause": "undetermined"
+      },
+      "precedingShortInput": {
+        "nativeInputBytes": 7680,
+        "durationMs": 160,
+        "finalRecognition": false,
+        "nativeResponseCreated": false,
+        "nextBOOTTriggeredSafeRebuild": true,
+        "observedRecoverySeconds": 7.047,
+        "cause": "undetermined"
+      },
+      "laterSuccessfulInterruptionIsNotContinuousTenRoundAcceptance": true
     }
   },
   "knownBoundary": "The earlier unanswered voice attempt remains unexplained. Target compilation, readiness, text and host simulation do not prove audible device acceptance.",
@@ -728,7 +818,7 @@
       },
       "limits": "Fixed clean speech is not the human microphone signal. Returned audio alone does not prove recognition; padding did not establish the human failure cause. No gain or protocol behavior change follows from this comparison."
     },
-    "nextStep": "human_long_native_answer_pagination_trial_passive_only",
+    "nextStep": "human_active_playback_interruption_and_pet_afterglow_trial_passive_only",
     "protocolDiagnostics": {
       "implementation": "bounded_content_free_in_memory_only",
       "eventsPerSession": 96,
