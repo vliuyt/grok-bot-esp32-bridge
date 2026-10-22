@@ -643,7 +643,7 @@
   "tradeoffs": [
     "Unscoped native async task updates cause a safe native-session rebuild at the next BOOT; a reconnect and explicit retry may be required.",
     "Same-turn native caption items retain first-arrival ordering; deliberately reversed completion is not established by the available native contract.",
-    "No real voice/style/touch/stop-time acceptance claimed for this image; no overnight automated sound or soak."
+    "Physical functional voice, reader, interruption and petting checks passed on the reference device; exact acoustic timing remains unmeasured. No overnight automated sound or soak."
   ],
   "github": {
     "status": "first_sync_ci_passed",
@@ -654,11 +654,12 @@
       "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39610994259",
       "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39610988372"
     ],
-    "latestVerifiedCodeHead": "24299372c305339130789f15639e98e4255be2a6",
+    "latestVerifiedCodeHead": "2c2065531baabc4f478249617c69f3ec4327c823",
     "latestVerifiedCodeChecks": [
-      "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39684122790",
-      "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39684113657"
-    ]
+      "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39703790088",
+      "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39703782446"
+    ],
+    "checkpointScope": "Latest recorded verified development checkpoint; subsequent documentation-only head checks are visible on the draft PR."
   },
   "diagnosisAfterUserFailure": {
     "silentPublicFixture": {
@@ -1156,5 +1157,6 @@
       "humanAcceptance": "user_confirmed_clear_correct5535_with_one_tool_and_one_async_return",
       "knownTaskBoundary": "Unscoped native task updates can require a safe session rebuild before the next BOOT turn."
     }
-  }
+  },
+  "lastUpdated": "2026-10-22"
 }
