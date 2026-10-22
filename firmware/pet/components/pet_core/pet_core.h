@@ -19,7 +19,7 @@ typedef enum { PET_EV_TICK, PET_EV_PET, PET_EV_PRESS, PET_EV_RELEASE, PET_EV_CAN
                PET_EV_TASK_CHANNEL, PET_EV_TOUCH_TAP,PET_EV_TURN_STATUS,PET_EV_CONTACT } pet_event_kind_t;
 typedef enum {PET_CONTACT_DOWN=1,PET_CONTACT_MOVE,PET_CONTACT_UP,PET_CONTACT_CANCEL} pet_contact_phase_t;
 typedef struct {
-    uint64_t sample_ms,until_ms,wake_until_ms,dodge_at_ms,last_tap_ms;
+    uint64_t sample_ms,until_ms,wake_until_ms,dodge_at_ms,first_tap_ms;
     int x,y,origin_x,origin_y;
     unsigned taps;
     bool active,stroking,seen;

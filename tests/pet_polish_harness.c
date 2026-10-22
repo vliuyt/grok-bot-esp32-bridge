@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifndef PET_CONTACT_INPUT_VERSION
 #define PET_EV_CONTACT ((pet_event_kind_t)(PET_EV_TURN_STATUS+1))
@@ -16,6 +17,32 @@ static uint32_t contact(pet_state_t *s,int phase,int x,int y,uint64_t now){
 }
 static void event(pet_state_t *s,pet_event_kind_t kind,uint64_t now,int value){
     pet_step(s,(pet_event_t){.kind=kind,.now_ms=now,.value=value,.generation=s->generation,.turn=s->turn});
+}
+static void tap(pet_state_t *s,uint64_t now){
+    contact(s,PET_CONTACT_DOWN,300,180,now-20);
+    contact(s,PET_CONTACT_UP,300,180,now);
+    event(s,PET_EV_TOUCH_TAP,now,0);
+}
+static void tap_window(void){
+    pet_state_t s;
+    pet_init(&s,0);tap(&s,100);tap(&s,550);tap(&s,1000);
+    assert(pet_pose(&s,1180).scale_x<.98f); /* Total window includes exactly 900ms. */
+    pet_init(&s,0);tap(&s,100);tap(&s,550);tap(&s,1001);
+    assert(pet_pose(&s,1181).scale_x>.98f); /* 901ms is not three rapid pokes. */
+    pet_init(&s,0);tap(&s,100);tap(&s,900);tap(&s,1700);
+    assert(pet_pose(&s,1900).scale_x>.98f); /* Adjacent gaps must not extend the window. */
+    pet_init(&s,0);tap(&s,100);tap(&s,300);
+    contact(&s,PET_CONTACT_DOWN,150,180,400);contact(&s,PET_CONTACT_UP,220,180,440);
+    event(&s,PET_EV_PET,440,0);tap(&s,500);
+    assert(pet_pose(&s,700).scale_x>.98f); /* Stroking interrupts a poke sequence. */
+}
+static void quick_stroke(void){
+    pet_state_t s;pet_init(&s,0);
+    contact(&s,PET_CONTACT_DOWN,150,180,100);
+    contact(&s,PET_CONTACT_UP,220,180,140); /* Faster than the UI MOVE throttle. */
+    event(&s,PET_EV_PET,140,0);
+    assert(pet_pose(&s,140).expression==PET_EXPR_HAPPY);
+    assert(pet_pose(&s,700).expression==PET_EXPR_HAPPY);
 }
 static void touch_reactions(void){
     pet_state_t s;pet_init(&s,0);
@@ -89,4 +116,9 @@ static void smooth_motion(void){
     assert(pet_contact_value(PET_CONTACT_DOWN,-1,0)==-1&&pet_contact_value(PET_CONTACT_UP,466,0)==-1);
     assert(pet_contact_value((pet_contact_phase_t)0,0,0)==-1&&pet_contact_value(PET_CONTACT_MOVE,0,466)==-1);
 }
-int main(void){touch_reactions();voice_priority();playing_pause();smooth_motion();puts("PET_POLISH_OK");return 0;}
+int main(int argc,char **argv){
+    if(argc>1&&!strcmp(argv[1],"tap-window"))tap_window();
+    else if(argc>1&&!strcmp(argv[1],"quick-stroke"))quick_stroke();
+    else {touch_reactions();voice_priority();playing_pause();smooth_motion();}
+    puts("PET_POLISH_OK");return 0;
+}

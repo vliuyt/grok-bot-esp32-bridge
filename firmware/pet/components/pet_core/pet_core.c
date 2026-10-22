@@ -41,7 +41,10 @@ static uint32_t contact_step(pet_state_t *s,pet_event_t e){
         int dx=x-c->origin_x,dy=y-c->origin_y;
         c->stroking=(dx>=24||dx<=-24)&&dy>-40&&dy<40;
     }
-    if(phase==PET_CONTACT_UP){c->active=false;c->until_ms=e.now_ms+700;}
+    if(phase==PET_CONTACT_UP){
+        c->stroking=pet_gesture(c->origin_x,c->origin_y,x,y)==PET_GESTURE_STROKE;
+        c->active=false;c->until_ms=e.now_ms+700;
+    }
     pet_note_activity(s,e.now_ms);
     return PET_FX_WAKE;
 }
@@ -161,6 +164,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         if(s->response_done) { s->dialogue=PET_DIALOGUE_IDLE; s->level=0; pet_note_activity(s,e.now_ms); }
         break;
     case PET_EV_PET:
+        s->contact.taps=0;s->contact.first_tap_ms=0;s->contact.dodge_at_ms=0;
         warm(s,e.now_ms,35);
         pet_note_activity(s,e.now_ms); fx|=PET_FX_WAKE;
         if(s->dialogue==PET_DIALOGUE_IDLE&&e.now_ms>=s->confused_until_ms) {
@@ -171,10 +175,10 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
     case PET_EV_TOUCH_TAP:
         if(s->contact.seen){
             pet_contact_t *c=&s->contact;
-            c->taps=c->last_tap_ms&&e.now_ms-c->last_tap_ms<=900?c->taps+1:1;
+            if(!c->taps||e.now_ms-c->first_tap_ms>900){c->taps=0;c->first_tap_ms=e.now_ms;}
+            c->taps++;
             if(c->taps==3)c->dodge_at_ms=e.now_ms;
             if(c->taps>3)c->taps=4;
-            c->last_tap_ms=e.now_ms;
         }
         warm(s,e.now_ms,10);
         pet_note_activity(s,e.now_ms); fx|=PET_FX_WAKE;
