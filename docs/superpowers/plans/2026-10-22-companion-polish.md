@@ -30,20 +30,20 @@
 
 **Files:** pet_core.{h,c}、pet_readability.{h,c}、pet_ui.{h,c}、pet_app.c；tests/pet_core_harness.c、pet_readability_harness.c。
 
-**Interfaces:** state增加本次按压只连接的标记；readability接收该标记。连接恢复不再在LINK处理器自动begin。未就绪同代数turn0的auth_required单独验收。
+**Interfaces:** 由既有held/dialogue导出本次按压尚未录音标记，readability接收该标记。连接恢复不再在LINK处理器自动begin。未就绪同代数turn0的auth_required单独验收。
 
-- [ ] 新增行为断言并运行`node --test tests/pet-core.test.mjs tests/pet-readability.test.mjs`，Expected: 半句与auth提示断言FAIL。
-- [ ] 实现门禁和可读提示；相同命令Expected: PASS，完整测试通过后提交。
+- [x] 新增行为断言并运行`node --test tests/pet-core.test.mjs tests/pet-readability.test.mjs`，Expected: 半句与auth提示断言FAIL。
+- [x] 实现门禁和可读提示；相同命令Expected: PASS，完整测试通过后提交。
 
 ### Task 2: 即时触摸与不同反应
 
 **Files:** pet_core.{h,c}、pet_ui.{h,c}、pet_app.c、pet_face.c；新增tests/pet-polish.test.mjs、pet_polish_harness.c；扩充display_host/ui_harness.c。
 
-**Interfaces:** 末尾追加CONTACT事件／UI动作，phase为DOWN/MOVE/UP/CANCEL，事件携带x/y；目标pose增加look_y。状态保存固定容量触点、反应与快点计数，时间和坐标严格限界。旧PET／TOUCH_TAP动作继续负责已有余韵。
+**Interfaces:** 末尾追加CONTACT事件／UI动作，phase为DOWN/MOVE/UP/CANCEL，phase/x/y经严格校验打包入现有int value，不扩大队列；目标pose增加look_y。状态保存固定容量触点、反应与快点计数，时间和坐标严格限界。旧PET／TOUCH_TAP动作继续负责已有余韵。
 
-- [ ] 先测试落指立即看向触点、移动跟随、三连点躲闪、困倦唤醒、抬指和失触取消、语音优先；Expected: FAIL。
-- [ ] 实现事件交付和纯状态；Expected: 新行为及真实LVGL指针PASS，旧设置／阅读／右滑不回归。
-- [ ] 验证事件限频、屏幕范围外输入与重复触点，完整测试通过后提交。
+- [x] 先测试落指立即看向触点、移动跟随、三连点躲闪、困倦唤醒、抬指和失触取消、语音优先；Expected: FAIL。
+- [x] 实现事件交付和纯状态；Expected: 新行为及真实LVGL指针PASS，旧设置／阅读／右滑不回归。
+- [x] 验证事件限频、屏幕范围外输入与重复触点，完整测试通过后提交。
 
 ### Task 3: 连贯表情与真实说话节奏
 
@@ -51,8 +51,8 @@
 
 **Interfaces:** `pet_motion_t`固定容量保存pose/last_ms/initialized；`pet_motion_step(m,target,now)`返回平滑pose。UI draw唯一调用；body时间常数90ms、eye60ms，首帧／回退／超过500ms间隔重置。语音level在最后播放事件后80ms开始以120ms时间常数衰减。
 
-- [ ] 先测试姿态不跳变、不同帧率等价、长间隔／回退安全、屏幕状态立即生效、真实电平停顿收动作；Expected: FAIL。
-- [ ] 实现最小数值过渡；Expected: PASS，完整检查及栈检查通过后提交。
+- [x] 先测试姿态不跳变、不同帧率等价、长间隔／回退安全、屏幕状态立即生效、真实电平停顿收动作；Expected: FAIL。
+- [x] 实现最小数值过渡；Expected: PASS，完整检查及栈检查通过后提交。
 
 ### Task 4: 集成、构建、保护安装和开发同步
 

@@ -4,7 +4,7 @@
 #include "pet_reader.h"
 #include "esp_err.h"
 typedef enum {PET_UI_PET,PET_UI_WAKE,PET_UI_VOLUME,PET_UI_BRIGHTNESS,PET_UI_QUIET,
-              PET_UI_CAPTIONS,PET_UI_SPEAKER,PET_UI_SETUP_OPEN,PET_UI_SETUP_CLOSE,PET_UI_TOUCH_TAP,PET_UI_READER_OPEN,PET_UI_READER_PREV,PET_UI_READER_NEXT,PET_UI_READER_RETRY,PET_UI_READER_CLOSE} pet_ui_action_kind_t;
+              PET_UI_CAPTIONS,PET_UI_SPEAKER,PET_UI_SETUP_OPEN,PET_UI_SETUP_CLOSE,PET_UI_TOUCH_TAP,PET_UI_READER_OPEN,PET_UI_READER_PREV,PET_UI_READER_NEXT,PET_UI_READER_RETRY,PET_UI_READER_CLOSE,PET_UI_CONTACT} pet_ui_action_kind_t;
 typedef struct {pet_ui_action_kind_t kind;int value;} pet_ui_action_t;
 typedef struct {
     pet_pose_t pose;

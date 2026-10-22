@@ -44,11 +44,11 @@
       "file": "pet_font_22.c",
       "size": 22,
       "bpp": 2,
-      "bitmapBytes": 27166,
+      "bitmapBytes": 27254,
       "lineHeight": 27,
-      "glyphs": 388,
-      "characterSetSha256": "6eac45c100f560f79082febfda108c0a60f0d633c37864642bcbf00a351650ca",
-      "sha256": "bd4e8d3889aac75490bda4aa5c7e10c0806d3d507d0aac109b887ad680f8f2d9",
+      "glyphs": 389,
+      "characterSetSha256": "1ed077502ee54eb6d709bcbe4faae74595dbdcfd6d4c9182114322dd8afb886d",
+      "sha256": "31fd978499f082500c6683277f5f4ae9fd611106172d4cdd5170beda95a889e9",
       "fallback": "pet_font_28"
     }
   ]

@@ -20,6 +20,8 @@ static pet_ui_action_kind_t last_reader_action;
 static pet_state_t activity_model;
 static uint64_t activity_now;
 static unsigned wake_count;
+static unsigned contact_counts[5];
+static int contact_x,contact_y;
 static const char *artifact_dir;
 static void noop_sleep(bool on){(void)on;}
 static void noop_brightness(int level){(void)level;}
@@ -37,7 +39,11 @@ static void read_pointer(lv_indev_t *d,lv_indev_data_t *data){(void)d;data->poin
 static void point(int x,int y,bool pressed){pointer_point=(lv_point_t){x,y};pointer_state=pressed?LV_INDEV_STATE_PRESSED:LV_INDEV_STATE_RELEASED;lv_tick_inc(20);lv_indev_read(pointer);}
 static void record(pet_ui_action_t event,void *context){
     (void)context;last_action=event;action_count++;
-    if(event.kind>=PET_UI_READER_OPEN)last_reader_action=event.kind;
+    if(event.kind>=PET_UI_READER_OPEN&&event.kind<=PET_UI_READER_CLOSE)last_reader_action=event.kind;
+    if(event.kind==PET_UI_READER_CLOSE+1){
+        unsigned phase=(unsigned)event.value>>18;assert(phase>=1&&phase<=4);contact_counts[phase]++;
+        contact_x=(event.value>>9)&511;contact_y=event.value&511;
+    }
     if(event.kind==PET_UI_WAKE){wake_count++;pet_note_activity(&activity_model,activity_now);}
 }
 static void frame(pet_ui_view_t *v){pet_ui_update(v);draw(NULL);lv_refr_now(display);}
@@ -155,6 +161,25 @@ static void ergonomics(pet_ui_view_t *v,const char *mode){
         point(130,180,true);show_page(PET_PAGE_MORE);frame(v);point(280,183,false);only_page(PET_PAGE_MORE);
         show_page(PET_PAGE_HOME);frame(v);point(180,190,true);point(300,192,true);point(320,193,false);
         only_page(PET_PAGE_HOME);assert(last_action.kind==PET_UI_PET);
+    }else if(!strcmp(mode,"motion")){
+        lv_tick_inc(600);v->pose=(pet_pose_t){.scale_x=1,.scale_y=1,.eye_open=1,.screen_on=true};frame(v);
+        assert(lv_obj_get_style_transform_rotation(body,0)==0);
+        v->pose.rotation=20;lv_tick_inc(33);frame(v);
+        int rotation=lv_obj_get_style_transform_rotation(body,0);assert(rotation>0&&rotation<200);
+        for(unsigned i=0;i<20;i++){lv_tick_inc(33);frame(v);}
+        assert(lv_obj_get_style_transform_rotation(body,0)>=198);
+        v->pose.screen_on=false;frame(v);assert(!screen_on);
+    }else if(!strcmp(mode,"touch")){
+        show_page(PET_PAGE_HOME);frame(v);point(160,190,true);
+        assert(contact_counts[1]==1&&contact_x==160&&contact_y==190);
+        point(200,190,true);point(240,190,true);point(300,190,true);
+        assert(contact_counts[2]==1&&contact_x==300); /*50ms movement throttle.*/
+        point(320,190,false);assert(contact_counts[3]==1&&last_action.kind==PET_UI_PET);
+        point(180,190,true);show_page(PET_PAGE_SETTINGS);assert(contact_counts[4]==1);
+        point(180,190,false);assert(contact_counts[3]==1);
+        show_page(PET_PAGE_HOME);frame(v);point(180,190,true);
+        pet_ui_home();frame(v);assert(contact_counts[4]==2);point(180,190,false);
+        assert(contact_counts[3]==1); /*BOOT cannot leave a held touch behind.*/
     }else assert(!"unknown ergonomic test");
     puts("PET_UI_ERGONOMICS_OK");
 }

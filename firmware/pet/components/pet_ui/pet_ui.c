@@ -14,6 +14,7 @@
 
 static SemaphoreHandle_t view_lock,ready_signal;
 static pet_ui_view_t view,presented;
+static pet_motion_t motion;
 static pet_ui_callback_t callback;
 static void *callback_context;
 static lv_obj_t *root,*pages[PET_PAGE_COUNT],*body,*eyes[2],*smiles[2];
@@ -28,6 +29,7 @@ static int requested_page=-1,detail_kind;
 static bool initialized,screen_on=true,syncing,snapshot_requested;
 static int touch_x,touch_y;
 static bool touching;
+static uint32_t last_contact_tick;
 static lv_indev_t *touch_input;
 static struct {bool active,slider;pet_page_t page;lv_point_t start;} return_touch;
 static char last_summary[321];
@@ -35,6 +37,13 @@ static uint32_t last_reader_activity_tick;
 static void return_moved(lv_event_t *event);
 
 static void action(pet_ui_action_kind_t kind,int value){if(callback)callback((pet_ui_action_t){kind,value},callback_context);}
+static void contact(pet_contact_phase_t phase,int x,int y){
+    int value=pet_contact_value(phase,x,y);if(value>=0)action(PET_UI_CONTACT,value);
+}
+static void cancel_touch(void){
+    if(!touching)return;
+    touching=false;contact(PET_CONTACT_CANCEL,0,0);
+}
 static void text(lv_obj_t *o,const char *value){if(strcmp(lv_label_get_text(o),value))lv_label_set_text(o,value);}
 static lv_obj_t *label(lv_obj_t *parent,const char *value,int x,int y,int width,pet_font_role_t role){
     lv_obj_t *o=lv_label_create(parent);
@@ -66,7 +75,7 @@ static bool frozen_reader_valid(void){
 static void show_page(pet_page_t next){
     pet_readability_input_t in=input();pet_page_t target=next==PET_PAGE_READING&&frozen_reader_valid()?PET_PAGE_READING:pet_readability_page(next,&in);
     if(target!=page){
-        touching=false;return_touch.active=false;
+        cancel_touch();return_touch.active=false;
         /* A held control on the old page must not click after BOOT or a swipe navigates away. */
         if(touch_input)lv_indev_reset(touch_input,NULL);
         if(page==PET_PAGE_READING)action(PET_UI_READER_CLOSE,0);
@@ -99,13 +108,20 @@ static void touch(lv_event_t *event){
     if(page!=PET_PAGE_HOME)return;
     lv_event_code_t code=lv_event_get_code(event);lv_point_t point;
     lv_indev_t *indev=lv_indev_active();if(!indev)return;lv_indev_get_point(indev,&point);
-    if(code==LV_EVENT_PRESSED){touch_x=point.x;touch_y=point.y;touching=true;action(PET_UI_WAKE,0);}
+    if(code==LV_EVENT_PRESSED){
+        touch_x=point.x;touch_y=point.y;touching=true;last_contact_tick=lv_tick_get();
+        contact(PET_CONTACT_DOWN,point.x,point.y);
+    }
+    else if(code==LV_EVENT_PRESSING&&touching&&lv_tick_elaps(last_contact_tick)>=50){
+        last_contact_tick=lv_tick_get();contact(PET_CONTACT_MOVE,point.x,point.y);
+    }
     else if(code==LV_EVENT_RELEASED&&touching){
         touching=false;pet_gesture_t g=pet_gesture(touch_x,touch_y,point.x,point.y);
+        contact(g==PET_GESTURE_SETTINGS?PET_CONTACT_CANCEL:PET_CONTACT_UP,point.x,point.y);
         if(g==PET_GESTURE_SETTINGS)show_page(PET_PAGE_SETTINGS);
         else if(g==PET_GESTURE_TAP)action(PET_UI_TOUCH_TAP,0);
         else if(g==PET_GESTURE_STROKE)action(PET_UI_PET,0);
-    }else if(code==LV_EVENT_PRESS_LOST)touching=false;
+    }else if(code==LV_EVENT_PRESS_LOST)cancel_touch();
 }
 static void return_sample(lv_indev_t *indev){
     if(!indev||!return_touch.active||return_touch.page!=page||return_touch.slider)return;
@@ -231,11 +247,12 @@ static void sync_settings(void){
 static void draw(lv_timer_t *timer){
     (void)timer;xSemaphoreTake(view_lock,portMAX_DELAY);presented=view;
     int next=requested_page;requested_page=-1;bool snap=snapshot_requested;snapshot_requested=false;xSemaphoreGive(view_lock);
+    if(next>=0)cancel_touch(); /* Includes BOOT returning to the current HOME page. */
     pet_readability_input_t in=input();
     if(page==PET_PAGE_READING&&presented.reader.active)reader_session_seen=true;
     if(page==PET_PAGE_READING&&reader_session_seen&&!presented.reader.active)next=PET_PAGE_HOME;
     show_page(next>=0?(pet_page_t)next:page);
-    pet_pose_t p=presented.pose;
+    pet_pose_t p=pet_motion_step(&motion,presented.pose,lv_tick_get());
     if(p.screen_on!=screen_on){screen_on=p.screen_on;pet_board()->panel_sleep(!screen_on);if(screen_on)lv_obj_invalidate(root);}
     if(!screen_on){if(snap)snapshot();return;}
     int brightness=p.dim?presented.brightness/4:presented.brightness;pet_board()->set_brightness(brightness<5?5:brightness);

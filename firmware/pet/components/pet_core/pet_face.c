@@ -8,10 +8,11 @@ pet_face_t pet_face_geometry(pet_pose_t p) {
     for(unsigned i=0;i<2;i++) {
         f.eyes[i]=(pet_eye_t){
             .x=(int)(f.width*(i?.5223f:.2411f))+(int)p.look_x,
-            .y=(int)(f.height*.29f),
+            .y=(int)(f.height*.29f)+(int)p.look_y,
             .height=(int)fmaxf(5,60*p.eye_open*(1+(i?-1:1)*p.eye_asymmetry)),
             .rotation=50+(int)((i?-1:1)*p.eye_tilt*10),
-            .arc=p.expression==PET_EXPR_HAPPY||p.expression==PET_EXPR_SLEEP,
+            /* Close the oval before revealing the smile during a smooth transition. */
+            .arc=(p.expression==PET_EXPR_HAPPY||p.expression==PET_EXPR_SLEEP)&&p.eye_open<=.32f,
             .arc_start=p.expression==PET_EXPR_SLEEP?20:200,
             .arc_end=p.expression==PET_EXPR_SLEEP?160:340
         };

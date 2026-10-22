@@ -21,6 +21,30 @@ float pet_warmth(const pet_state_t *s,uint64_t now){
 static void warm(pet_state_t *s,uint64_t now,float amount){
     s->warmth=fminf(100,pet_warmth(s,now)+amount);s->warmth_at_ms=now;
 }
+int pet_contact_value(pet_contact_phase_t phase,int x,int y){
+    if(phase<PET_CONTACT_DOWN||phase>PET_CONTACT_CANCEL||x<0||x>465||y<0||y>465)return -1;
+    return ((int)phase<<18)|(x<<9)|y;
+}
+static uint32_t contact_step(pet_state_t *s,pet_event_t e){
+    if(e.value<0||((unsigned)e.value>>21))return PET_FX_NONE;
+    int phase=e.value>>18,x=(e.value>>9)&511,y=e.value&511;
+    if(pet_contact_value((pet_contact_phase_t)phase,x,y)!=e.value)return PET_FX_NONE;
+    pet_contact_t *c=&s->contact;
+    if(phase==PET_CONTACT_CANCEL){memset(c,0,sizeof(*c));return PET_FX_NONE;}
+    if(phase==PET_CONTACT_DOWN){
+        if(c->active)return PET_FX_NONE;
+        if(s->life!=PET_LIFE_AWAKE)c->wake_until_ms=e.now_ms+900;
+        c->active=c->seen=true;c->stroking=false;c->origin_x=x;c->origin_y=y;
+    }else if(!c->active)return PET_FX_NONE;
+    c->x=x;c->y=y;c->sample_ms=e.now_ms;
+    if(phase==PET_CONTACT_MOVE){
+        int dx=x-c->origin_x,dy=y-c->origin_y;
+        c->stroking=(dx>=24||dx<=-24)&&dy>-40&&dy<40;
+    }
+    if(phase==PET_CONTACT_UP){c->active=false;c->until_ms=e.now_ms+700;}
+    pet_note_activity(s,e.now_ms);
+    return PET_FX_WAKE;
+}
 static uint32_t begin(pet_state_t *s,uint64_t now) {
     if(s->expired) return PET_FX_NONE;
     s->turn++;
@@ -61,11 +85,13 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
     if(voice_event(e.kind) && !connection_auth && (e.generation!=s->generation || e.turn!=s->turn || s->response_cancelled)) return PET_FX_NONE;
     uint32_t fx=PET_FX_NONE;
     switch(e.kind) {
+    case PET_EV_CONTACT:fx=contact_step(s,e);break;
     case PET_EV_PRESS:
         if(s->held) break;
         s->held=true; s->expired=false; s->setup=false;
         if(s->connection==PET_CONN_READY||s->notice!=PET_NOTICE_AUTH_REQUIRED)s->notice=PET_NOTICE_NONE;
         pet_note_activity(s,e.now_ms);
+        memset(&s->contact,0,sizeof(s->contact));
         fx=PET_FX_WAKE|PET_FX_CANCEL;
         if(s->connection==PET_CONN_READY) fx|=begin(s,e.now_ms);
         else fx|=PET_FX_CONNECT;
@@ -80,6 +106,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         }
         break;
     case PET_EV_CANCEL:
+        memset(&s->contact,0,sizeof(s->contact));
         s->notice=PET_NOTICE_NONE;
         fx=PET_FX_CANCEL;
         if(s->dialogue==PET_DIALOGUE_LISTEN) fx|=PET_FX_STOP;
@@ -142,6 +169,13 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         }
         break;
     case PET_EV_TOUCH_TAP:
+        if(s->contact.seen){
+            pet_contact_t *c=&s->contact;
+            c->taps=c->last_tap_ms&&e.now_ms-c->last_tap_ms<=900?c->taps+1:1;
+            if(c->taps==3)c->dodge_at_ms=e.now_ms;
+            if(c->taps>3)c->taps=4;
+            c->last_tap_ms=e.now_ms;
+        }
         warm(s,e.now_ms,10);
         pet_note_activity(s,e.now_ms); fx|=PET_FX_WAKE;
         if(s->dialogue==PET_DIALOGUE_IDLE&&e.now_ms>=s->confused_until_ms) {
@@ -179,6 +213,7 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
         s->minute=e.value; s->clock_ms=e.now_ms; s->clock_valid=true;
         break;
     case PET_EV_TICK: {
+        if(s->contact.active&&e.now_ms-s->contact.sample_ms>=1000)memset(&s->contact,0,sizeof(s->contact));
         if(s->dialogue==PET_DIALOGUE_LISTEN && e.now_ms-s->entered_ms>=55000) {
             s->dialogue=PET_DIALOGUE_IDLE; s->expired=true; s->response_cancelled=true;
             fx|=PET_FX_STOP|PET_FX_CANCEL; pet_note_activity(s,e.now_ms);
@@ -220,12 +255,26 @@ pet_pose_t pet_pose(const pet_state_t *s,uint64_t now) {
         p.rotation=6+sinf(t*2)*3; p.look_x=4; p.eye_asymmetry=.12f;
     } else if(s->dialogue==PET_DIALOGUE_SPEAK) {
         p.expression=PET_EXPR_SPEAK; p.level=(float)s->level/1000;
+        uint64_t age=now>=s->entered_ms?now-s->entered_ms:0;
+        if(age>80)p.level*=expf(-(float)(age-80)/120);
         p.scale_y=1+p.level*.075f; p.scale_x=1-p.level*.04f; p.offset_y=-p.level*7;
     } else if(s->life!=PET_LIFE_AWAKE) {
         p.expression=PET_EXPR_SLEEP; p.eye_open=.08f; p.scale_y=.94f; p.offset_y=10;
     } else if(now<s->confused_until_ms) {
         p.expression=PET_EXPR_CONFUSED; p.rotation=sinf(t*3)*7;
         p.eye_open=.75f; p.eye_asymmetry=-.22f; p.eye_tilt=18;
+    } else if(s->contact.seen&&(s->contact.active||now<s->contact.until_ms)) {
+        const pet_contact_t *c=&s->contact;
+        float fade=c->active?1:fminf(1,(float)(c->until_ms-now)/700);
+        p.expression=c->stroking?PET_EXPR_HAPPY:PET_EXPR_CURIOUS;
+        p.look_x=fmaxf(-8,fminf(8,(float)(c->x-233)/20))*fade;
+        p.look_y=fmaxf(-5,fminf(5,(float)(c->y-210)/25))*fade;
+        p.rotation=p.look_x*.45f;p.offset_y=-3*fade;
+        p.eye_open=c->stroking?.2f:1.04f;p.scale_y=c->stroking?.97f:1;
+        if(now<c->wake_until_ms){
+            float stretch=sinf((float)(900-(c->wake_until_ms-now))*3.14159265f/900);
+            p.scale_y+=.06f*stretch;p.offset_y-=4*stretch;
+        }
     } else if(now<s->pet_until_ms) {
         p.expression=PET_EXPR_HAPPY; p.eye_open=.15f; p.scale_y=.94f+sinf(t*9)*.035f;
         p.scale_x=1.04f; p.offset_y=3-fabsf(sinf(t*9))*10;
@@ -243,7 +292,28 @@ pet_pose_t pet_pose(const pet_state_t *s,uint64_t now) {
         p.eye_open=1-.15f*warmth;
         if((now+(s->seed%2000))%6200<130) p.eye_open=.08f;
     }
+    if(s->dialogue==PET_DIALOGUE_IDLE&&s->life==PET_LIFE_AWAKE&&now>=s->confused_until_ms&&
+       s->contact.dodge_at_ms&&now>=s->contact.dodge_at_ms&&now-s->contact.dodge_at_ms<900){
+        float dodge=sinf((float)(now-s->contact.dodge_at_ms)*3.14159265f/900);
+        p.expression=PET_EXPR_CURIOUS;p.scale_x-=.06f*dodge;
+        p.rotation+=(s->contact.x>=233?-12:12)*dodge;p.offset_y+=3*dodge;
+    }
     return p;
+}
+pet_pose_t pet_motion_step(pet_motion_t *m,pet_pose_t target,uint64_t now){
+    if(!m->initialized||!target.screen_on||now<m->last_ms||now-m->last_ms>500){
+        m->pose=target;m->last_ms=now;m->initialized=target.screen_on;return target;
+    }
+    float dt=(float)(now-m->last_ms);
+    float body=-expm1f(-dt/90),eye=-expm1f(-dt/60);
+#define FOLLOW(field,amount) m->pose.field+=(target.field-m->pose.field)*(amount)
+    FOLLOW(offset_y,body);FOLLOW(scale_x,body);FOLLOW(scale_y,body);FOLLOW(rotation,body);
+    FOLLOW(eye_open,eye);FOLLOW(look_x,eye);FOLLOW(look_y,eye);FOLLOW(level,body);
+    FOLLOW(eye_asymmetry,eye);FOLLOW(eye_tilt,eye);
+#undef FOLLOW
+    m->pose.expression=target.expression;m->pose.screen_on=target.screen_on;
+    m->pose.dim=target.dim;m->pose.invitation=target.invitation;m->last_ms=now;
+    return m->pose;
 }
 pet_gesture_t pet_gesture(int x0,int y0,int x1,int y1) {
     if(x0<0||x0>465||x1<0||x1>465||y0<0||y0>465||y1<0||y1>465) return PET_GESTURE_NONE;

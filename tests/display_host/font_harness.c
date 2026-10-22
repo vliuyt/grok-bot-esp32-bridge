@@ -23,6 +23,8 @@ int main(void){
     lv_init();
     const lv_font_t *body=pet_font(PET_FONT_BODY),*reader=pet_font(PET_FONT_READER);
     lv_font_glyph_dsc_t glyph={0};
+    assert(lv_font_get_glyph_dsc(pet_font(PET_FONT_HINT),&glyph,0x5148,0)&&!glyph.is_placeholder);
+    assert(glyph.resolved_font==pet_font(PET_FONT_HINT)); /* New readiness hint stays at22px. */
     assert(lv_font_get_glyph_dsc(body,&glyph,0x4e2d,0)&&!glyph.is_placeholder);
     assert(glyph.box_h>=23&&body->line_height<=40);
     assert(lv_font_get_glyph_dsc(reader,&glyph,0x4e2d,0)&&!glyph.is_placeholder);
