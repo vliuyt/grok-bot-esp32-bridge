@@ -2,7 +2,7 @@
   "date": "2026-10-21",
   "branch": "codex/v0.2.0-roadmap",
   "pullRequest": "https://github.com/vliuyt/grok-bot-esp32-bridge/pull/2",
-  "status": "functional_physical_trials_passed_continuous_ten_rounds_and_acoustic_timing_pending",
+  "status": "functional_physical_acceptance_passed_exact_acoustic_timing_pending",
   "release": false,
   "modules": [
     "voice_reliability",
@@ -96,7 +96,7 @@
     "disconnectThenNewQuestion": "passed_for_expected_post_task_rebuild_network_loss_not_injected",
     "deviceAudibleFirstAudioMs": null,
     "interruptionStopMs": null,
-    "reason": "The user confirmed five audible baseline rounds, correct spoken task result5535, two same-call memory rounds, complete67.18s long-answer paging/scroll/back, active BOOT interruption without old audio returning, and natural petting afterglow. Expected post-task rebuild and subsequent new questions passed. A fresh continuous ten-round run and exact acoustic timings remain pending. Idle native server_error and a separate160ms unanswered input/safe rebuild are retained, so successes across sessions are not combined into ten rounds.",
+    "reason": "Physical functional checks passed: ten consecutive clear Chinese replies in one native session without reconnect, correct spoken task result5535, same-call memory, complete67.18s long answer with multi-page reading/scroll/back, active BOOT interruption with no old audio returning, natural petting afterglow, and new questions after expected task-boundary rebuild. Exact acoustic first-sound/stopping times remain unmeasured. Earlier unanswered/silent-speaker cases, idle native server_error, and short-input rebuilds remain retained and are not explained by this successful run.",
     "firstTrial": {
       "result": "failed",
       "userReport": "voice_not_connecting",
@@ -260,15 +260,16 @@
       "contextCalculationNextThreeTrial": "requested_pending"
     },
     "tenComfortableVolumeChineseRounds": {
-      "confirmedAudible": 5,
+      "confirmedAudible": 10,
       "target": 10,
-      "status": "not_passed_fresh_continuous_run_still_required",
+      "status": "passed_by_user_and_passive_continuous_same_session_evidence",
       "volumeSetting": 88,
       "approximateScreenPercent": 50,
       "earlierFailuresRetained": true,
       "additionalConfirmedAudibleTaskRound": 1,
       "additionalConfirmedMemoryRounds": 2,
-      "latestRun": "requested_fresh_ten_rounds_human_BOOT_from_generation46_device_turn33"
+      "latestRun": "ten_completed_questions_same_generation46_turns34_through43",
+      "baselineFiveRoundsAreSeparate": true
     },
     "postInputGainContextCalculationTrial": {
       "date": "2026-10-22",
@@ -472,6 +473,139 @@
         "cause": "undetermined"
       },
       "laterSuccessfulInterruptionIsNotContinuousTenRoundAcceptance": true
+    },
+    "continuousTenFollowup": {
+      "date": "2026-10-22",
+      "sourceHead": "27e4028",
+      "userConfirmedAllTenClear": true,
+      "userConfirmedNoConnectingDuringRun": true,
+      "method": "human_BOOT_arbitrary_Chinese_chat_passive_metadata_only",
+      "completedRounds": 10,
+      "sameNativeSession": true,
+      "deviceGeneration": 46,
+      "firstDeviceTurn": 34,
+      "lastDeviceTurn": 43,
+      "volumeSetting": 88,
+      "approximateScreenPercent": 50,
+      "micGain": 30,
+      "finalRecognitionRounds": 10,
+      "completedNativeResponses": 10,
+      "outputFrames": 1020800,
+      "allOutputFramesConsumed": true,
+      "nativeFirstAudioMsRange": [
+        748,
+        1294
+      ],
+      "deviceAudibleFirstAudioMs": null,
+      "reconnects": 0,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "observerErrors": 0,
+      "separateEarlierFailuresRetained": true,
+      "noAutomaticPTTCloudProbeOrManualReconnect": true,
+      "trials": [
+        {
+          "deviceTurn": 34,
+          "nativeTurn": 3,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 40640,
+          "playedFramesDelta": 40640,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 885
+        },
+        {
+          "deviceTurn": 35,
+          "nativeTurn": 4,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 91840,
+          "playedFramesDelta": 91840,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 914
+        },
+        {
+          "deviceTurn": 36,
+          "nativeTurn": 5,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 122560,
+          "playedFramesDelta": 122560,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 1294
+        },
+        {
+          "deviceTurn": 37,
+          "nativeTurn": 6,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 81600,
+          "playedFramesDelta": 81600,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 748
+        },
+        {
+          "deviceTurn": 38,
+          "nativeTurn": 7,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 127680,
+          "playedFramesDelta": 127680,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 869
+        },
+        {
+          "deviceTurn": 39,
+          "nativeTurn": 8,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 132800,
+          "playedFramesDelta": 132800,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 1076
+        },
+        {
+          "deviceTurn": 40,
+          "nativeTurn": 9,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 122560,
+          "playedFramesDelta": 122560,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 922
+        },
+        {
+          "deviceTurn": 41,
+          "nativeTurn": 10,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 117440,
+          "playedFramesDelta": 117440,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 837
+        },
+        {
+          "deviceTurn": 42,
+          "nativeTurn": 11,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 117440,
+          "playedFramesDelta": 117440,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 1032
+        },
+        {
+          "deviceTurn": 43,
+          "nativeTurn": 12,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 66240,
+          "playedFramesDelta": 66240,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 787
+        }
+      ],
+      "limits": "This one continuous window passed; it does not explain earlier failures or establish indefinite idle reliability, cross-session memory, or exact acoustic latency."
     }
   },
   "knownBoundary": "The earlier unanswered voice attempt remains unexplained. Target compilation, readiness, text and host simulation do not prove audible device acceptance.",

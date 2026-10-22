@@ -62,10 +62,10 @@
 
 **Files:** 更新README中英、CHANGELOG、VALIDATION及VOICE_INPUT；新增`docs/companion-evolution-validation.json`，固定示例预览/脱敏实机图按实际完成记录。工具沿用现有build_pet、verify_application、保护安装器。
 
-- [ ] 独立审查三项计划最终完整差异，重点C并发/栈/音频优先级、JS异步/回收/认证、UI可读性/脱敏；重要问题用失败测试修复，完整测试全绿。
-- [ ] 用现有ESP-IDF6.0.1构建，Expected: PET_APPLICATION_BUILT且小于0x3e0000；verify_application通过源码与依赖绑定；不放宽单SW绘制保护。
-- [ ] 真实设备读取状态，核对同一设备，保存新的完整8MiB备份和有效恢复记录；保护安装器仅写原应用槽并验证，Expected: PET_INSTALL_VERIFIED。未获得可用串口或备份校验失败则保留固件，不冒险写入。
+- [x] 独立审查三项计划最终完整差异，重点C并发/栈/音频优先级、JS异步/回收/认证、UI可读性/脱敏；重要问题用失败测试修复，完整测试全绿。
+- [x] 用现有ESP-IDF6.0.1构建，Expected: PET_APPLICATION_BUILT且小于0x3e0000；verify_application通过源码与依赖绑定；不放宽单SW绘制保护。
+- [x] 真实设备读取状态，核对同一设备，保存新的完整8MiB备份和有效恢复记录；保护安装器仅写原应用槽并验证，Expected: PET_INSTALL_VERIFIED。未获得可用串口或备份校验失败则保留固件，不冒险写入。
 - [ ] 无声核对状态、页面和重启保留；有使用者参与时低音量BOOT完成十轮、上下文/计算、长回答分页、播放中打断与断线后新问题；记录首段和停声时间，不自动出声，不重复任务。缺真人/声学证据项保持pending。
-- [ ] 更新开发介绍和验收记录，公开检查通过后推送同一开发分支与草稿PR并等待CI；不发布正式版。主机、云端跳过项和实机成绩分别记录。
+- [x] 更新开发介绍和验收记录，公开检查通过后推送同一开发分支与草稿PR并等待CI；不发布正式版。主机、云端跳过项和实机成绩分别记录。
 
-Implementation and fresh independent reviews complete; Important fixes verified RED→GREEN with143/143 tests. Guarded application installation and silent readiness passed. Human acoustic/pagination trials, long soak and exact remote CI status remain governed by docs/companion-evolution-validation.json.
+2026-10-22：实现、独立审查、目标构建、备份与保护安装已完成；当前代码最近一次完整本地检查156/156、零跳过。实物已通过舒适音量下同一次连接连续十轮、上下文／任务核算、长回答分页、播放打断、抚摸余韵，以及保护重建后的新问题。音量选择依据使用者实际听感，没有强制使用此前几乎听不见的10～20%。上方人工／时延项保留未完成标记，因为精确声学首段和停声时间尚未测量；Mac原生首段时延与定性实物反馈分别记录，不互相替代。此前无回答、无声音及待机服务错误保留，异步任务后的下一次BOOT可能先保护重建。开发PR2保持草稿，当前CI与逐项证据见`docs/companion-evolution-validation.json`，未发布正式版。
