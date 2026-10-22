@@ -2,7 +2,7 @@
   "date": "2026-10-22",
   "baseCommit": "9c63beba1b4ce3b81145fac155e5fe528a4d1027",
   "scope": "First native voice turn after long idle",
-  "status": "silent_native_recovery_passed_awaiting_physical_first_reply",
+  "status": "physical_first_reply_after_extended_idle_passed",
   "baseline": {
     "tests": 157,
     "passed": 157,
@@ -61,10 +61,27 @@
     "remainingSlotBytes": 355840
   },
   "humanAcceptance": {
-    "firstReplyAfter15Minutes": "pending",
-    "firstReplyAfter1Hour": "pending",
-    "firstReplyAfterOvernight": "pending",
-    "boundary": "Connection readiness and silent diagnostics do not prove physical speech or speaker output."
+    "firstReplyAfter15Minutes": "passed_in_longer_idle_trial",
+    "firstReplyAfter1Hour": "passed_in_longer_idle_trial",
+    "firstReplyAfterOvernight": "pending_controlled_overnight",
+    "boundary": "The user confirmed one clear physical reply after extended idle. Connection readiness alone does not certify sound, repeated turns or future overnight stability. Controlled exact one-hour and full-overnight trials remain separate.",
+    "observedReply": {
+      "date": "2026-10-23",
+      "result": "user_confirmed_clear_speaker_reply",
+      "approximateBridgeUptimeSecondsAtRead": 17782,
+      "nativeRecoveries": 19,
+      "deviceReconnects": 0,
+      "recognizedInputs": 1,
+      "nativeReplies": 1,
+      "deviceTurns": 1,
+      "fault": null,
+      "playbackCredits": 20,
+      "queuedPackets": 0,
+      "nativeAndTaskReady": true,
+      "exactButtonPressTimestampMeasured": false,
+      "interpretation": "One first physical reply after a longer than one-hour idle interval; deployment-to-read duration is an approximate upper bound, not an exact measured input-idle duration.",
+      "audioOrTranscriptsRetained": false
+    }
   },
   "updated": "2026-10-23",
   "recovery": {
