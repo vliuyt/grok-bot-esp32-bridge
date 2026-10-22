@@ -41,6 +41,18 @@ test('a settled native idle expiry can be claimed without fault or replay',async
     assert.equal(f.socket.sent.filter(e=>e.type==='input_audio_buffer.commit').length,0);
   }finally{f.voice.close();}
 });
+test('recovery accepts the same bounded idle/session/timeout vocabulary used by diagnostics',async()=>{
+  for(const error of [
+    {type:'server_error',message:'Conversation idle timeout'},
+    {type:'server_error',message:'Conversation silence timeout'},
+    {type:'server_error',message:'Session inactive deadline exceeded'},
+    {type:'server_error',code:'conversation_inactive_deadline_exceeded',message:'fixture'}
+  ]){
+    const f=await fixture();
+    try{f.advance(900000);f.socket.receive({type:'error',error});assert.equal(f.recoveries(),1);assert.deepEqual(f.faults,[]);}
+    finally{f.voice.close();}
+  }
+});
 test('an unclaimed idle expiry still follows the ordinary failure path',async()=>{
   const f=await fixture();
   try{f.voice.removeAllListeners('idleExpired');f.advance(900000);f.socket.receive(idleError);assert.deepEqual(f.faults,['VOICE_SERVICE_ERROR']);}

@@ -5,9 +5,9 @@ import {VoiceTrace} from './voice-trace.mjs';
 
 function idleSessionError(error) {
   if(error?.type!=='server_error')return false;
-  const fields=[error.code,error.message].filter(value=>typeof value==='string'&&value.length<=512);
+  const fields=[typeof error.code==='string'&&error.code.length<=128?error.code:'',typeof error.message==='string'&&error.message.length<=512?error.message:''];
   const text=fields.join(' ').replaceAll('_',' ');
-  return /\bsession\b/i.test(text)&&/\b(?:idle|inactivity)\b/i.test(text)&&/\btimeout\b|\btimed out\b/i.test(text)&&
+  return /\b(?:session|conversation)\b/i.test(text)&&/\b(?:idle|inactive|inactivity|silence)\b/i.test(text)&&/\btimeout\b|\btimed out\b|\bdeadline\b/i.test(text)&&
     !/\b(?:auth|unauthorized|forbidden|credential|token|secret)\b|\brate.?limit/i.test(text);
 }
 
@@ -139,7 +139,8 @@ export class RealtimeSession extends EventEmitter {
       case 'response.output_audio_transcript.done': case 'response.audio_transcript.done':
         if (this.ownsResponse(message.response_id)) this.emit('transcript', { role: 'assistant', text: message.transcript ?? '', itemId: message.item_id,turn:this.turn }); break;
       case 'error':
-        if(idleSessionError(message.error)&&this.canRecoverIdle()){
+        this.idleExpiryCheck={signature:idleSessionError(message.error),settled:this.canRecoverIdle(),socketOpen:this.socket?.readyState===1};
+        if(this.idleExpiryCheck.signature&&this.idleExpiryCheck.settled){
           // A listener must synchronously retire this socket before resuming.
           // An unclaimed expiry keeps the ordinary failure/cleanup behavior.
           this.emit('idleExpired');if(this.state==='closed')break;

@@ -14,7 +14,7 @@ The same branch now implements bounded turn feedback and safe route renewal, a q
 
 The latest polish adds immediate touch gaze, stroke reactions, a gentle three-tap dodge, waking stretches and time-based motion smoothing. A connection that recovers while BOOT is held requires release and a fresh press, preventing partial recordings. Speech motion settles when actual playback-level updates stop. See the [interaction guide](docs/COMPANION_POLISH.md) and [separate evidence record](docs/companion-polish-validation.json); prior device acceptance does not certify this new image. The user confirmed natural touch reactions and one clear BOOT reply on that image. Wake stretches and speech-motion transitions remain separately unverified.
 
-The development branch now handles a reproduced native idle disconnect after roughly 15 minutes. Only fully settled calls with drained device playback and negotiated `native_resume` firmware may attempt one fresh-credential reconnection; configuration and the original conversation ID must both be confirmed before ready. Old firmware keeps its existing failure path. 191 local checks, independent reviews, full backup and application-only readback passed. Natural-idle recovery and physical first-reply acceptance are tracked separately in the [current record](docs/idle-first-use-validation.json).
+The development branch now handles a reproduced native idle disconnect after roughly 15 minutes. Only fully settled calls with drained device playback and negotiated `native_resume` firmware may attempt one fresh-credential reconnection; configuration and the original conversation ID must both be confirmed before ready. Old firmware keeps its existing failure path. 192 local checks, independent reviews, full backup and application-only readback passed. Natural-idle recovery and physical first-reply acceptance are tracked separately in the [current record](docs/idle-first-use-validation.json).
 
 ![Fixed public reading example rendered by the production LVGL UI on the host](docs/paged-reader-preview.png)
 
@@ -57,7 +57,7 @@ The proactive-behavior clock is currently fixed to Shanghai time (UTC+8), with n
 
 Full acoustic interruption/reconnection, physical touch feel, authenticated BLE provisioning and battery behavior still require acceptance. Public packaging changes were host-tested; a second-device clean install has not been tested. See [validation and limitations](docs/VALIDATION.md) for precise boundaries.
 
-`npm test` uses mocks and local compiler checks, with no account access, flashing or acoustic playback. On this development branch, five target-dependent tests, including real LVGL rendering, are explicitly skipped until the firmware dependencies are resolved. All 191 tests passed locally without skips. Optional hardware benches are separate and can make sound.
+`npm test` uses mocks and local compiler checks, with no account access, flashing or acoustic playback. On this development branch, five target-dependent tests, including real LVGL rendering, are explicitly skipped until the firmware dependencies are resolved. All 192 tests passed locally without skips. Optional hardware benches are separate and can make sound.
 
 ## Contributing and licensing
 

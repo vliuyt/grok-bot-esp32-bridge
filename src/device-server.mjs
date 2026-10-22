@@ -43,6 +43,10 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
     const cleanup = () => {
       if (call.closing) return call.closing;
       stats.previousVoiceTrace = call.session.voice?.trace?.snapshot() ?? null;
+      const idleCheck=call.session.voice?.idleExpiryCheck;
+      stats.previousIdleExpirySignature=!!idleCheck?.signature;
+      stats.previousIdleExpirySettled=!!idleCheck?.settled;
+      stats.previousIdleExpirySocketOpen=!!idleCheck?.socketOpen;
       stats.previousOutputAudio = {turn:call.turn,...call.outputMeter.snapshot()};
       stats.previousInputAudio = {turn:call.turn,...call.inputMeter.snapshot()};
       clearTimeout(call.timer);clearInterval(call.clockTimer);call.book.clear(); sockets.delete(socket);
@@ -225,7 +229,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
   });
   server.on('tlsClientError', () => {});
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, host, resolve); });
-  return { port: server.address().port, snapshot: () => ({ ...stats, nativeResumable:typeof active?.session.voice?.conversationId==='string', inputAudio:active?{turn:active.turn,...active.inputMeter.snapshot()}:null, outputAudio:active?{turn:active.turn,...active.outputMeter.snapshot()}:null, voiceTrace:active?.session.voice?.trace?.snapshot()??null, firstAudioMs: [...stats.firstAudioMs], playback:active?{credits:active.playback.available,packets:active.playback.queue.length,bytes:active.playback.bytes,responseActive:!!active.session.voice?.responseActive,recording:active.recording}:null }),
+  return { port: server.address().port, snapshot: () => ({ ...stats, nativeResumeCapable:!!active?.capabilities?.has('native_resume'),nativeResumable:typeof active?.session.voice?.conversationId==='string', inputAudio:active?{turn:active.turn,...active.inputMeter.snapshot()}:null, outputAudio:active?{turn:active.turn,...active.outputMeter.snapshot()}:null, voiceTrace:active?.session.voice?.trace?.snapshot()??null, firstAudioMs: [...stats.firstAudioMs], playback:active?{credits:active.playback.available,packets:active.playback.queue.length,bytes:active.playback.bytes,responseActive:!!active.session.voice?.responseActive,recording:active.recording}:null }),
     disconnect: () => active?.socket.destroy(),
     pause: () => { paused = true; active?.socket.destroy(); }, resume: () => { paused = false; },
     close: async () => {

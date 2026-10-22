@@ -2,7 +2,7 @@
   "date": "2026-10-22",
   "baseCommit": "9c63beba1b4ce3b81145fac155e5fe528a4d1027",
   "scope": "First native voice turn after long idle",
-  "status": "installed_awaiting_natural_idle_recovery",
+  "status": "first_live_recovery_failed_v2_installed_under_observation",
   "baseline": {
     "tests": 157,
     "passed": 157,
@@ -81,11 +81,36 @@
       "cancelledResponses": 1024,
       "tools": 1000
     },
-    "failure": "Authentication keeps its explicit login notice; other failures close through the existing safe path."
+    "failure": "Authentication keeps its explicit login notice; other failures close through the existing safe path.",
+    "observations": [
+      {
+        "implementation": "first installed recovery",
+        "result": "failed_no_recovery_started",
+        "errorAtMs": 905072,
+        "inputIdleMs": 905065,
+        "errorSignals": [
+          "idle",
+          "timeout",
+          "session"
+        ],
+        "fault": "VOICE_SERVICE_ERROR",
+        "conclusion": "The live attempt did not claim recovery; cause not proven."
+      },
+      {
+        "implementation": "bounded vocabulary alignment and boolean eligibility diagnostics",
+        "result": "installed_under_natural_idle_observation",
+        "changes": [
+          "Align conversation, inactive, silence and deadline terms with diagnostic vocabulary",
+          "Expose only signature, settled, socket-open and firmware-capability booleans"
+        ],
+        "localChecks": 192,
+        "humanAudioOrTasksInitiated": false
+      }
+    ]
   },
   "checks": {
-    "tests": 191,
-    "passed": 191,
+    "tests": 192,
+    "passed": 192,
     "failed": 0,
     "skipped": 0,
     "realTLS": true,
@@ -95,7 +120,8 @@
       "cppChecks": 5,
       "typescriptChecks": 57,
       "generalChecks": 77,
-      "remainingImportantFindings": 0
+      "remainingImportantFindings": 0,
+      "vocabularyAndTelemetry": "approved"
     },
     "reviewRegressionsFixed": [
       "matching conversation confirmation before ready",
