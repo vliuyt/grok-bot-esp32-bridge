@@ -21,6 +21,8 @@ static bool enabled;
 static uint32_t played_frames,captured_frames;
 static uint64_t last_write_ms,last_level_ms;
 static float hpf_x,hpf_y;
+static double mic_energy[2],mic_sum[2];
+static uint32_t mic_samples;
 static uint64_t now_ms(void){return (uint64_t)esp_timer_get_time()/1000;}
 static bool owns(uint32_t g,uint32_t t){return atomic_load(&generation)==g&&atomic_load(&turn)==t;}
 static void event(pet_event_kind_t kind,uint32_t g,uint32_t t,int value){
@@ -75,7 +77,7 @@ void pet_audio_clear(uint32_t g,uint32_t t){
 }
 void pet_audio_begin(uint32_t g,uint32_t t){
     pet_audio_clear(g,t);pet_audio_power(true);
-    xSemaphoreTake(state_lock,portMAX_DELAY);hpf_x=hpf_y=0;xSemaphoreGive(state_lock);
+    xSemaphoreTake(state_lock,portMAX_DELAY);hpf_x=hpf_y=0;mic_energy[0]=mic_energy[1]=mic_sum[0]=mic_sum[1]=0;mic_samples=0;xSemaphoreGive(state_lock);
     if(atomic_load(&powered))atomic_store(&recording,true);
 }
 void pet_audio_finish(void){
@@ -84,11 +86,15 @@ void pet_audio_finish(void){
     xSemaphoreGive(state_lock);
     if(!active&&cb.stopped)cb.stopped(g,t,cb.context);
 }
-int pet_audio_push(uint32_t g,uint32_t t,const void *pcm,size_t bytes){
+uint32_t pet_audio_receive_epoch(void){return atomic_load(&playback_epoch);}
+int pet_audio_push(uint32_t g,uint32_t t,uint32_t receive_epoch,const void *pcm,size_t bytes){
     if(!queue||atomic_load(&recording)||!owns(g,t))return 0;
     if(!atomic_load(&powered)){pet_audio_power(true);if(!atomic_load(&powered))return -1;}
     xSemaphoreTake(state_lock,portMAX_DELAY);
-    int result=pet_pcm_push(queue,g,t,pcm,bytes);
+    /* Snapshot is taken before the model gate. A clear between gate and enqueue
+     * must invalidate the frame even when generation/turn stay the same. */
+    int result=receive_epoch==atomic_load(&playback_epoch)&&!atomic_load(&recording)?
+               pet_pcm_push(queue,g,t,pcm,bytes):0;
     if(result==1){drain_sent=false;if(!buffered_announced){buffered_announced=true;event(PET_EV_BUFFERED,g,t,0);}}
     xSemaphoreGive(state_lock);
     return result;
@@ -117,10 +123,11 @@ static void capture_block(void){
     bool valid=owns(g,t)&&atomic_load(&recording);
     if(valid){
         for(unsigned i=0;i<320;i++){
+            for(unsigned c=0;c<2;c++){double sample=stereo[i*2+c];mic_energy[c]+=sample*sample;mic_sum[c]+=sample;}
             float x=stereo[i*2];float y=.96954f*(hpf_y+x-hpf_x);hpf_x=x;hpf_y=y;
             mono[i]=(int16_t)(y>32767?32767:y< -32768?-32768:y);
         }
-        captured_frames+=320;
+        captured_frames+=320;mic_samples+=320;
     }
     bool finish=valid&&finish_requested;
     if(finish){finish_requested=false;atomic_store(&recording,false);}
@@ -191,6 +198,14 @@ esp_err_t pet_audio_start(const pet_config_t *config,pet_audio_callbacks_t callb
 }
 pet_audio_status_t pet_audio_status(void){
     pet_audio_status_t status={.recording=atomic_load(&recording),.powered=atomic_load(&powered),.fault=atomic_load(&faulted)};
-    if(state_lock){xSemaphoreTake(state_lock,portMAX_DELAY);status.queued=queue->count;status.played_frames=played_frames;status.captured_frames=captured_frames;xSemaphoreGive(state_lock);}
-    return status;
+    double energy[2]={0},sum[2]={0};uint32_t samples=0;
+    if(state_lock){
+        xSemaphoreTake(state_lock,portMAX_DELAY);status.queued=queue->count;status.played_frames=played_frames;status.captured_frames=captured_frames;
+        for(unsigned c=0;c<2;c++){energy[c]=mic_energy[c];sum[c]=mic_sum[c];}samples=mic_samples;xSemaphoreGive(state_lock);
+    }
+    int db[2];for(unsigned c=0;c<2;c++){
+        double mean=samples?sum[c]/samples:0,variance=samples?energy[c]/samples-mean*mean:0;
+        double level=10*log10(fmax(variance,0)/1073741824.0+1e-10);db[c]=(int)fmax(-100,fmin(0,level));
+    }
+    status.mic_left_db=db[0];status.mic_right_db=db[1];return status;
 }

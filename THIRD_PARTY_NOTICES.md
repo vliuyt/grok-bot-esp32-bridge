@@ -22,6 +22,12 @@ Source font `unifont-16.0.04.otf` SHA-256: `0e3981ab552231b5a2a870f2b61741903a4b
 
 The upstream font is dual licensed; this repository distributes its font conversion under **SIL Open Font License 1.1**, separately from the Apache-licensed application. The upstream copyright and license texts are preserved in [Unifont-OFL-1.1.txt](docs/third-party/Unifont-OFL-1.1.txt) and [Unifont-16.0.04-COPYING.txt](docs/third-party/Unifont-16.0.04-COPYING.txt). Font regeneration details are in the font directory README. The current source release does not distribute font-generation utilities from Unifont.
 
+## Readability web prototype — Noto Sans SC / OFL-1.1
+
+`preview/companion/fonts/xiaotang-ui-preview.woff` is a renamed subset of Noto Sans SC Medium, distributed under SIL Open Font License 1.1. It is used only by the readability design prototype, not by device firmware. Original copyright/license name records are retained inside the font. Source revision, hashes and conversion details: [font README](preview/companion/fonts/README.md) and [provenance](preview/companion/fonts/provenance.json). Preserve the [full OFL text](preview/companion/fonts/OFL.txt) with redistribution.
+
+The separate firmware conversions `firmware/pet/components/pet_ui/fonts/pet_font_{22,28,30}.c` also derive from Noto Sans SC Medium, copyright © 2014-2021 Adobe. They retain **OFL-1.1**, not the application's Apache license. `pet_font_rare16.c` derives from the Unifont source documented above. Exact conversion provenance and both font-license references are in the [firmware font README](firmware/pet/components/pet_ui/fonts/README.md). Original complete font files and converter dependencies are not vendored.
+
 ## Dependencies resolved when building
 
 ESP-IDF and managed component sources are not vendored in this repository. `firmware/pet/main/idf_component.yml` and `dependencies.lock` pin their versions: ESP-IDF, LVGL, esp_codec_dev, esp_lvgl_adapter, esp_lcd_co5300, cJSON and mDNS, including their transitive dependencies. Each has its own licenses/notices in the downloaded package.

@@ -1,0 +1,123 @@
+{
+  "date": "2026-10-21",
+  "stage": "reference-device-readability-acceptance",
+  "status": "readability_voice_and_reboot_passed_regressions_pending",
+  "firmwareCommit": "0c3cde6",
+  "applicationSha256": "c035f0c1555d154cdb2656f53c7732e1eeff4228e86d4eafd27f48f7d55b3f1e",
+  "applicationBytes": 3693968,
+  "deviceFlashed": true,
+  "fullBackupBytes": 8388608,
+  "backupReadbackVerified": true,
+  "applicationWriteReadbackVerified": true,
+  "previousSettingsRetained": true,
+  "screenResolution": [
+    466,
+    466
+  ],
+  "screenshots": [
+    "readability-device-home.png",
+    "readability-device-settings.png"
+  ],
+  "screenCaptureMethod": "actual device LVGL snapshot; conversation body and pairing code redacted",
+  "userConfirmed": {
+    "textClearer": true,
+    "touchTargetsEasier": true,
+    "nativeVoiceHeard": true,
+    "realCaptionDisplayed": true,
+    "readingScroll": true,
+    "readingReturn": true
+  },
+  "stability": {
+    "elapsedSeconds": 180.4,
+    "resets": 0,
+    "audioFaults": 0,
+    "minimumHeap": 30843,
+    "minimumPsram": 7859520,
+    "newEventDrops": 0,
+    "passed": true
+  },
+  "stabilityScope": "three-minute observation; not a long-duration soak or a voice acceptance pass",
+  "hostTests": {
+    "passed": 108,
+    "failed": 0,
+    "skipped": 0
+  },
+  "voiceAcceptance": {
+    "status": "basic_manual_reply_passed",
+    "firstManualTurn": "audio uploaded but no recognized input, response or speaker frames",
+    "fixedFixtureControl": "same native bot harness recognized fixed Chinese greeting and returned audio; output counted only, never played",
+    "currentProbe": "fresh device session; user confirmed normal native voice reply; no parallel cloud probes during retry",
+    "retryObservation": {
+      "seconds": 119.3,
+      "newManualTurnsObserved": 0,
+      "lastBridgeState": "ready"
+    },
+    "confirmedRetry": {
+      "observedAt": "2026-10-20T23:59:54.182929+00:00",
+      "userConfirmedNormalSpeakerReply": true,
+      "bridgeState": "ready",
+      "bridgeFault": null,
+      "devicePlayedFramesCumulative": 101760,
+      "deviceQueuedPackets": 0,
+      "deviceRecording": false,
+      "deviceAudioFault": false,
+      "bridgeRepliesCumulative": 2,
+      "nativeAudioDeltaEventsCumulative": 16,
+      "taskReturnAvailable": true,
+      "lastInputDb": -41,
+      "firstNativeAudioAtBridgeMs": 974,
+      "latencyScope": "BOOT release to first native audio at Mac; not measured physical speaker latency"
+    },
+    "firstFailureRootCause": "not established; session was refreshed before successful retry; no production code changed during diagnosis",
+    "scope": "greeting retry confirmed by user, followed by caption/reading acceptance with a story reply; cumulative counters do not establish ten-round acceptance"
+  },
+  "readingAcceptance": {
+    "status": "passed",
+    "method": "user requested a five-to-six-sentence story using physical BOOT, then confirmed caption display, manual scrolling and return",
+    "observedAt": "2026-10-21T00:02:35.597909+00:00",
+    "bridgeStateAfterPlayback": "ready",
+    "bridgeFault": null,
+    "devicePlayedFramesCumulative": 633920,
+    "deviceQueuedPackets": 0,
+    "deviceAudioFault": false,
+    "deviceEventDrops": 0,
+    "deviceHeapAfterPlayback": 53483,
+    "devicePsramAfterPlayback": 8039748,
+    "firstNativeAudioAtBridgeMs": 760,
+    "scope": "one real story reply; current bounded caption window, not full conversation history"
+  },
+  "volumeObservation": {
+    "earlierPercent": 14,
+    "retryReceiptPercent": 100,
+    "cause": "user confirmed manually raising volume",
+    "userConfirmedManualAdjustment": true,
+    "followUp": "silent reboot confirmed retained volume; no unintended volume change established"
+  },
+  "rebootAcceptance": {
+    "status": "passed",
+    "observedAt": "2026-10-21T00:06:28.718814+00:00",
+    "resetObserved": true,
+    "uptimeBeforeMs": 2609069,
+    "uptimeAfterBootMs": 977,
+    "volumeBeforeAndAfterPercent": 100,
+    "speakerBeforeAndAfter": true,
+    "settingsSnapshotsVisuallyMatched": true,
+    "brightnessBeforeAndAfterPercent": 41,
+    "captionModeBeforeAndAfter": "concise",
+    "automaticReconnectReady": true,
+    "readyObservedAtUptimeMs": 22021,
+    "taskReturnAvailable": true,
+    "playedFramesAfterReboot": 0,
+    "queuedPacketsAfterReboot": 0,
+    "audioFault": false,
+    "flashWrites": false,
+    "returnedToHome": true,
+    "scope": "idle reboot and automatic connection recovery; no new manual voice turn after reboot",
+    "initialDirectResetAttempt": "did not reset uptime and was not counted as a pass; supported maintenance reset then confirmed restart"
+  },
+  "pending": [
+    "continuous ten-round regression",
+    "interruption and active-call reconnect audio regression"
+  ],
+  "partitionAndBootMetadataGuard": "matched fresh full backup immediately before write; installer writes only the original application slot"
+}

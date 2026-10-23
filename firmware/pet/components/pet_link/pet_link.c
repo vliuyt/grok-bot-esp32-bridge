@@ -1,5 +1,8 @@
 #include "pet_link.h"
 #include "pet_link_wire.h"
+#include "pet_press_wire.h"
+#include "pet_link_watchdog.h"
+#include "pet_reader_wire.h"
 #include "pet_network.h"
 #include "pet_audio.h"
 #include "esp_tls.h"
@@ -24,9 +27,12 @@ static esp_tls_t *tls;
 static atomic_uint generation,current_turn;
 static atomic_bool suspended,reset_requested,connected;
 static atomic_bool hello,native_ready;
+static atomic_bool companion_mood_capable;
+static bool turn_status_capable,turn_progress_capable,caption_pages_capable;
 static pet_link_rx_t receiver;
 static char bridge_id[33];
-static uint64_t last_received,last_ping,connected_at;
+static uint64_t last_received,last_ping;
+static pet_link_watchdog_t watchdog;
 typedef struct {uint32_t generation,turn;uint16_t bytes;uint8_t type;uint8_t data[640];} packet_t;
 static uint64_t now_ms(void){return (uint64_t)esp_timer_get_time()/1000;}
 static bool post(pet_event_kind_t kind,int value){return cb.event((pet_event_t){.kind=kind,.now_ms=now_ms(),.generation=atomic_load(&generation),.turn=atomic_load(&current_turn),.value=value},cb.context);}
@@ -42,18 +48,27 @@ static bool enqueue(uint8_t type,uint32_t g,uint32_t t,const void *data,size_t n
  if(!outgoing||!atomic_load(&connected)||g!=atomic_load(&generation)||n>640)return false;
  packet_t p={.generation=g,.turn=t,.bytes=(uint16_t)n,.type=type};memcpy(p.data,data,n);
  bool ok=xQueueSend(outgoing,&p,0)==pdTRUE;
- if(!ok){atomic_store(&reset_requested,true);}
+ if(!ok){atomic_store(&companion_mood_capable,false);atomic_store(&reset_requested,true);}
  return ok;
 }
 bool pet_link_control(const char *action,uint32_t g,uint32_t t,void *ctx){
  (void)ctx;if(strcmp(action,"press")&&strcmp(action,"release")&&strcmp(action,"cancel"))return false;
  if(g!=atomic_load(&generation))return false;
- if(!strcmp(action,"press"))atomic_store(&current_turn,t);
+ if(!strcmp(action,"press")){
+  bool mood=atomic_load(&companion_mood_capable);pet_state_t state={0};char data[128];
+  if(mood)state=cb.state(cb.context);
+  size_t n=pet_press_encode(mood,g,t,mood?&state:NULL,data,sizeof(data));if(!n)return false;
+  atomic_store(&current_turn,t);return enqueue(2,g,t,data,n);
+ }
  return enqueue(2,g,t,action,strlen(action));
+}
+bool pet_link_reader(const pet_reader_request_t *request,void *ctx){
+ (void)ctx;char data[192];size_t n=pet_reader_encode(request,data,sizeof(data));
+ return n&&request->turn==atomic_load(&current_turn)&&enqueue(2,request->generation,request->turn,data,n);
 }
 bool pet_link_capture(uint32_t g,uint32_t t,const void *pcm,size_t n,void *ctx){(void)ctx;return n>0&&n<=640&&n%2==0&&enqueue(3,g,t,pcm,n);}
 bool pet_link_credit(uint32_t g,uint32_t t,void *ctx){(void)ctx;if(g!=atomic_load(&generation)||t!=atomic_load(&current_turn))return true;return enqueue(2,g,t,"credit",6);}
-void pet_link_reconnect(void *ctx){(void)ctx;atomic_store(&suspended,false);if(!atomic_load(&connected))atomic_store(&reset_requested,true);}
+void pet_link_reconnect(void *ctx){(void)ctx;atomic_store(&suspended,false);if(!atomic_load(&connected)){atomic_store(&companion_mood_capable,false);atomic_store(&reset_requested,true);}}
 void pet_link_sleep(bool asleep,void *ctx){(void)ctx;atomic_store(&suspended,asleep);}
 static const char *string(cJSON *j,const char *key){cJSON *v=cJSON_GetObjectItemCaseSensitive(j,key);return cJSON_IsString(v)?v->valuestring:NULL;}
 static bool number(cJSON *j,const char *name,uint32_t *out){cJSON *v=cJSON_GetObjectItemCaseSensitive(j,name);if(!cJSON_IsNumber(v)||v->valuedouble<0||v->valuedouble>4294967295.0||v->valuedouble!=(uint32_t)v->valuedouble)return false;*out=(uint32_t)v->valuedouble;return true;}
@@ -66,17 +81,34 @@ static bool metadata(const void *bytes,size_t n){
  if(!strcmp(op,"hello")){
   const char *id=string(j,"bridgeId");uint32_t version;
   if(hello||!id||strcmp(id,bridge_id)||!number(j,"v",&version)||version!=2){ok=false;goto done;}
-  hello=true;if(native_ready)post(PET_EV_LINK,PET_CONN_READY);
+  cJSON *caps=cJSON_GetObjectItemCaseSensitive(j,"capabilities");bool mood=false;
+  if(caps){
+   if(!cJSON_IsArray(caps)||cJSON_GetArraySize(caps)>8){ok=false;goto done;}
+   cJSON *cap; cJSON_ArrayForEach(cap,caps){if(!cJSON_IsString(cap)||strlen(cap->valuestring)>32){ok=false;goto done;}if(!strcmp(cap->valuestring,"turn_status"))turn_status_capable=true;if(!strcmp(cap->valuestring,"turn_progress"))turn_progress_capable=true;if(!strcmp(cap->valuestring,"caption_pages"))caption_pages_capable=true;if(!strcmp(cap->valuestring,"companion_mood"))mood=true;}
+  }
+  atomic_store(&companion_mood_capable,mood);hello=true;if(native_ready)post(PET_EV_LINK,PET_CONN_READY);
  }else if(!hello){ok=false;}
  else if(!strcmp(op,"link")){
   const char *state=string(j,"state");if(!state){ok=false;goto done;}
-  native_ready=!strcmp(state,"ready");post(PET_EV_LINK,native_ready?PET_CONN_READY:!strcmp(state,"connecting")?PET_CONN_CONNECTING:PET_CONN_UNAVAILABLE);
+  pet_link_watchdog_ready(&watchdog,&native_ready,!strcmp(state,"ready"),now_ms());post(PET_EV_LINK,native_ready?PET_CONN_READY:!strcmp(state,"connecting")?PET_CONN_CONNECTING:PET_CONN_UNAVAILABLE);
  }else if(!strcmp(op,"task_channel")){
   cJSON *v=cJSON_GetObjectItemCaseSensitive(j,"available");if(!cJSON_IsBool(v)){ok=false;goto done;}post(PET_EV_TASK_CHANNEL,cJSON_IsTrue(v));
  }else if(!strcmp(op,"caption")){
   uint32_t turn;const char *caption=string(j,"text");
   if(!caption||strlen(caption)>320||!number(j,"turn",&turn)){ok=false;goto done;}
   if(turn==atomic_load(&current_turn))cb.caption(g,turn,caption,cb.context);
+ }else if(!strcmp(op,"caption_catalog")||!strcmp(op,"caption_page")){
+  pet_reader_metadata_t message;
+  if(!caption_pages_capable||!pet_reader_parse(j,&message)){ok=false;goto done;}
+  if(message.page.turn==atomic_load(&current_turn)){
+   if(message.catalog&&cb.reader_catalog)cb.reader_catalog(g,message.page.turn,message.available,message.page.responding,message.page.truncated,cb.context);
+   else if(!message.catalog&&cb.reader_page)cb.reader_page(&message.page,cb.context);
+  }
+ }else if(!strcmp(op,"turn_status")){
+  uint32_t turn;pet_notice_t notice=pet_notice_from_code(string(j,"code"));
+  if(!turn_status_capable||notice==PET_NOTICE_NONE||!number(j,"turn",&turn)){ok=false;goto done;}
+  if(notice==PET_NOTICE_PROGRESS&&!turn_progress_capable){ok=false;goto done;}
+  if(turn==atomic_load(&current_turn))cb.event((pet_event_t){.kind=PET_EV_TURN_STATUS,.now_ms=now_ms(),.generation=g,.turn=turn,.value=notice},cb.context);
  }else if(!strcmp(op,"clock")){
   cJSON *v=cJSON_GetObjectItemCaseSensitive(j,"epochMs");
   if(!cJSON_IsNumber(v)||v->valuedouble<1700000000000.0||v->valuedouble>4102444800000.0){ok=false;goto done;}
@@ -89,13 +121,16 @@ static bool receive(uint8_t type,uint32_t turn,const void *bytes,size_t n,void *
  (void)ctx;uint32_t g=atomic_load(&generation),current=atomic_load(&current_turn);
  if(type==3){
   if(turn!=current||!hello)return true;
+  uint32_t receive_epoch=pet_audio_receive_epoch();
   pet_state_t state=cb.state(cb.context);
-  if(state.dialogue==PET_DIALOGUE_LISTEN){return enqueue(2,g,turn,"credit",6);}
-  int result=pet_audio_push(g,turn,bytes,n);return result>=0;
+  if(!pet_response_audio_allowed(&state,g,turn)){return enqueue(2,g,turn,"credit",6);}
+  int result=pet_audio_push(g,turn,receive_epoch,bytes,n);
+  if(result==0)return enqueue(2,g,turn,"credit",6);
+  return result>0;
  }
  if(n&&((const char *)bytes)[0]=='{')return metadata(bytes,n);
  if(n==4&&!memcmp(bytes,"pong",4))return true;
- if(n==5&&!memcmp(bytes,"ready",5)){native_ready=true;if(hello)post(PET_EV_LINK,PET_CONN_READY);return true;}
+ if(n==5&&!memcmp(bytes,"ready",5)){pet_link_watchdog_ready(&watchdog,&native_ready,true,now_ms());if(hello)post(PET_EV_LINK,PET_CONN_READY);return true;}
  if(turn!=current)return true;
  if(n==5&&!memcmp(bytes,"clear",5)){pet_audio_flush_playback(g,turn);return true;}
  if(n==4&&!memcmp(bytes,"done",4)){pet_audio_done(g,turn);return true;}
@@ -116,24 +151,24 @@ static bool connect_bridge(void){
  psk_hint_key_t psk={.key=c.key,.key_size=32,.hint="grok-esp32"};esp_tls_cfg_t cfg={.timeout_ms=5000,.psk_hint_key=&psk};
  tls=esp_tls_init();if(!tls)goto done;
  int fd;if(esp_tls_conn_new_sync(host,strlen(host),port,&cfg,tls)!=1||esp_tls_get_conn_sockfd(tls,&fd)!=ESP_OK||fcntl(fd,F_SETFL,fcntl(fd,F_GETFL,0)|O_NONBLOCK)<0)goto done;
- char greeting[128];snprintf(greeting,sizeof(greeting),"{\"op\":\"hello\",\"v\":2,\"generation\":%u}",(unsigned)atomic_load(&generation));
+ char greeting[192];snprintf(greeting,sizeof(greeting),"{\"op\":\"hello\",\"v\":2,\"generation\":%u,\"capabilities\":[\"turn_status\",\"turn_progress\",\"caption_pages\",\"native_resume\",\"companion_mood\"]}",(unsigned)atomic_load(&generation));
  ok=send(2,0,greeting,strlen(greeting));
  done:pet_config_wipe(&c,sizeof(c));return ok;
 }
 static void disconnect_bridge(void){
- atomic_store(&connected,false);if(tls){esp_tls_conn_destroy(tls);tls=NULL;}
+ atomic_store(&connected,false);atomic_store(&companion_mood_capable,false);if(tls){esp_tls_conn_destroy(tls);tls=NULL;}
  post(PET_EV_LINK,PET_CONN_OFFLINE);cb.status(false,cb.context);
  packet_t p;while(xQueueReceive(outgoing,&p,0)==pdTRUE)pet_config_wipe(&p,sizeof(p));
- memset(&receiver,0,sizeof(receiver));hello=native_ready=false;
+ memset(&receiver,0,sizeof(receiver));hello=false;pet_link_watchdog_begin(&watchdog,&native_ready,0);turn_status_capable=turn_progress_capable=caption_pages_capable=false;
 }
 static void link_task(void *unused){
  (void)unused;unsigned failures=0;
  for(;;){
   if(atomic_load(&suspended)||!pet_network_online()||cb.state(cb.context).setup){vTaskDelay(pdMS_TO_TICKS(100));continue;}
-  atomic_fetch_add(&generation,1);atomic_store(&current_turn,0);atomic_store(&reset_requested,false);post(PET_EV_LINK,PET_CONN_CONNECTING);
+  atomic_store(&companion_mood_capable,false);atomic_fetch_add(&generation,1);atomic_store(&current_turn,0);atomic_store(&reset_requested,false);post(PET_EV_LINK,PET_CONN_CONNECTING);
   if(!connect_bridge()){disconnect_bridge();if(failures<6)failures++;}
   else{
-   atomic_store(&connected,true);cb.status(true,cb.context);last_received=last_ping=connected_at=now_ms();
+   atomic_store(&connected,true);cb.status(true,cb.context);last_received=last_ping=now_ms();pet_link_watchdog_begin(&watchdog,&native_ready,last_received);
    bool ok=true;
    while(ok&&!atomic_load(&reset_requested)&&!atomic_load(&suspended)&&pet_network_online()&&!cb.state(cb.context).setup){
     uint8_t input[1024];ssize_t n=esp_tls_conn_read(tls,input,sizeof(input));
@@ -145,7 +180,7 @@ static void link_task(void *unused){
      pet_config_wipe(&packet,sizeof(packet));
     }
     uint64_t now=now_ms();if(now-last_ping>=5000){ok=ok&&send(2,atomic_load(&current_turn),"ping",4);last_ping=now;}
-    if(now-last_received>20000||(!native_ready&&now-connected_at>45000))break;
+    if(pet_link_watchdog_expired(&watchdog,&native_ready,last_received,now))break;
     vTaskDelay(pet_delay_ticks(2,configTICK_RATE_HZ));
    }
    bool was_ready=hello&&native_ready;disconnect_bridge();

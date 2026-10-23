@@ -1,9 +1,11 @@
 #pragma once
 #include "pet_core.h"
+#include "pet_reader.h"
 #include "pet_config.h"
 #include <stddef.h>
 typedef struct {
     bool (*control)(const char *action,uint32_t generation,uint32_t turn,void *context);
+    bool (*reader)(const pet_reader_request_t *request,void *context);
     bool (*capture)(uint32_t generation,uint32_t turn,const void *pcm,size_t bytes,void *context);
     bool (*credit)(uint32_t generation,uint32_t turn,void *context);
     void (*reconnect)(void *context);

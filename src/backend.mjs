@@ -14,7 +14,7 @@ function allowedGateway(value) {
 }
 export class Backend {
   constructor(auth, { fetch = globalThis.fetch, version = '0.71.2' } = {}) {
-    Object.defineProperties(this, { auth: { value: auth }, fetch: { value: fetch } });
+    Object.defineProperties(this, { auth: { value: auth }, fetch: { value: fetch }, gatewayRefresh: {value:null,writable:true} });
     this.version = version;
   }
   async request(url, body, headers, uncertain = false, signal) {
@@ -47,29 +47,53 @@ export class Backend {
     }, method === 'VoiceCallHarnessTool', signal);
   }
   async connectGateway(signal) {
-    const reply = await this.rpc('EnsureSandBox', {}, signal);
-    const url = allowedGateway(reply.gatewayUrl);
-    if (typeof reply.gatewayToken !== 'string' || !reply.gatewayToken) throw new BridgeError('CONTRACT', 'Gateway credential missing');
-    Object.defineProperty(this, 'gateway', { configurable: true, writable: true,
-      value: { url, token: reply.gatewayToken, networkToken: reply.networkToken ?? reply.anyrunNetworkToken ?? reply.gatewayHeaders?.['x-anyrun-network-token'] } });
+    if(signal?.aborted)throw new BridgeError('NETWORK','Gateway request cancelled');
+    let refresh=this.gatewayRefresh;
+    if(!refresh||refresh.controller.signal.aborted){
+      refresh={controller:new AbortController(),waiters:0,done:false};
+      this.gatewayRefresh=refresh;
+      refresh.promise=(async()=>{
+        const reply=await this.rpc('EnsureSandBox',{},refresh.controller.signal);
+        if(refresh.controller.signal.aborted)throw new BridgeError('NETWORK','Gateway request cancelled');
+        const url=allowedGateway(reply.gatewayUrl);
+        if(typeof reply.gatewayToken!=='string'||!reply.gatewayToken)throw new BridgeError('CONTRACT','Gateway credential missing');
+        Object.defineProperty(this,'gateway',{configurable:true,writable:true,
+          value:{url,token:reply.gatewayToken,networkToken:reply.networkToken??reply.anyrunNetworkToken??reply.gatewayHeaders?.['x-anyrun-network-token']}});
+      })().finally(()=>{refresh.done=true;if(this.gatewayRefresh===refresh)this.gatewayRefresh=null;});
+    }
+    refresh.waiters++;
+    return new Promise((resolve,reject)=>{
+      let finished=false;
+      const finish=(callback,value)=>{
+        if(finished)return;
+        finished=true;signal?.removeEventListener('abort',abort);refresh.waiters--;
+        if(!refresh.waiters&&!refresh.done)refresh.controller.abort();
+        callback(value);
+      };
+      const abort=()=>finish(reject,new BridgeError('NETWORK','Gateway request cancelled'));
+      signal?.addEventListener('abort',abort,{once:true});
+      refresh.promise.then(value=>finish(resolve,value),error=>finish(reject,error));
+      if(signal?.aborted)abort();
+    });
   }
   async gatewayCall(method, body = {}, signal) {
-    if (!this.gateway) await this.connectGateway(signal);
     if (!['listAgents', 'getAgentTranscriptTail', 'readMainAgentContext', 'sendPrompt', 'nudgeVoiceCall', 'recordVoiceCall', 'setVoiceCallPresence'].includes(method)) {
       throw new BridgeError('CONTRACT', 'Unsupported gateway operation');
     }
-    const request = () => this.request(`${allowedGateway(this.gateway.url)}/api/${method}`, body, {
-      authorization: `Bearer ${this.gateway.token}`,
-      ...(this.gateway.networkToken ? { 'x-anyrun-network-token': this.gateway.networkToken } : {})
+    if (!this.gateway) await this.connectGateway(signal);
+    const binding=this.gateway;
+    const request = gateway => this.request(`${allowedGateway(gateway.url)}/api/${method}`, body, {
+      authorization: `Bearer ${gateway.token}`,
+      ...(gateway.networkToken ? { 'x-anyrun-network-token': gateway.networkToken } : {})
     }, ['sendPrompt', 'nudgeVoiceCall'].includes(method), signal);
-    try { return await request(); }
+    try { return await request(binding); }
     catch (error) {
       // Only read operations and idempotent presence updates may renew routing.
       // Prompt delivery and call recording are never replayed automatically.
       if (!['listAgents','getAgentTranscriptTail','readMainAgentContext','setVoiceCallPresence'].includes(method) ||
-          ![401,403,417].includes(error.status)) throw error;
-      await this.connectGateway(signal);
-      return request();
+          signal?.aborted || ![401,403,404,417].includes(error.status)) throw error;
+      if(this.gateway===binding)await this.connectGateway(signal);
+      return request(this.gateway);
     }
   }
   async listBots() {
@@ -79,21 +103,23 @@ export class Backend {
     return bots.filter(bot => !bot.isGroup).map(bot => ({ id: bot.id ?? bot.agentId, name: bot.name ?? bot.title ?? '', description: bot.description ?? '' }));
   }
   async openEvents(signal) {
-    try { return await this.openEventsOnce(signal); }
+    if(!this.gateway)await this.connectGateway(signal);
+    const binding=this.gateway;
+    try { return await this.openEventsOnce(signal,binding); }
     catch (error) {
-      if (signal.aborted || ![401,403,417].includes(error.status)) throw error;
-      await this.connectGateway(signal);
-      return this.openEventsOnce(signal);
+      if (signal?.aborted || ![401,403,404,417].includes(error.status)) throw error;
+      if(this.gateway===binding)await this.connectGateway(signal);
+      return this.openEventsOnce(signal,this.gateway);
     }
   }
-  async openEventsOnce(signal) {
-    if (!this.gateway) await this.connectGateway(signal);
+  async openEventsOnce(signal,gateway=this.gateway) {
+    if(!gateway){await this.connectGateway(signal);gateway=this.gateway;}
     const deadline = new AbortController(), timeout = setTimeout(() => deadline.abort(), 20000);
     try {
-      const response = await this.fetch(`${allowedGateway(this.gateway.url)}/events`, {
-        method: 'GET', redirect: 'error', signal: AbortSignal.any([signal, deadline.signal]), headers: {
-          accept: 'text/event-stream', authorization: `Bearer ${this.gateway.token}`,
-          ...(this.gateway.networkToken ? { 'x-anyrun-network-token': this.gateway.networkToken } : {})
+      const response = await this.fetch(`${allowedGateway(gateway.url)}/events`, {
+        method: 'GET', redirect: 'error', signal: signal?AbortSignal.any([signal, deadline.signal]):deadline.signal, headers: {
+          accept: 'text/event-stream', authorization: `Bearer ${gateway.token}`,
+          ...(gateway.networkToken ? { 'x-anyrun-network-token': gateway.networkToken } : {})
         }
       });
       if (!response.ok || !response.headers.get('content-type')?.startsWith('text/event-stream')) {

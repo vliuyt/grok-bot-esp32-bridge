@@ -23,3 +23,28 @@ test('pet protocol validates negotiated identity and UTF-8 without breaking lega
   assert(privateLanPeer('192.168.1.9'));assert(privateLanPeer('::ffff:10.0.0.8'));assert(privateLanPeer('127.0.0.1'));
   assert(!privateLanPeer('8.8.8.8'));assert(!privateLanPeer('192.168.1.9/evil'));assert(!privateLanPeer('198.18.0.1'));
 });
+
+test('optional voice status capability keeps legacy hello valid and status identities bounded',()=>{
+  const hello={op:'hello',v:2,generation:7,capabilities:['turn_status']};
+  assert.deepEqual(petMessage(encodePetMessage(hello)),hello);
+  const status={op:'turn_status',generation:7,turn:3,code:'short_input'};
+  assert.deepEqual(petMessage(encodePetMessage(status),{generation:7,turn:3}),status);
+  assert.equal(petMessage(encodePetMessage(status),{generation:7,turn:4}),null);
+  assert.throws(()=>encodePetMessage({...status,code:'arbitrary server text'}),/PET_PROTOCOL/);
+  assert.throws(()=>encodePetMessage({...hello,capabilities:[{}]}),/PET_PROTOCOL/);
+});
+
+test('caption reading identities, byte limits and controlled errors are validated',()=>{
+ const request={op:'caption_read',generation:7,turn:3,request:1,version:0,page:0};
+ assert.deepEqual(petMessage(encodePetMessage(request)),request);
+ for(const patch of [{request:0},{version:-1},{page:65536},{page:1,version:0}])assert.throws(()=>encodePetMessage({...request,...patch}),/PET_PROTOCOL/);
+ const page={op:'caption_page',generation:7,turn:3,request:1,version:1,page:0,pages:2,text:'中文🙂\n\t',truncated:false,responding:true};
+ assert.deepEqual(petMessage(encodePetMessage(page)),page);
+ assert.equal(petMessage(encodePetMessage(page),{generation:7,turn:4}),null);
+ for(const patch of [{text:'中'.repeat(101)},{text:'\ud800'},{text:'bad\x00'},{pages:0},{page:2}])assert.throws(()=>encodePetMessage({...page,...patch}),/PET_PROTOCOL/);
+ const error={op:'caption_page',generation:7,turn:3,request:1,version:1,page:0,error:'stale'};
+ assert.deepEqual(petMessage(encodePetMessage(error)),error);
+ assert.throws(()=>encodePetMessage({...error,error:'private raw reason'}),/PET_PROTOCOL/);
+ const catalog={op:'caption_catalog',generation:7,turn:3,available:true,truncated:false,responding:false};
+ assert.deepEqual(petMessage(encodePetMessage(catalog)),catalog);
+});

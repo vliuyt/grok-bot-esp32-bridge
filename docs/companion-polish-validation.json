@@ -1,0 +1,105 @@
+{
+  "date": "2026-10-22",
+  "scope": [
+    "fresh BOOT press after connection recovery",
+    "local touch reactions",
+    "time-based expression and speech motion"
+  ],
+  "baseCommit": "2eb7ff50cf4971afab53c9ac3764d92d0efcf5d4",
+  "board": "Waveshare ESP32-S3-Touch-AMOLED-1.43C",
+  "checks": {
+    "localTests": 157,
+    "passed": 157,
+    "failed": 0,
+    "skipped": 0,
+    "productionLVGL": true,
+    "addressAndUndefinedSanitizers": true,
+    "targetStackRegression": true,
+    "redToGreen": [
+      "partial utterance after ready recovery",
+      "current connection authentication visibility and ready-state rejection",
+      "new 22px hint glyph resolves without fallback",
+      "touch-down and MOVE delivery",
+      "actual playback-level pause decay",
+      "continuous pose movement",
+      "three taps total window at 900 vs 901ms",
+      "fast stroke without a MOVE sample"
+    ]
+  },
+  "independentReview": {
+    "scope": "2eb7ff5..26e34b4",
+    "critical": 0,
+    "important": 1,
+    "minor": 1,
+    "importantFixed": "Limit three taps to a total 900ms window and reset the sequence on strokes.",
+    "minorFixed": "Classify the final UP coordinates so a fast stroke responds immediately.",
+    "verification": "Both findings reproduced as failing tests, then all157 local tests passed; reviewers each independently ran6 checks with zero skips."
+  },
+  "target": {
+    "bytes": 3707296,
+    "sha256": "c54fe0cc0fd3c7a637437fadcc1f5d5133453102d24cc8e3e0f7f7ba3060fa48",
+    "sourceSha256": "e476910c25cd3e1a1dbf58b5f6480e35c07fbe44aeba862efd54f62060154428",
+    "dependenciesSha256": "0133de3853f8ce1dd8ef3937b73bf0bb357782c96e83423b14e4ab7cbd8f6499",
+    "sdkconfigSha256": "32e2986dca5293a5eafb31f6161663dade9763182de65b1bcb5ce938441b95a3",
+    "sdk": "ESP-IDF6.0.1",
+    "appOffset": 131072,
+    "slotBytes": 4063232,
+    "remainingBytes": 355936,
+    "sourceAndDependenciesVerified": true,
+    "measuredStackFramesBytes": {
+      "app_main": 2864,
+      "pet_pose": 80,
+      "pet_motion_step": 48,
+      "pet_step": 48,
+      "draw": 880
+    },
+    "mainTaskStackBytes": 8192
+  },
+  "installation": {
+    "status": "guarded_app_only_install_and_readback_verified",
+    "fullBackupVerified": true,
+    "olderBackupArchived": true,
+    "writeScope": "original ota_0 application slot only",
+    "nativeVoiceAndTaskReady": true,
+    "volumePreserved": true,
+    "micGainPreserved": true,
+    "speakerPreserved": true,
+    "wifiConnected": true,
+    "pairingPreserved": true,
+    "audioFault": false,
+    "newEventDrops": 0,
+    "firmwareSHA256": "c54fe0cc0fd3c7a637437fadcc1f5d5133453102d24cc8e3e0f7f7ba3060fa48"
+  },
+  "humanAcceptance": {
+    "touchDownAndGaze": "user_confirmed_natural_and_distinguishable",
+    "strokeAndThreeTapDodge": "user_confirmed_natural_and_distinguishable",
+    "wakeStretchAndTransitions": "pending",
+    "voiceAfterUpdate": "user_confirmed_clear_reply",
+    "firstVoiceAfterLongIdle": "pending",
+    "boundary": "Wake stretch, speech-motion transitions, long-idle first reply and physical timing were not separately confirmed."
+  },
+  "measurements": {
+    "physicalTouchLatencyMs": null,
+    "acousticFirstAudioMs": null,
+    "acousticInterruptionMs": null
+  },
+  "knownLimits": [
+    "Repeated native idle server_error remains unexplained; this change does not claim a fix or add periodic forced reconnects.",
+    "No automatic recording, acoustic test, task submission or extra sound in this iteration.",
+    "BOOT remains the sole voice input; no multi-Bot selector or network architecture change.",
+    "Previous ten-round, long-answer and interruption acceptance belongs to the prior firmware image."
+  ],
+  "publication": {
+    "kind": "development branch and existing draft PR",
+    "newFormalRelease": false,
+    "ci": "Latest commit status is tracked on the existing draft PR; it is separate from local target-dependent checks."
+  },
+  "referenceDeviceReply": {
+    "newDeviceTurns": 1,
+    "newNativeReplies": 1,
+    "playedFrames": 40640,
+    "sameConnectionGeneration": true,
+    "nativeFirstAudioAtMacMs": 957,
+    "boundary": "Before/after counters and human confirmation; passive continuous observer started after the reply, so no per-frame timing trace for this turn."
+  }
+}

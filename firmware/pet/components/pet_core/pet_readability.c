@@ -1,0 +1,55 @@
+#include "pet_readability.h"
+#include <math.h>
+#include <string.h>
+
+static bool readable(const pet_readability_input_t *in) {
+    char first[5];
+    return in->notice==PET_NOTICE_NONE&&in->connection==PET_CONN_READY&&
+        (in->dialogue==PET_DIALOGUE_IDLE||in->dialogue==PET_DIALOGUE_SPEAK)&&
+        pet_caption_mode_valid(in->caption_mode)&&in->caption_mode!=PET_CAPTION_OFF&&
+        pet_caption_text(PET_CAPTION_COMPACT,in->caption,first,sizeof(first))>0;
+}
+pet_readability_text_t pet_readability_text(const pet_readability_input_t *in) {
+    pet_readability_text_t out={.hint=in->connection==PET_CONN_READY?"按住 BOOT 说话":"语音连接中"};
+    const char *local=NULL;
+    if(in->dialogue==PET_DIALOGUE_LISTEN){local="我在听";out.hint="松开 BOOT 后提交";}
+    else if(in->notice>PET_NOTICE_NONE&&in->notice<=PET_NOTICE_CONNECTION_LOST&&in->notice!=PET_NOTICE_PROGRESS){
+        static const char *const messages[]={"","还在等回复","正在处理任务","录音太短，请再说一次","暂时没收到回复，请再试","这次没有声音回复，请再试","没听清，请再说一次","这次回答失败，请再试","请在 Mac 检查登录","","连接断开，正在恢复"};
+        local=messages[in->notice];
+    }
+    else if(in->release_before_recording){
+        local=in->connection==PET_CONN_READY?"已就绪，请松开再按":"连接恢复后再说";
+        out.hint=in->connection==PET_CONN_READY?"松开后重新按住 BOOT":"尚未录音，请先松开";
+    }
+    else if(in->dialogue==PET_DIALOGUE_WAIT)local=in->waiting_long?"还在想，稍等我一下":"让我想想";
+    else if(in->pose.expression==PET_EXPR_HAPPY)local="好舒服呀";
+    else if(in->pose.expression==PET_EXPR_CURIOUS)local="嗯？我在呢";
+    else if(in->pose.expression==PET_EXPR_CONFUSED)local="刚才没连上";
+    else if(in->pose.invitation)local="想和你聊聊天";
+    if(in->connection==PET_CONN_READY&&(in->dialogue==PET_DIALOGUE_WAIT||in->dialogue==PET_DIALOGUE_SPEAK))out.hint="按住 BOOT 打断";
+    if(local){pet_caption_text(PET_CAPTION_FULL,local,out.summary,sizeof(out.summary));out.local=true;}
+    else if(readable(in))pet_caption_text(PET_CAPTION_COMPACT,in->caption,out.summary,sizeof(out.summary));
+    out.can_read=readable(in)&&!out.local;
+    return out;
+}
+pet_page_t pet_readability_page(pet_page_t page,const pet_readability_input_t *in) {
+    if(page<PET_PAGE_HOME||page>=PET_PAGE_COUNT)return PET_PAGE_HOME;
+    if(page==PET_PAGE_READING&&!readable(in))return PET_PAGE_HOME;
+    return page;
+}
+pet_face_t pet_readability_face(pet_pose_t pose) {
+    pose.scale_x*=200.0f/224;pose.scale_y*=200.0f/224;
+    pose.offset_y-=21;
+    return pet_face_geometry(pose);
+}
+int pet_volume_percent(int codec_setting) {
+    if(codec_setting<=0)return 0;
+    if(codec_setting>=100)return 100;
+    int percent=(int)lroundf(100*powf(10,(codec_setting-100)/40.0f));
+    return percent<1?1:percent;
+}
+int pet_volume_setting(int percent) {
+    if(percent<=0)return 0;
+    if(percent>=100)return 100;
+    return (int)lroundf(100+40*log10f(percent/100.0f));
+}

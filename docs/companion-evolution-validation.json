@@ -1,0 +1,1162 @@
+{
+  "date": "2026-10-21",
+  "branch": "codex/v0.2.0-roadmap",
+  "pullRequest": "https://github.com/vliuyt/grok-bot-esp32-bridge/pull/2",
+  "status": "functional_physical_acceptance_passed_exact_acoustic_timing_pending",
+  "release": false,
+  "modules": [
+    "voice_reliability",
+    "quiet_petting_mood",
+    "device_reply_style_and_frozen_reader"
+  ],
+  "host": {
+    "tests": 156,
+    "passed": 156,
+    "failed": 0,
+    "skipped": 0,
+    "scope": "local_offline_tests_after_resolving_target_dependencies"
+  },
+  "target": {
+    "built": true,
+    "idf": "6.0.1",
+    "bytes": 3699008,
+    "slotBytes": 4063232,
+    "sha256": "1241772b2304033383394f68845cbde5fabcdd5901dc586c4ed53baf7309cbde",
+    "sourceAndDependencyBindingVerified": true,
+    "softwareDrawWorkers": 1,
+    "applicationOnlyOffset": 131072,
+    "sourceSha256": "b9151cb851690dcafb0439439463455e2b242d996ef00b6d4857e542c7dd7f0c",
+    "dependenciesSha256": "0133de3853f8ce1dd8ef3937b73bf0bb357782c96e83423b14e4ab7cbd8f6499"
+  },
+  "backup": {
+    "freshComplete8MiBVerified": true,
+    "previousBackupArchivedAndVerified": true,
+    "sameBoardIdentityVerified": true,
+    "recoveryLayoutVerified": true,
+    "privateFilesPublished": false
+  },
+  "installation": {
+    "status": "PET_INSTALL_VERIFIED",
+    "applicationOnly": true,
+    "bootMetadataCompared": true,
+    "applicationReadbackVerified": true,
+    "settingsObserved": {
+      "volume": 100,
+      "speaker": true
+    },
+    "extraRebootTest": "not_run_during_pending_user_trial"
+  },
+  "runtime": {
+    "status": "ready",
+    "credentialsAndPairingPreserved": true,
+    "nativeAndTaskReady": true,
+    "old404LoopNoLongerObserved": true,
+    "updatedModules": 8,
+    "unrelatedRuntimeSourcesPreserved": true,
+    "latestInputGainUpdateModules": 2
+  },
+  "offlineEvidence": {
+    "redThenGreen": [
+      "safe_gateway_renewal",
+      "turn_progress_and_stale_tool_isolation",
+      "firmware_notices",
+      "petting_warmth_and_preview_review_regressions",
+      "device_only_style",
+      "caption_book_utf8_and_versioning",
+      "tls_reader_negotiation_and_frozen_story",
+      "c_reader_lifecycle",
+      "real_lvgl_navigation_and_privacy",
+      "browser_reader_controls"
+    ],
+    "realLvgl": "production_UI_compiled_on_host_with_fixed_examples",
+    "snapshotPrivacy": "home_caption_reader_text_page_metadata_navigation_and_pairing_code_hidden",
+    "browser": "fixed_long_example_open_next_previous_return_verified_silently",
+    "targetStackFramesBytes": {
+      "app_main": 2720,
+      "link_task": 2256,
+      "receive": 1536,
+      "pet_json_parse": 2080,
+      "pet_reader_parse": 48
+    },
+    "image": "paged-reader-preview.png"
+  },
+  "gatewayObservation": {
+    "oldServiceTaskHistoryStatus": 404,
+    "freshNormalLoginBrokerStatus": 200,
+    "freshRosterStatus": 200,
+    "freshTargetHistoryStatus": 200,
+    "establishesOriginalUnansweredVoiceCause": false
+  },
+  "manualAcceptance": {
+    "pettingOnPhysicalScreen": "passed_by_user_qualitative_afterglow_and_natural_recovery",
+    "tenLowVolumeChineseRounds": "not_passed",
+    "contextAndSpokenCalculation": "passed_by_user_in_separate_bounded_trials",
+    "longNativeAnswerPhysicalPagination": "passed_by_user",
+    "interruptAndRejectOldAudio": "passed_by_user_old_story_stopped_clear_new_reply_no_old_audio_return",
+    "disconnectThenNewQuestion": "passed_for_expected_post_task_rebuild_network_loss_not_injected",
+    "deviceAudibleFirstAudioMs": null,
+    "interruptionStopMs": null,
+    "reason": "Physical functional checks passed: ten consecutive clear Chinese replies in one native session without reconnect, correct spoken task result5535, same-call memory, complete67.18s long answer with multi-page reading/scroll/back, active BOOT interruption with no old audio returning, natural petting afterglow, and new questions after expected task-boundary rebuild. Exact acoustic first-sound/stopping times remain unmeasured. Earlier unanswered/silent-speaker cases, idle native server_error, and short-input rebuilds remain retained and are not explained by this successful run.",
+    "firstTrial": {
+      "result": "failed",
+      "userReport": "voice_not_connecting",
+      "volume": 13,
+      "bridgeObservedTurns": 1,
+      "uplinkBytes": 115840,
+      "nativeInputBytes": 173760,
+      "inputDb": -42,
+      "cloudCommitAcknowledged": true,
+      "recognized": false,
+      "responseCreated": false,
+      "timeoutStatus": "no_reply",
+      "safeSessionRebuild": true,
+      "readyAfterRebuild": true,
+      "cause": "undetermined"
+    },
+    "singlePostDiagnosticReply": "passed_by_user",
+    "latestTrial": {
+      "date": "2026-10-22",
+      "result": "failed",
+      "userReport": "voice_not_connecting",
+      "firmwareSha256": "14b744b7551cedc2e6e666a27b70520ef5057daf9f15ab87270f50d3d9133ac6",
+      "method": "passive_half_second_status_sampling_human_BOOT_no_parallel_cloud_probes_or_manual_reconnect",
+      "volumeSetting": 65,
+      "micGain": 30,
+      "observedBridgeTurns": 1,
+      "recognizedInputDelta": 0,
+      "nativeReplyDelta": 0,
+      "playedFrames": 0,
+      "inputDb": -44,
+      "nativeInputBytes": 305280,
+      "reconnectDelta": 1,
+      "fault": "VOICE_TURN_UNCERTAIN",
+      "readyAfterRebuild": true,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "observerErrors": 0,
+      "cause": "undetermined",
+      "threeRoundsCompleted": false
+    },
+    "screenRecoveryFollowup": {
+      "date": "2026-10-22",
+      "userInitiallyReported": "screen_connecting",
+      "deviceStateReady": true,
+      "sanitizedSnapshotHint": "hold_BOOT_to_talk",
+      "userSubsequentlyConfirmedActualScreenReady": true,
+      "persistentDisplayFreezeEstablished": false
+    },
+    "speakerFollowup": {
+      "date": "2026-10-22",
+      "result": "failed",
+      "userReport": "no_sound_heard",
+      "observedNativeCompletedReplies": 1,
+      "devicePlayedFramesCumulative": 75200,
+      "speakerEnabled": true,
+      "audioFault": false,
+      "volumeSettingInitially": 65,
+      "volumeSettingSubsequentlyObserved": 88,
+      "settingsChangedByAgent": false,
+      "nativeFirstAudioMs": 1208,
+      "deviceAudibleFirstAudioMs": null,
+      "outputSignalLevelMeasured": false,
+      "cause": "undetermined",
+      "limits": "Codec-consumed frames and native completion do not prove speaker audibility. Recognition event count includes interim status and is not a completed-turn count."
+    },
+    "audibleRecoveryFollowup": {
+      "date": "2026-10-22",
+      "result": "single_round_confirmed_by_user",
+      "userReport": "clear_normal_sound",
+      "volumeSetting": 88,
+      "approximateScreenVolumePercent": 50,
+      "micGain": 30,
+      "nativeInputBytes": 136320,
+      "inputDb": -39,
+      "finalRecognition": true,
+      "completedNativeReply": true,
+      "outputSamples16kHz": 45760,
+      "outputRmsDbFS": -22.66,
+      "outputPeakDbFS": -5.21,
+      "devicePlayedFrameDelta": 45760,
+      "playbackDrained": true,
+      "nativeFirstAudioMs": 1102,
+      "deviceAudibleFirstAudioMs": null,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "reconnectsDuringSpokenTurn": 0,
+      "observerErrorsDuringSpokenTurn": 0,
+      "observerTimeoutAfterTrial": 1,
+      "reconnectsEarlierInObservation": 3,
+      "rootCauseOfPreviousFailuresEstablished": false,
+      "continuousTenRoundAcceptance": false
+    },
+    "continuousThreeRoundFollowup": {
+      "date": "2026-10-22",
+      "result": "failed",
+      "userReport": "one_round_abnormal_or_answer_incorrect",
+      "independentObservation": "second_requested_round_no_final_recognition_and_no_native_response",
+      "firstRequestedRoundNativeCompleted": true,
+      "secondRequestedRound": {
+        "deviceTurn": 9,
+        "nativeTurn": 3,
+        "inputBytes": 122880,
+        "inputDb": -40,
+        "commitAcknowledged": true,
+        "speechStartedAfterCommitWasSent": true,
+        "finalRecognition": false,
+        "responseCreated": false,
+        "outputSamples": 0,
+        "timeoutSeconds": 30,
+        "safeSessionRebuild": true
+      },
+      "thirdRequestedRoundAfterRebuildNativeReply": true,
+      "semanticAnswersConfirmedByUser": false,
+      "rootCause": "undetermined"
+    },
+    "postInputGainSingleTrial": {
+      "date": "2026-10-22",
+      "result": "clear_audible_reply_confirmed_by_user",
+      "deviceTurn": 15,
+      "nativeTurn": 1,
+      "volumeSetting": 88,
+      "approximateScreenPercent": 50,
+      "micGain": 30,
+      "rawInputDb": -38,
+      "processedInputRmsDbFS": -32.76,
+      "finalRecognition": true,
+      "completedNativeReply": true,
+      "outputSamples16kHz": 45760,
+      "outputRmsDbFS": -21.92,
+      "outputPeakDbFS": -5.21,
+      "devicePlayedFrameDelta": 45760,
+      "nativeFirstAudioMs": 1126,
+      "deviceAudibleFirstAudioMs": null,
+      "reconnects": 0,
+      "observerErrors": 0,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "allEarlierFailureCausesEstablished": false
+    },
+    "postInputGainObservedSequence": {
+      "observedNativeTurns": 5,
+      "finalRecognitionTurns": 5,
+      "completedNativeResponses": 5,
+      "allOutputFrameCountsConsumed": true,
+      "nativeFirstAudioMsRange": [
+        1053,
+        1237
+      ],
+      "reconnects": 0,
+      "observerErrors": 0,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "allFiveHearingConfirmedByUser": true,
+      "semanticAnswersConfirmedByUser": false,
+      "requestedFiveHearingConfirmation": "user_confirmed_all_five_clear",
+      "scope": "passive_metadata_only_no_parallel_cloud_probes_manual_reconnect_or_automatic_PTT",
+      "confirmedAudibleRounds": 5,
+      "volumeSetting": 88,
+      "approximateScreenVolumePercent": 50,
+      "nativeSessionContinuous": true,
+      "contextCalculationNextThreeTrial": "requested_pending"
+    },
+    "tenComfortableVolumeChineseRounds": {
+      "confirmedAudible": 10,
+      "target": 10,
+      "status": "passed_by_user_and_passive_continuous_same_session_evidence",
+      "volumeSetting": 88,
+      "approximateScreenPercent": 50,
+      "earlierFailuresRetained": true,
+      "additionalConfirmedAudibleTaskRound": 1,
+      "additionalConfirmedMemoryRounds": 2,
+      "latestRun": "ten_completed_questions_same_generation46_turns34_through43",
+      "baselineFiveRoundsAreSeparate": true
+    },
+    "postInputGainContextCalculationTrial": {
+      "date": "2026-10-22",
+      "result": "failed_calculation",
+      "userReportedSpokenResult": 5400,
+      "expectedResult": 5535,
+      "normalNativeRecordCheck": {
+        "inputContains123": true,
+        "inputContains45": true,
+        "inputOperationMultiplication": true,
+        "assistantResult": 5400,
+        "toolCalls": 0,
+        "extraRawTranscriptOrAudioSaved": false
+      },
+      "subsequentThreeNativeResponsesCompleted": true,
+      "precedingShortInput": {
+        "nativeInputBytes": 11520,
+        "durationMs": 240,
+        "nextBOOTTriggeredSafeSessionRebuild": true,
+        "relationToWrongCalculationEstablished": false
+      },
+      "contextAnswerSeparatelyConfirmed": false,
+      "rootCauseOfWrongMath": "native_voice_answered_directly_without_verified_calculation",
+      "rootCauseOfEarlierNoASRAndSilentSpeakerFailures": "not_established"
+    },
+    "nativeTaskResultReturn": "one_calculation_result_confirmed_spoken_by_user",
+    "preciseArithmeticFollowup": {
+      "date": "2026-10-22",
+      "sourceHead": "27e4028",
+      "userConfirmedClear5535": true,
+      "expectedResult": 5535,
+      "deviceTurn": 25,
+      "nativeTurn": 1,
+      "deviceGeneration": 43,
+      "volumeSetting": 88,
+      "approximateScreenPercent": 50,
+      "micGain": 30,
+      "rawInputDb": -43,
+      "nativeInputBytes": 258240,
+      "processedInput": {
+        "turn": 25,
+        "samples": 129120,
+        "rmsDb": -34.09,
+        "peakDb": -0.77
+      },
+      "output": {
+        "turn": 25,
+        "samples": 55840,
+        "rmsDb": -23.97,
+        "peakDb": -4.4
+      },
+      "devicePlayedFrameDelta": 55840,
+      "nativeFunctionCallCount": 1,
+      "nativeAsyncUpdateCount": 1,
+      "completedNativeResponses": 3,
+      "spokenQuestionTurns": 1,
+      "nativeFirstAudioMs": 832,
+      "nativeAsyncResponseCreatedAfterCommitMs": 6482,
+      "nativeFirstAudioIsNotVerifiedResultOrAcousticLatency": true,
+      "reconnectsDuringTrial": 0,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "observerErrorsDuringSpokenTrial": 0,
+      "observerErrorsEarlierInObservation": 1,
+      "playbackDrained": true,
+      "original5400FailureRetained": true
+    },
+    "postTaskContextFollowup": {
+      "date": "2026-10-22",
+      "userConfirmedBothClearAndCodeCorrect": true,
+      "sameNativeSessionForBothMemoryQuestions": true,
+      "deviceGeneration": 44,
+      "spokenMemoryRounds": 2,
+      "trials": [
+        {
+          "nativeTurn": 1,
+          "deviceTurn": 27,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 30560,
+          "playedFramesDelta": 30560,
+          "nativeFirstAudioMs": 1091,
+          "rawInputDb": -45,
+          "processedInputRmsDbFS": -35.25,
+          "drained": true
+        },
+        {
+          "nativeTurn": 2,
+          "deviceTurn": 28,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 20320,
+          "playedFramesDelta": 20320,
+          "nativeFirstAudioMs": 860,
+          "rawInputDb": -40,
+          "processedInputRmsDbFS": -30.91,
+          "drained": true
+        }
+      ],
+      "priorTaskBoundaryRebuild": {
+        "expected": true,
+        "initiatedByHumanBOOT": true,
+        "faultCode": "VOICE_TURN_UNCERTAIN",
+        "observedReconnectCount": 1,
+        "approximateObservedRecoveryMs": 7553,
+        "agentInitiatedReconnect": false,
+        "oldAudioOrTaskReplayObserved": false
+      },
+      "reconnectDuringTwoMemoryRounds": false,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "observerErrorsDuringTwoMemoryRounds": 0,
+      "networkLossFaultInjectionTested": false,
+      "doesNotProveOldCallContextSurvivesRebuild": true
+    },
+    "longNativeAnswerFollowup": {
+      "date": "2026-10-22",
+      "sourceHead": "27e4028",
+      "userConfirmedFullAudio": true,
+      "userConfirmedMultiplePages": true,
+      "nextPreviousScrollReturn": "all_confirmed_normal",
+      "deviceGeneration": 44,
+      "deviceTurn": 29,
+      "nativeTurn": 3,
+      "finalRecognition": true,
+      "nativeCompleted": true,
+      "inputBytes": 330240,
+      "rawInputDb": -43,
+      "outputSamples16kHz": 1074880,
+      "outputPcmDurationSeconds": 67.18,
+      "outputRmsDbFS": -24.09,
+      "outputPeakDbFS": -4.44,
+      "devicePlayedFrameDelta": 1074880,
+      "nativeFirstAudioMs": 1017,
+      "deviceAudibleFirstAudioMs": null,
+      "reconnectsDuringStory": 0,
+      "playbackDrained": true,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "exactPageCountNotMeasured": true
+    },
+    "interruptionFollowup": {
+      "date": "2026-10-22",
+      "sourceHead": "27e4028",
+      "method": "human_BOOT_passive_half_second_metadata_only_no_parallel_probes_or_manual_reconnect",
+      "userConfirmedOldStoryStoppedImmediately": true,
+      "userConfirmedClearNewShortReply": true,
+      "userConfirmedOldAudioDidNotReturn": true,
+      "deviceGeneration": 46,
+      "interruptedDeviceTurn": 32,
+      "newDeviceTurn": 33,
+      "oldOutputSamples16kHz": 603840,
+      "oldPlayedFramesBeforeStory": 2108000,
+      "playedFramePlateauAfterObservedNewRecording": 2193953,
+      "oldConsumedFramesBeforeInterruption": 85953,
+      "oldUnplayedFramesDiscarded": 517887,
+      "oldFramesAddedDuringObservedNewRecordingAndWaiting": 0,
+      "newOutputSamples16kHz": 20320,
+      "newOutputRmsDbFS": -21.2,
+      "newOutputPeakDbFS": -5.38,
+      "newPlayedFrameDelta": 20320,
+      "newPlaybackDrained": true,
+      "nativeFirstAudioMs": 803,
+      "deviceAudibleFirstAudioMs": null,
+      "interruptionStopMs": null,
+      "reconnectsDuringSuccessfulInterruption": 0,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "observerErrors": 0,
+      "limits": "Half-second status sampling and codec counts do not measure exact acoustic stopping time. Earlier idle error and short-input rebuild are separately retained."
+    },
+    "pettingAfterglowFollowup": {
+      "date": "2026-10-22",
+      "userConfirmedAfterglow": true,
+      "userConfirmedNaturalReturnToCalm": true,
+      "physicalDurationSeconds": null,
+      "scope": "qualitative_human_touch_and_screen_observation",
+      "limits": "Exact physical duration and motion amplitude were not measured; fixed-clock host tests cover the nominal sixty-second envelope."
+    },
+    "idleAndShortInputFollowup": {
+      "date": "2026-10-22",
+      "idleServiceError": {
+        "nativeSessionElapsedMs": 1076331,
+        "errorType": "server_error",
+        "errorCode": "other",
+        "deviceGeneration": 44,
+        "deviceTurn": 29,
+        "newHumanInputAtError": false,
+        "agentInitiatedReconnect": false,
+        "observedRecoverySeconds": 7.606,
+        "recoveredReady": true,
+        "cause": "undetermined"
+      },
+      "precedingShortInput": {
+        "nativeInputBytes": 7680,
+        "durationMs": 160,
+        "finalRecognition": false,
+        "nativeResponseCreated": false,
+        "nextBOOTTriggeredSafeRebuild": true,
+        "observedRecoverySeconds": 7.047,
+        "cause": "undetermined"
+      },
+      "laterSuccessfulInterruptionIsNotContinuousTenRoundAcceptance": true
+    },
+    "continuousTenFollowup": {
+      "date": "2026-10-22",
+      "sourceHead": "27e4028",
+      "userConfirmedAllTenClear": true,
+      "userConfirmedNoConnectingDuringRun": true,
+      "method": "human_BOOT_arbitrary_Chinese_chat_passive_metadata_only",
+      "completedRounds": 10,
+      "sameNativeSession": true,
+      "deviceGeneration": 46,
+      "firstDeviceTurn": 34,
+      "lastDeviceTurn": 43,
+      "volumeSetting": 88,
+      "approximateScreenPercent": 50,
+      "micGain": 30,
+      "finalRecognitionRounds": 10,
+      "completedNativeResponses": 10,
+      "outputFrames": 1020800,
+      "allOutputFramesConsumed": true,
+      "nativeFirstAudioMsRange": [
+        748,
+        1294
+      ],
+      "deviceAudibleFirstAudioMs": null,
+      "reconnects": 0,
+      "audioFault": false,
+      "newEventDrops": 0,
+      "observerErrors": 0,
+      "separateEarlierFailuresRetained": true,
+      "noAutomaticPTTCloudProbeOrManualReconnect": true,
+      "trials": [
+        {
+          "deviceTurn": 34,
+          "nativeTurn": 3,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 40640,
+          "playedFramesDelta": 40640,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 885
+        },
+        {
+          "deviceTurn": 35,
+          "nativeTurn": 4,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 91840,
+          "playedFramesDelta": 91840,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 914
+        },
+        {
+          "deviceTurn": 36,
+          "nativeTurn": 5,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 122560,
+          "playedFramesDelta": 122560,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 1294
+        },
+        {
+          "deviceTurn": 37,
+          "nativeTurn": 6,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 81600,
+          "playedFramesDelta": 81600,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 748
+        },
+        {
+          "deviceTurn": 38,
+          "nativeTurn": 7,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 127680,
+          "playedFramesDelta": 127680,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 869
+        },
+        {
+          "deviceTurn": 39,
+          "nativeTurn": 8,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 132800,
+          "playedFramesDelta": 132800,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 1076
+        },
+        {
+          "deviceTurn": 40,
+          "nativeTurn": 9,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 122560,
+          "playedFramesDelta": 122560,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 922
+        },
+        {
+          "deviceTurn": 41,
+          "nativeTurn": 10,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 117440,
+          "playedFramesDelta": 117440,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 837
+        },
+        {
+          "deviceTurn": 42,
+          "nativeTurn": 11,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 117440,
+          "playedFramesDelta": 117440,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 1032
+        },
+        {
+          "deviceTurn": 43,
+          "nativeTurn": 12,
+          "finalRecognition": true,
+          "nativeCompleted": true,
+          "outputFrames": 66240,
+          "playedFramesDelta": 66240,
+          "playbackDrained": true,
+          "nativeFirstAudioMs": 787
+        }
+      ],
+      "limits": "This one continuous window passed; it does not explain earlier failures or establish indefinite idle reliability, cross-session memory, or exact acoustic latency."
+    }
+  },
+  "knownBoundary": "The earlier unanswered voice attempt remains unexplained. Target compilation, readiness, text and host simulation do not prove audible device acceptance.",
+  "silentDeviceStatus": {
+    "connection": "ready",
+    "turn": 0,
+    "heap": 50139,
+    "psram": 8039748,
+    "audioFault": false,
+    "eventDrops": 0,
+    "emergencyReasons": 0,
+    "stackConsole": 6924,
+    "stackNetwork": 4864,
+    "runtimeScope": "startup_status_only_no_voice_no_soak_no_link_task_highwater"
+  },
+  "review": {
+    "scopeBase": "51a3105",
+    "scopeHead": "204c986",
+    "freshIndependentSeats": [
+      "C_firmware_UI",
+      "JavaScript_native_bridge_preview"
+    ],
+    "importantFindings": 3,
+    "fixedCommit": "8f6a943",
+    "fixedWithFailingThenPassingTests": true,
+    "fullRegressionAfterFix": {
+      "total": 143,
+      "pass": 143,
+      "skip": 0,
+      "fail": 0
+    },
+    "reReview": false,
+    "deferredMinors": []
+  },
+  "tradeoffs": [
+    "Unscoped native async task updates cause a safe native-session rebuild at the next BOOT; a reconnect and explicit retry may be required.",
+    "Same-turn native caption items retain first-arrival ordering; deliberately reversed completion is not established by the available native contract.",
+    "Physical functional voice, reader, interruption and petting checks passed on the reference device; exact acoustic timing remains unmeasured. No overnight automated sound or soak."
+  ],
+  "github": {
+    "status": "first_sync_ci_passed",
+    "draft": true,
+    "release": false,
+    "testedHead": "3491cf94adb2c7142b7a82c1a05baf8681562683",
+    "checks": [
+      "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39610994259",
+      "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39610988372"
+    ],
+    "latestVerifiedCodeHead": "2c2065531baabc4f478249617c69f3ec4327c823",
+    "latestVerifiedCodeChecks": [
+      "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39703790088",
+      "https://github.com/vliuyt/grok-bot-esp32-bridge/actions/runs/39703782446"
+    ],
+    "checkpointScope": "Latest recorded verified development checkpoint; subsequent documentation-only head checks are visible on the draft PR."
+  },
+  "diagnosisAfterUserFailure": {
+    "silentPublicFixture": {
+      "normalSpeech": {
+        "recognized": true,
+        "nativeAudioReturned": true,
+        "playback": false,
+        "toolsExecuted": 0
+      },
+      "alternateTurnDetectionShape": {
+        "recognized": true,
+        "nativeAudioReturned": true,
+        "playback": false,
+        "toolsExecuted": 0
+      },
+      "conclusion": "Both shapes worked with a fixed public fixture; session-config-shape hypothesis not established, product configuration unchanged."
+    },
+    "fixtureDb": -18.08,
+    "failedDeviceInputDb": -42,
+    "nextStep": "A subsequent spoken reply was confirmed; original intermittent failure remains unexplained. Keep full voice regression acceptance pending.",
+    "closeRangeUserReport": "screen_connecting",
+    "deviceTrialsObserved": {
+      "turns": 4,
+      "replies": 1,
+      "recognizedInputs": 2,
+      "failedTurnInputDb": -39,
+      "lastOutcome": "no_reply_then_safe_reconnect"
+    },
+    "snapshotObserved": "physical_home_hint_hold_BOOT_ready",
+    "quietFixture": {
+      "minus40db": "recognized_and_audio",
+      "minus24db": "recognized_and_audio",
+      "playback": false
+    },
+    "idle45Seconds": "recognized_and_audio",
+    "fullTlsNativePipeline": {
+      "originalStyle": "recognized_and_audio",
+      "companionStyle": "recognized_and_audio",
+      "playback": false,
+      "toolsExecuted": 0,
+      "fixtureHistoryPersisted": false
+    },
+    "microphoneDiagnostic": {
+      "commit": "3efa408267345bb45d53b1563988a41900a73f97",
+      "onlyNumericTelemetry": true,
+      "rawAudioRetained": false,
+      "channelAndGainUnchanged": true,
+      "independentReview": "approved_no_actionable_findings",
+      "audioWorkerSanitizers": "2_passed",
+      "fullLocalTests": {
+        "total": 143,
+        "passed": 143,
+        "failed": 0,
+        "skipped": 0
+      },
+      "targetBytes": 3700128,
+      "sha256": "eeb068e971d134ddf796ecccf0f6d27d1c68c1393952351118473f021128ba05",
+      "freshCompleteBackupVerified": true,
+      "applicationOnlyInstall": "PET_INSTALL_VERIFIED",
+      "postInstall": {
+        "volume": 21,
+        "connection": 2,
+        "linkFlags": 7,
+        "audioFault": false,
+        "eventDrops": 0,
+        "micLeftDb": -100,
+        "micRightDb": -100,
+        "screenHint": "hold_BOOT_to_speak"
+      },
+      "provesFailureCause": false,
+      "humanTrial": {
+        "result": "audible_reply_confirmed",
+        "screenHintConfirmed": "hold_BOOT_to_speak",
+        "macObservedAdditionalTurns": 2,
+        "macObservedAdditionalReplies": 2,
+        "macReconnectionsDuringTrial": 0,
+        "leftDb": -41,
+        "rightDb": -40,
+        "provesPhysicalChannelFault": false,
+        "originalFailureCause": "undetermined"
+      }
+    }
+  },
+  "usabilityFeedback": {
+    "lowVolume": "10_to_20_percent_barely_audible",
+    "touch": "return_requires_5_to_10_attempts",
+    "nextStep": "retain_remaining_voice_reader_and_reconnection_acceptance_gates",
+    "designApproved": true,
+    "status": "reference_device_return_volume_and_settings_swipe_confirmed",
+    "offlineTests": {
+      "total": 143,
+      "passed": 143,
+      "failed": 0,
+      "skipped": 0
+    },
+    "redThenGreen": [
+      "real_volume_display_and_codec_action",
+      "peripheral_return_taps_and_pressed_feedback",
+      "nested_right_swipe_slider_and_scroll_exclusion",
+      "stale_held_button_after_navigation",
+      "disabled_page_feedback_and_retry_label_clipping"
+    ],
+    "volumeStorageUnchanged": true,
+    "maximumOutputUnchanged": true,
+    "coordinateCalibrationChanged": false,
+    "physicalAcceptance": {
+      "date": "2026-10-22",
+      "installedSha256": "b916003687860294c6bbb746ab466c6109b59d55f45a9cea8cf506f6c7c6f9f8",
+      "returnButton": "user_confirmed_usually_one_tap",
+      "lowVolume": "user_confirmed_improved",
+      "rightSwipe": "user_reported_low_success_rate"
+    },
+    "target": {
+      "bytes": 3703632,
+      "sha256": "b916003687860294c6bbb746ab466c6109b59d55f45a9cea8cf506f6c7c6f9f8",
+      "sourceSha256": "9897d3ed3e5bc02798db20881d18dd71631302b7733725745c2b446144637948",
+      "dependenciesSha256": "0133de3853f8ce1dd8ef3937b73bf0bb357782c96e83423b14e4ab7cbd8f6499",
+      "slotBytes": 4063232
+    },
+    "preInstall": {
+      "volumeCodecSetting": 100,
+      "speaker": true,
+      "connection": 2,
+      "audioFault": false,
+      "eventDrops": 0
+    },
+    "review": {
+      "base": "0c9d333",
+      "head": "04bc594",
+      "independent": true,
+      "verdict": "approve",
+      "critical": 0,
+      "important": 0,
+      "minor": [
+        {
+          "issue": "adjacent_settings_rows_transparent_hit_edges_overlap_2px",
+          "deferred": true,
+          "visibleButtonBodiesOverlap": false
+        }
+      ],
+      "independentHarnessRuns": [
+        "volume",
+        "buttons",
+        "swipe",
+        "full_ui"
+      ],
+      "physicalClaims": false
+    },
+    "freshComplete8MiBBackupVerified": true,
+    "previousBackupArchivedAndVerified": true,
+    "installation": {
+      "result": "PET_INSTALL_VERIFIED",
+      "applicationOnly": true,
+      "bootMetadataCompared": true,
+      "readbackVerified": true,
+      "volumeCodecSettingBefore": 100,
+      "volumeCodecSettingAfter": 100,
+      "screenVolumePercentAfter": 100,
+      "currentLoudnessPreserved": true,
+      "nativeAndTaskReady": true,
+      "audioFault": false,
+      "eventDrops": 0
+    },
+    "swipeFollowup": {
+      "date": "2026-10-22",
+      "status": "settings_right_swipe_confirmed_by_user",
+      "base": "a3b255e",
+      "redThenGreen": true,
+      "productionLvglCases": [
+        "moderate_diagonal_before_release_all_nested_pages",
+        "sparse_samples_with_repeated_release_coordinates",
+        "one_navigation_per_finger",
+        "initial_vertical_lock",
+        "existing_slider_scroll_short_drift_and_left_swipe_exclusions"
+      ],
+      "fullLocalTests": {
+        "passed": 143,
+        "failed": 0,
+        "skipped": 0
+      },
+      "volumeAndButtonLayoutChanged": false,
+      "actualFailingFingerTraceCaptured": false,
+      "physicalAcceptance": {
+        "date": "2026-10-22",
+        "result": "passed_by_user",
+        "scope": "natural_right_swipe_from_settings_page",
+        "userReport": "basically_every_time_returns",
+        "requestedRepetitions": "3_to_5",
+        "exactCompletedCountReported": false,
+        "installedSha256": "14b744b7551cedc2e6e666a27b70520ef5057daf9f15ab87270f50d3d9133ac6",
+        "readerPagePhysicalSwipe": "not_separately_confirmed",
+        "sliderDragPhysicalExclusion": "not_separately_confirmed"
+      },
+      "target": {
+        "bytes": 3703680,
+        "sha256": "14b744b7551cedc2e6e666a27b70520ef5057daf9f15ab87270f50d3d9133ac6",
+        "sourceSha256": "41697648be9f01998798afdd3f2ef8fd26982273929ec83016e96e641dd79095",
+        "dependenciesSha256": "0133de3853f8ce1dd8ef3937b73bf0bb357782c96e83423b14e4ab7cbd8f6499",
+        "slotBytes": 4063232
+      },
+      "preInstall": {
+        "volumeCodecSetting": 65,
+        "screenVolumePercent": 13,
+        "speaker": true,
+        "connection": 2,
+        "audioFault": false,
+        "eventDrops": 0
+      },
+      "review": {
+        "base": "a3b255e",
+        "head": "1ef3430",
+        "independent": true,
+        "verdict": "approve",
+        "critical": 0,
+        "important": 0,
+        "newMinor": 0,
+        "independentExistingHarnessRuns": [
+          "swipe",
+          "volume",
+          "buttons",
+          "full_ui"
+        ],
+        "fullSuiteIndependentlyRepeated": false
+      },
+      "freshComplete8MiBBackupVerified": true,
+      "previousBackupArchivedAndVerified": true,
+      "installation": {
+        "result": "PET_INSTALL_VERIFIED",
+        "applicationOnly": true,
+        "bootMetadataCompared": true,
+        "readbackVerified": true,
+        "volumeCodecBefore": 65,
+        "volumeCodecAfter": 65,
+        "screenVolumePercentAfter": 13,
+        "volumePreserved": true,
+        "nativeAndTaskReady": true,
+        "audioFault": false,
+        "eventDrops": 0
+      }
+    },
+    "acceptanceSummary": {
+      "date": "2026-10-22",
+      "returnButton": "user_confirmed_usually_one_tap",
+      "lowVolume": "user_confirmed_improved",
+      "settingsRightSwipe": "user_confirmed_usually_returns_after_followup",
+      "formalSuccessRateMeasured": false
+    }
+  },
+  "updatedDate": "2026-10-22",
+  "diagnosis20261022": {
+    "appVersion": "0.75.0",
+    "appObservedMuteHandling": "server_vad_with_500ms_silence_flush",
+    "deviceAndRuntimeSettingsChanged": false,
+    "realAudioRetained": false,
+    "silentFixedFixture": {
+      "fixture": "public_greeting_trimmed_to_4.66_seconds",
+      "toolsExecuted": 0,
+      "playback": false,
+      "dbMinus44": {
+        "trials": 3,
+        "paddingMs": [
+          0,
+          500,
+          0
+        ],
+        "recognized": [
+          false,
+          false,
+          false
+        ],
+        "audioReturned": [
+          true,
+          true,
+          true
+        ]
+      },
+      "dbMinus24": {
+        "trials": 2,
+        "paddingMs": [
+          0,
+          500
+        ],
+        "recognized": [
+          true,
+          true
+        ],
+        "audioReturned": [
+          true,
+          true
+        ]
+      },
+      "limits": "Fixed clean speech is not the human microphone signal. Returned audio alone does not prove recognition; padding did not establish the human failure cause. No gain or protocol behavior change follows from this comparison."
+    },
+    "nextStep": "human_active_playback_interruption_and_pet_afterglow_trial_passive_only",
+    "protocolDiagnostics": {
+      "implementation": "bounded_content_free_in_memory_only",
+      "eventsPerSession": 96,
+      "identifierAliasesPerSession": 64,
+      "retainedSessions": "current_and_previous_closed",
+      "audioBehaviorChanged": false,
+      "localTests": 149,
+      "localPassed": 149,
+      "localSkipped": 0,
+      "independentReview": {
+        "scope": "5e822ea..12bd764",
+        "privacyImportant": 1,
+        "importantFix": "per_session_random_HMAC_alias_keys_no_raw_ID_retention",
+        "fixRedThenGreen": true,
+        "integrationFindings": 0,
+        "integrationIndependentTests": 32,
+        "privacyIndependentTests": 3,
+        "rootFullRegression": 149,
+        "reReview": false
+      },
+      "runtimeInstallation": "installed_and_ready",
+      "runtimeModulesUpdated": 3,
+      "pairingAndUnrelatedSourcesPreserved": true,
+      "firmwareAndAudioSettingsChanged": false,
+      "runtimeSourceHead": "899cdb7",
+      "humanTraceTrial": "failed_second_requested_round_no_final_recognition_or_response"
+    },
+    "outputMeter": {
+      "scope": "numeric_resampled_16kHz_downlink_RMS_peak_and_sample_count_only",
+      "perTurnReset": true,
+      "PCMRetained": false,
+      "PCMOrVolumeChanged": false,
+      "measuresSpeakerSound": false,
+      "targetFirmwareChanged": false,
+      "testsRedThenGreen": true,
+      "fullLocalTests": 152,
+      "fullLocalPassed": 152,
+      "independentReview": {
+        "scope": "93e4fae..6634959",
+        "critical": 0,
+        "important": 0,
+        "minorTestSuggestions": 2,
+        "minorSuggestionsApplied": true,
+        "pureMeterIndependentTests": 4,
+        "integrationIndependentTests": 12,
+        "fullLocalAfterTestFix": 152,
+        "reReview": false
+      },
+      "runtimeInstallation": "installed_single_audible_reply_confirmed_continuous_followup_failed",
+      "sourceHead": "c09dd941edcb01a76b6f747a4f6bfd81aeeb17ad",
+      "pairingAndUnrelatedSourcesPreserved": true,
+      "gracefulRestart": true,
+      "observedVolumeSetting": 88,
+      "observedMicGain": 30,
+      "humanTrial": "single_audible_reply_confirmed_at_existing_50_percent_volume"
+    },
+    "commitOrderControl": {
+      "fixture": "fixed_public_greeting_warmup_short_stream_short_burst",
+      "immediateRecognizedAndCompleted": 3,
+      "waitCommitAckRecognizedAndCompleted": 3,
+      "initialImmediateOpeningFailure": "VOICE_CONNECTION",
+      "initialOpeningFailureRetriedSeparately": true,
+      "toolsExecuted": 0,
+      "playback": false,
+      "productionOrderChanged": false,
+      "conclusion": "commit_order_hypothesis_not_established"
+    },
+    "inputGain": {
+      "sourceHead": "5f189a61e19518120a049e9d58dc65d041f363bc",
+      "scope": "device_only_live_24kHz_input_after_resampling_including_finish_tail",
+      "maximumLinearGain": 4,
+      "approximateMaximumDb": 12.04,
+      "peakLimit": 30000,
+      "minimumLinearGain": 1,
+      "releaseTimeConstantMs": 500,
+      "newEnvelopeEachPress": true,
+      "realPCMRetained": false,
+      "rawInputMeterPreserved": true,
+      "processedInputNumericMeter": true,
+      "speakerVolumeChanged": false,
+      "micHardwareGainChanged": false,
+      "firmwareChanged": false,
+      "protocolOrderChanged": false,
+      "silentLevelControl": {
+        "targetSpeechDb": [
+          -44,
+          -32,
+          -32,
+          -44
+        ],
+        "finalRecognized": [
+          false,
+          true,
+          true,
+          false
+        ],
+        "completedResponse": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "limits": "Audio without final recognition is not a recognized spoken turn. Clean fixed speech is not the human microphone signal."
+      },
+      "productionGainNativeControl": {
+        "rawTargetSpeechDb": -44,
+        "trials": 2,
+        "finalRecognized": [
+          true,
+          true
+        ],
+        "completedResponse": [
+          true,
+          true
+        ],
+        "toolsExecuted": 0,
+        "playback": false
+      },
+      "testsRedThenGreen": true,
+      "fullLocalTests": 156,
+      "fullLocalPassed": 156,
+      "fullLocalSkipped": 0,
+      "independentReview": {
+        "scope": "2160773..5f189a6",
+        "critical": 0,
+        "important": 0,
+        "minor": 1,
+        "minorRecoveryAssertionTightened": true,
+        "minorFixHead": "23329bbc7d3faa9f0c2e2a4c9487fb1f56c3cf57",
+        "pureDSPIndependentTests": 3,
+        "integrationIndependentTests": 16,
+        "extraChecks": "random_chunk_invariance_peak_unity_floor_and_reconnect_numeric_meter_isolation",
+        "fullLocalAfterFix": 156,
+        "reReview": false
+      },
+      "runtimeInstallation": "installed_ready_with_native_and_task_channels",
+      "humanAcceptance": "five_consecutive_clear_audible_rounds_confirmed_by_user_context_and_calculation_pending",
+      "previousFailuresRootCauseEstablished": false,
+      "limits": "Improves a reproduced low-input recognition weakness, without establishing the cause of every earlier human no-reply or silent-speaker failure. Digital gain also raises input noise and cannot repair poor signal-to-noise ratio.",
+      "runtimeModulesUpdated": 2,
+      "pairingAndUnrelatedSourcesPreserved": true,
+      "gracefulRestart": true,
+      "humanTrialBaseline": {
+        "volumeSetting": 88,
+        "approximateScreenPercent": 50,
+        "micGain": 30,
+        "inputSamples": 0,
+        "firmwareSha256": "14b744b7551cedc2e6e666a27b70520ef5057daf9f15ab87270f50d3d9133ac6",
+        "deviceReady": true,
+        "audioFault": false
+      }
+    },
+    "preciseArithmetic": {
+      "sourceHead": "27e40288c7d5b9bd439bbd12a2df98997a033582",
+      "scope": "device_only_advice_routes_exact_math_through_existing_native_send_task",
+      "nativeToolsPersonaAndVoicePreserved": true,
+      "newToolOrSpeechService": false,
+      "promptGuidanceNotHardExecutionGate": true,
+      "recordedFailure": {
+        "input123": true,
+        "input45": true,
+        "multiplication": true,
+        "answer5400": true,
+        "toolCalls": 0
+      },
+      "silentNativeControl": {
+        "validTrials": 1,
+        "toolsSubmitted": 1,
+        "boundedFixedTaskRequest": true,
+        "taskReturns": 1,
+        "finalInputHas123": true,
+        "finalInputHas45": true,
+        "result5535WithNativeAudio": true,
+        "incorrect5400": false,
+        "faults": 0,
+        "playback": false,
+        "fixedAudioGeneratedLocally": true,
+        "realUserAudioOrExtraTranscriptRetained": false,
+        "limit": "One fixed task probe verifies routing and result/audio return; it is not hardware or universal model-compliance acceptance."
+      },
+      "invalidProbeExcluded": {
+        "count": 1,
+        "reason": "empty_fixture_from_sandbox_system_voice_access",
+        "tasksSubmitted": 0
+      },
+      "localTests": 156,
+      "localPassed": 156,
+      "localSkipped": 0,
+      "independentReview": {
+        "scope": "462c533..27e4028",
+        "critical": 0,
+        "important": 0,
+        "minor": 0,
+        "boundary": "Task acknowledgement still permits model continuation; waiting for verified result is prompt guidance."
+      },
+      "runtimeInstallation": "installed_native_and_task_ready",
+      "updatedModules": 1,
+      "pairingAndUnrelatedSourcesPreserved": true,
+      "firmwareOrAudioSettingsChanged": false,
+      "gracefulRestart": true,
+      "humanAcceptance": "user_confirmed_clear_correct5535_with_one_tool_and_one_async_return",
+      "knownTaskBoundary": "Unscoped native task updates can require a safe session rebuild before the next BOOT turn."
+    }
+  },
+  "lastUpdated": "2026-10-22"
+}

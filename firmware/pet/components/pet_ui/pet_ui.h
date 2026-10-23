@@ -1,16 +1,22 @@
 #pragma once
 #include "pet_core.h"
+#include "pet_caption.h"
+#include "pet_reader.h"
 #include "esp_err.h"
 typedef enum {PET_UI_PET,PET_UI_WAKE,PET_UI_VOLUME,PET_UI_BRIGHTNESS,PET_UI_QUIET,
-              PET_UI_CAPTIONS,PET_UI_SPEAKER,PET_UI_SETUP_OPEN,PET_UI_SETUP_CLOSE} pet_ui_action_kind_t;
+              PET_UI_CAPTIONS,PET_UI_SPEAKER,PET_UI_SETUP_OPEN,PET_UI_SETUP_CLOSE,PET_UI_TOUCH_TAP,PET_UI_READER_OPEN,PET_UI_READER_PREV,PET_UI_READER_NEXT,PET_UI_READER_RETRY,PET_UI_READER_CLOSE,PET_UI_CONTACT} pet_ui_action_kind_t;
 typedef struct {pet_ui_action_kind_t kind;int value;} pet_ui_action_t;
 typedef struct {
     pet_pose_t pose;
     pet_dialogue_t dialogue;
     pet_connection_t connection;
+    pet_notice_t notice;
+    pet_reader_t reader;
     char caption[321],wifi[80],mac[80],voice[80],setup[96];
-    int volume,brightness,battery,passkey;
-    bool quiet,captions,speaker,task_channel,waiting_long;
+    int volume,brightness,battery,passkey; /* volume is the persisted codec setting. */
+    pet_caption_mode_t caption_mode;
+    bool quiet,speaker,task_channel,waiting_long,caption_save_failed;
+    bool wifi_online,mac_online,setup_open,release_before_recording;
 } pet_ui_view_t;
 typedef void (*pet_ui_callback_t)(pet_ui_action_t action,void *context);
 esp_err_t pet_ui_start(pet_ui_callback_t callback,void *context);

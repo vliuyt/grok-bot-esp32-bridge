@@ -23,3 +23,31 @@
 ## 测试
 
 纯 Node／C mock 检查覆盖线协议、失效轮次、录音收尾、播放清空、任务去重与失败退避。修改任一侧格式时必须同时更新兼容测试；旧客户端不能被迫接收它未协商的宠物元数据。
+
+## 可选通话反馈与长字幕（v0.2开发分支）
+
+v2 hello可带`capabilities`，双方取交集，最多8个短字符串。`turn_status`启用受控等待／失败通知；`turn_progress`单独协商，只有真实进展才续设备等待时限。旧端不会收到未协商消息。
+
+`native_resume`表示固件支持同一TLS上的原生语音重连窗口：进入未就绪时重新开始45秒期限，重复connecting不续期，20秒无收包期限不变。Mac仅在协商此能力、设备播放已排空且原生输入／识别／响应／任务全部结束时，才对已识别的长闲置超时尝试一次续接。期间发送link:connecting，忽略BOOT输入；新凭证连接完成配置并确认原conversation后才发ready。连接中按住的BOOT必须松开重按，不提交半句。旧固件保持原来的断线恢复路径。
+
+`caption_pages`启用下列元数据，均带非零uint32 `generation`和uint32 `turn`：
+
+| op | 字段 |
+|---|---|
+| `caption_catalog` | `available`, `responding`, `truncated` 布尔值 |
+| `caption_read` | `request`:非零uint32；`version`:uint32；`page`:uint16 |
+| `caption_page` | 同请求身份；成功时`version`非零、`pages`、`text`、`responding`、`truncated`；失败时`error`只允许`unavailable/stale/busy` |
+
+`version=0,page=0`打开新快照；后续请求使用返回版本。一次只有一个请求，设备1秒限流、3秒超时，重试只读页面。返回或新轮后晚到页被丢弃。Mac最多保存当前正文24KiB和一个24KiB冻结快照，按原生item替换去重；清理取消／断线时释放，不写磁盘。保留换行与tab，移除NUL及其他控制字符，拒绝损坏UTF-8。页面正文最多300字节，JSON编码后整帧仍不超过1024字节。
+
+旧`caption`继续用于主屏与旧固件。普通快照隐藏主屏正文、阅读正文／段号／导航及配对码；公开画面只用固定例文。
+
+原生`async_update.add`没有已证实的响应关联标识；发送后将会话视为存在无标签异步响应的可能。跨越到下一次BOOT前安全重建，可能需要显式重试。不能把迟到正文或音频归给新问题。
+
+## 可选当轮情绪（v0.2开发分支）
+
+双方协商`companion_mood`后，固件将实际BOOT的type2纯文本`press`替换为单条JSON：`{"op":"press","generation":7,"turn":3,"mood":"warm"}`。`generation/turn`均为非零uint32，JSON turn必须等于外层帧turn，generation必须属于当前连接；ready且turn递增时才开始录音。mood仅允许`neutral/warm`，其他字段不参与指令。未协商此能力的旧端继续纯文本press；release/cancel/credit不变。
+
+固件在实际录音开始时冻结衰减后的暖意，随后以同代同轮LISTEN快照编码，不传触点、历史、文本或任意提示。Mac只为当前有效真人轮次的response.create附加完整原instructions与固定风格建议，不修改session工具/声音，不写入用户或系统历史。工具后同轮续答保留该建议，新BOOT、短输入、取消、关闭与新idle socket清除。异步结果仍遵守现有不确定响应隔离，不据情绪解除任何门禁。
+
+只读诊断的`companionMoodCapable`为布尔值，`lastCompanionMood`仅保留最后一个已成功开始轮次的有限值；它表示设备提交状态，不代表模型实际表达了相应情绪。

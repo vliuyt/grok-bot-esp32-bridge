@@ -3,6 +3,24 @@ export function validatePcm(bytes) {
   return bytes;
 }
 
+// Aggregate numeric levels only; no PCM reference or sample history is retained.
+export class PcmMeter {
+  #samples = 0; #energy = 0; #peak = 0;
+  push(bytes) {
+    validatePcm(bytes);
+    for (let i = 0; i < bytes.length; i += 2) {
+      const sample = bytes.readInt16LE(i);
+      this.#energy += sample * sample; this.#peak = Math.max(this.#peak, Math.abs(sample));
+    }
+    this.#samples += bytes.length / 2;
+  }
+  snapshot() {
+    if (!this.#samples) return {samples: 0, rmsDb: null, peakDb: null};
+    const db = amplitude => Math.round(Math.max(-100, 20 * Math.log10(amplitude / 32768)) * 100) / 100;
+    return {samples: this.#samples, rmsDb: db(Math.sqrt(this.#energy / this.#samples)), peakDb: db(this.#peak)};
+  }
+}
+
 // Streaming linear interpolation; the retained edge sample avoids frame-boundary clicks.
 export class PcmResampler {
   constructor(inputRate, outputRate) {

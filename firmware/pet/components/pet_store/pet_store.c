@@ -100,3 +100,30 @@ bool pet_store_save(const pet_config_t *config) {
     bool ok=save(config);
     xSemaphoreGive(lock);return ok;
 }
+
+bool pet_store_caption_mode_load(pet_caption_mode_t *out) {
+    if(!out||!init())return false;
+    xSemaphoreTake(lock,portMAX_DELAY);
+    nvs_handle_t h;uint8_t value=0;
+    esp_err_t err=nvs_open("grok_pet",NVS_READONLY,&h);
+    if(err==ESP_OK){err=nvs_get_u8(h,"caption_mode",&value);nvs_close(h);}
+    xSemaphoreGive(lock);
+    if(err==ESP_ERR_NVS_NOT_FOUND){
+        pet_config_t old;bool ok=pet_store_load(&old);
+        if(ok)*out=old.captions?PET_CAPTION_COMPACT:PET_CAPTION_OFF;
+        pet_config_wipe(&old,sizeof(old));return ok;
+    }
+    if(err!=ESP_OK||!pet_caption_mode_valid((pet_caption_mode_t)value))return false;
+    *out=(pet_caption_mode_t)value;return true;
+}
+bool pet_store_caption_mode_save(pet_caption_mode_t mode) {
+    if(!pet_caption_mode_valid(mode)||!init())return false;
+    xSemaphoreTake(lock,portMAX_DELAY);
+    nvs_handle_t h;esp_err_t err=nvs_open("grok_pet",NVS_READWRITE,&h);
+    if(err==ESP_OK){
+        err=nvs_set_u8(h,"caption_mode",(uint8_t)mode);
+        if(err==ESP_OK)err=nvs_commit(h);
+        nvs_close(h);
+    }
+    xSemaphoreGive(lock);return err==ESP_OK;
+}

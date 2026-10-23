@@ -1,0 +1,185 @@
+{
+  "date": "2026-10-22",
+  "baseCommit": "9c63beba1b4ce3b81145fac155e5fe528a4d1027",
+  "scope": "First native voice turn after long idle",
+  "status": "physical_first_reply_after_extended_idle_passed",
+  "baseline": {
+    "tests": 157,
+    "passed": 157,
+    "skipped": 0,
+    "failureAfterLastInputMs": 900307
+  },
+  "silentReproduction": {
+    "idleErrorsAtMs": [
+      902498,
+      902589,
+      905360
+    ],
+    "errorType": "server_error",
+    "errorSignals": [
+      "idle",
+      "timeout",
+      "session"
+    ],
+    "asrTimeoutHypothesis": "rejected",
+    "rootCause": "The native service closes the idle voice socket after about15 minutes. Previously this also destroyed device TLS; its original 45-second deadline prevented keeping the old TLS during native recovery.",
+    "humanAudioOrTasksInitiated": false,
+    "rawErrorOrContentRetained": false,
+    "serverClose": {
+      "code": 1001,
+      "afterErrorMs": 2168,
+      "locallyInitiated": false
+    }
+  },
+  "diagnosticChecks": {
+    "tests": 161,
+    "passed": 161,
+    "failed": 0,
+    "skipped": 0,
+    "independentReview": "approved",
+    "bounds": {
+      "events": 96,
+      "aliases": 64,
+      "signals": 11
+    },
+    "snapshotArrayMutationRegression": "passed"
+  },
+  "macRuntime": {
+    "priorRuntime": "Dynamic library missing; restart could not execute Node.",
+    "repair": "Only this bridge service now uses an existing working Node24.19.0; no global package changes.",
+    "restart": "verified_with_native_and_task_ready"
+  },
+  "firmware": {
+    "changed": true,
+    "reason": "A native reconnection on old TLS needs a new bounded45-second deadline.",
+    "bytes": 3707392,
+    "sha256": "bf5895888b5ef963f90bcced74552010e677ca380b173000e5baed0b460afd2f",
+    "sourceSha256": "1386d131fdecaa0b3844514a86ef435200b973d32addd95955dcaf3b4c81ffc8",
+    "dependenciesSha256": "0133de3853f8ce1dd8ef3937b73bf0bb357782c96e83423b14e4ab7cbd8f6499",
+    "sdkconfigSha256": "32e2986dca5293a5eafb31f6161663dade9763182de65b1bcb5ce938441b95a3",
+    "offset": 131072,
+    "remainingSlotBytes": 355840
+  },
+  "humanAcceptance": {
+    "firstReplyAfter15Minutes": "passed_in_longer_idle_trial",
+    "firstReplyAfter1Hour": "passed_in_longer_idle_trial",
+    "firstReplyAfterOvernight": "pending_controlled_overnight",
+    "boundary": "The user confirmed one clear physical reply after extended idle. Connection readiness alone does not certify sound, repeated turns or future overnight stability. Controlled exact one-hour and full-overnight trials remain separate.",
+    "observedReply": {
+      "date": "2026-10-23",
+      "result": "user_confirmed_clear_speaker_reply",
+      "approximateBridgeUptimeSecondsAtRead": 17782,
+      "nativeRecoveries": 19,
+      "deviceReconnects": 0,
+      "recognizedInputs": 1,
+      "nativeReplies": 1,
+      "deviceTurns": 1,
+      "fault": null,
+      "playbackCredits": 20,
+      "queuedPackets": 0,
+      "nativeAndTaskReady": true,
+      "exactButtonPressTimestampMeasured": false,
+      "interpretation": "One first physical reply after a longer than one-hour idle interval; deployment-to-read duration is an approximate upper bound, not an exact measured input-idle duration.",
+      "audioOrTranscriptsRetained": false
+    }
+  },
+  "updated": "2026-10-23",
+  "recovery": {
+    "scope": "Only negotiated native_resume firmware, fully settled input/ASR/response/tasks and drained playback.",
+    "attemptsPerExpiry": 1,
+    "freshCredential": true,
+    "originalConversationConfirmationRequired": true,
+    "sameNativeCall": true,
+    "replayInputOrTasks": false,
+    "silentAudioKeepalive": false,
+    "periodicForcedReconnect": false,
+    "historyBounds": {
+      "responses": 1024,
+      "cancelledResponses": 1024,
+      "tools": 1000
+    },
+    "failure": "Authentication keeps its explicit login notice; other failures close through the existing safe path.",
+    "observations": [
+      {
+        "implementation": "first installed recovery",
+        "result": "failed_no_recovery_started",
+        "errorAtMs": 905072,
+        "inputIdleMs": 905065,
+        "errorSignals": [
+          "idle",
+          "timeout",
+          "session"
+        ],
+        "fault": "VOICE_SERVICE_ERROR",
+        "conclusion": "The live attempt did not claim recovery; cause not proven."
+      },
+      {
+        "implementation": "bounded vocabulary alignment and boolean eligibility diagnostics",
+        "result": "native_recovered_ready_same_device_tls",
+        "changes": [
+          "Align conversation, inactive, silence and deadline terms with diagnostic vocabulary",
+          "Expose only signature, settled, socket-open and firmware-capability booleans"
+        ],
+        "localChecks": 192,
+        "humanAudioOrTasksInitiated": false,
+        "errorAtMs": 903724,
+        "inputIdleMs": 903715,
+        "recoveryMs": 2420,
+        "nativeRecoveries": 1,
+        "deviceReconnects": 0,
+        "fault": null,
+        "samples": 446,
+        "observerErrors": 0,
+        "originalConversationConfirmed": true,
+        "nativeAndTaskReady": true
+      }
+    ]
+  },
+  "checks": {
+    "tests": 192,
+    "passed": 192,
+    "failed": 0,
+    "skipped": 0,
+    "realTLS": true,
+    "productionWatchdogC": true,
+    "targetBuild": "ESP-IDF6.0.1",
+    "independentReview": {
+      "cppChecks": 5,
+      "typescriptChecks": 57,
+      "generalChecks": 77,
+      "remainingImportantFindings": 0,
+      "vocabularyAndTelemetry": "approved"
+    },
+    "reviewRegressionsFixed": [
+      "matching conversation confirmation before ready",
+      "tool/response fences across new sockets",
+      "fixed authentication-required notice",
+      "retired and oversized observer frames"
+    ],
+    "ci": {
+      "sourceCommit": "e9b4c998cbf54cd95df2f2f3cc74d7d4567adadf",
+      "pushRun": 39815850165,
+      "prRun": 39815856212,
+      "conclusion": "success",
+      "tests": 192,
+      "passed": 187,
+      "failed": 0,
+      "skipped": 5,
+      "skipReason": "Target build, cJSON and LVGL dependencies are verified locally; absent on clean CI."
+    }
+  },
+  "installation": {
+    "fullBackupBytes": 8388608,
+    "previousApplicationVerified": true,
+    "applicationOnlyWriteAndReadback": true,
+    "previousBackupsPreserved": true,
+    "audioSettingsPreserved": true,
+    "wifiConnected": true,
+    "pairingPreserved": true,
+    "nativeAndTaskReady": true,
+    "resumableConversationAvailable": true,
+    "audioFault": false,
+    "newEventDrops": 0,
+    "audioOrTaskInitiated": false
+  }
+}

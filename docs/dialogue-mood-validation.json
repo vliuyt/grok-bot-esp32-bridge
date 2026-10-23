@@ -1,0 +1,400 @@
+{
+  "date": "2026-10-23",
+  "scope": [
+    "dialogue visual rhythm",
+    "petting warmth carried through the real BOOT turn"
+  ],
+  "status": "selected_listening_cadence_installed_visual_feedback_recorded",
+  "baseCommit": "91e02df",
+  "checks": {
+    "localTests": 202,
+    "passed": 202,
+    "failed": 0,
+    "skipped": 0,
+    "realLVGLDialogueAndReader": true,
+    "realPairedTLS": true,
+    "productionCWithSanitizers": true,
+    "independentReview": {
+      "cppChecks": 22,
+      "typescriptChecks": 90,
+      "typescriptTelemetryChecks": 7,
+      "generalChecks": 22,
+      "remainingImportantFindings": 0
+    },
+    "visibilityFollowupReview": {
+      "cppChecks": 13,
+      "typescriptChecks": 1,
+      "generalChecks": 10,
+      "sanitizerRecoveryFinding": "P2 fixed with -fno-sanitize-recover=all and unsafe-probe abort verification",
+      "remainingImportantFindings": 0
+    },
+    "expressiveFollowupReview": {
+      "cppRelevantChecks": 7,
+      "generalRelevantChecks": 7,
+      "typescriptChecks": 4,
+      "titleOcclusionFinding": "P2 fixed; actual title pixel region stays unchanged through dialogue and maximum warmth/level",
+      "remainingImportantFindings": 0,
+      "independentContinuousGeometryFrames": 316848
+    },
+    "balancedFollowupReview": {
+      "cppRelevantChecks": 7,
+      "generalRelevantChecks": 8,
+      "independentContinuousGeometryFrames": 316848,
+      "remainingImportantFindings": 0
+    },
+    "roundSpeechFollowupReview": {
+      "cppRelevantChecks": 7,
+      "generalRelevantChecks": 8,
+      "independentContinuousGeometryFrames": 316848,
+      "independentTargetWarmthLevelCombinations": 101101,
+      "remainingImportantFindings": 0
+    },
+    "listeningEyeFollowupReview": {
+      "cppRelevantChecks": 6,
+      "generalRelevantChecks": 6,
+      "remainingImportantFindings": 0
+    },
+    "listeningEngagementReview": {
+      "cppRelevantChecks": 7,
+      "generalRelevantChecks": 8,
+      "independentLongHoldGeometryFrames": 10002,
+      "remainingImportantFindings": 0
+    },
+    "listeningCadenceReview": {
+      "cppRelevantChecks": 7,
+      "generalRelevantChecks": 8,
+      "typescriptGeneratorReview": "passed",
+      "independentLongHoldGeometryFrames": 10002,
+      "selectedPreviewFramesEqualProduction": true,
+      "remainingImportantFindings": 0
+    }
+  },
+  "behavior": {
+    "waitPhasesSeconds": [
+      0,
+      3,
+      8
+    ],
+    "waitClockIndependentOfProgressDeadline": true,
+    "successfulPlaybackSettleMs": 900,
+    "logicalBOOTBlockedDuringSettle": false,
+    "warmthSnapshot": "Actual recording start, current decayed local warmth; no extension of original60s idle warmth.",
+    "moodWireValues": [
+      "neutral",
+      "warm"
+    ],
+    "moodRequiresNegotiatedCapability": "companion_mood",
+    "moodTransmittedOnlyWithRealBOOT": true,
+    "rawTouchCoordinatesTransmitted": false,
+    "perResponseOverridePreservesOriginalInstructions": true,
+    "newHistoryItemsFromMood": false,
+    "nativeVoiceOrToolsChanged": false,
+    "visibleMotionFollowup": {
+      "presentationOnly": true,
+      "audioLevelAndDecayPreserved": true,
+      "originalTimingAndStateMachinePreserved": true,
+      "macModulesChanged": false,
+      "testGeometry": "production pose,33ms smoothing,200px integer round-screen geometry",
+      "warmth35HeightDifferencePx": 4,
+      "warmth35EyeHeightDifferencePx": [
+        7,
+        8
+      ],
+      "firstSecondWaitingRotationRangeDegrees": 3.8,
+      "level90SpeechHeightDifferencePx": 5,
+      "spokenSettleCenterRangePx": 7,
+      "subtitlesAndScreenBoundsVerified": true
+    },
+    "expressiveFollowup": {
+      "presentationOnly": true,
+      "audioLevelVolumeProtocolsAndTimingPreserved": true,
+      "listeningEyeGrowthPx": 16,
+      "listeningLiftPx": 8,
+      "firstSecondWaitEyeClosurePx": 41,
+      "firstSecondWaitRotationRangeDegrees": 8.9,
+      "level90SpeechHeightDifferencePx": 17,
+      "level90SpeechWidthDifferencePx": 10,
+      "settleCenterRangePx": 13,
+      "settleEyeHeightRangePx": 55,
+      "rotatedOutlineTopMinimumPx": 75.422,
+      "rotatedOutlineBottomMaximumPx": 305.5,
+      "titleAndSubtitlesUnoccluded": true,
+      "realLVGLTitlePixelHashUnchanged": true,
+      "physicalAcceptanceInferredFromHostChecks": false,
+      "firmwareSha256": "afa9d2ce1663626662090598e4ae2780bdc52b245cab12a72cf294dd63d88355",
+      "humanMotionResult": "visible_but_exaggerated"
+    },
+    "balancedFollowup": {
+      "presentationOnly": true,
+      "audioLevelVolumeProtocolsAndTimingPreserved": true,
+      "listeningEyeGrowthPx": 11,
+      "listeningLiftPx": 6,
+      "firstSecondWaitEyeClosurePx": 28,
+      "firstSecondWaitRotationRangeDegrees": 3.8,
+      "level90SpeechHeightDifferencePx": 8,
+      "level90SpeechWidthDifferencePx": 5,
+      "settleCenterRangePx": 8,
+      "settleRotationRangeDegrees": 4.7,
+      "settleEyeHeightRangePx": 41,
+      "blinkTargetWindowWithinOriginalSettleMs": 324,
+      "rotatedOutlineTopMinimumPx": 75.518,
+      "rotatedOutlineBottomMaximumPx": 298.997,
+      "titleAndSubtitlesUnoccluded": true,
+      "realLVGLTitlePixelHashUnchanged": true,
+      "physicalAcceptanceInferredFromHostChecks": false,
+      "firmwareSha256": "a95712f208c33ee96a95ac6c5aa2ab895746a957261277f27c4511250322932b",
+      "humanMotionResult": "not_accepted_face_stretch_and_squash"
+    },
+    "roundSpeechFollowup": {
+      "presentationOnly": true,
+      "speechTargetAxesEqual": true,
+      "speechDiameterIndependentOfAudioLevel": true,
+      "warmthDiameterIsotropic": true,
+      "eyesAndGentleLiftStillAudioDriven": true,
+      "audioLevelDecayStateAndTimingPreserved": true,
+      "steadyRenderedAxisRoundingTolerancePx": 1,
+      "inheritedWAITTransitionSettlesWithinMs": 330,
+      "titleAndSubtitlesUnoccluded": true,
+      "rotatedOutlineTopMinimumPx": 75.518,
+      "rotatedOutlineBottomMaximumPx": 296.998,
+      "physicalAcceptanceInferredFromHostChecks": false,
+      "firmwareSha256": "5270fec9c7e1b6e0a15e0db3b4932c8225b43e154bde5623419b6b7b03c69ad4",
+      "humanRoundFaceResult": "passed",
+      "humanOtherMotionResult": "listening_eyes_too_wide"
+    },
+    "listeningEyeFollowup": {
+      "onlyProductionChange": "LISTEN eye_open1.20 to1.04",
+      "neutralRestingEyeHeightPx": 60,
+      "neutralListeningEyeHeightPx": 62,
+      "listeningEyeGrowthPx": 2,
+      "listeningLiftPx": 6,
+      "warmth35EyeHeightDifferencePx": 7,
+      "roundSpeechAndOtherPosesPreserved": true,
+      "audioTransportAndVolumePreserved": true,
+      "physicalAcceptanceInferredFromHostChecks": false,
+      "firmwareSha256": "100bee30be8dbba17dfa2a32fd6fe245af483eac57299c9884c9ead621949ce7",
+      "humanEyeSizeResult": "natural",
+      "humanOtherMotionResult": "too_few_actions"
+    },
+    "listeningEngagement": {
+      "localPresentationOnly": true,
+      "modelStateOrAudioChanged": false,
+      "timeBase": "actual BOOT entered_ms",
+      "cycleMs": 4200,
+      "quietGapsBetweenGestures": true,
+      "directionAlternatesByTurnAndCycle": true,
+      "targetGazePx": 5,
+      "targetLeanDegrees": 3,
+      "targetNodPx": 2.5,
+      "shortBlinkWindowMs": 220,
+      "normalEyeOpeningUpperBound": 1.04,
+      "measured33msGazeRangePx": 4,
+      "measured33msLeanRangeDegrees": 2.8,
+      "measured33msNodRangePx": 3,
+      "measured33msMinimumBlinkEyeHeightPx": 26,
+      "titleAndSubtitlesUnoccluded": true,
+      "noUIActionsEmittedByAnimation": true,
+      "physicalAcceptanceInferredFromHostChecks": false,
+      "humanCadenceChoice": "active_4200ms",
+      "humanVisualFeedback": "more_actions_and_natural"
+    }
+  },
+  "firmware": {
+    "bytes": 3709296,
+    "sha256": "b2b8ec2a1e36e03d01e3a9a9fc6ed0f2f74427127a76c890d7c109d81a870808",
+    "sourceSha256": "8237e53d557e1657164964a11f2061c6ec56342e2d5b6f91940ae6107b0faccf",
+    "dependenciesSha256": "0133de3853f8ce1dd8ef3937b73bf0bb357782c96e83423b14e4ab7cbd8f6499",
+    "sdkconfigSha256": "32e2986dca5293a5eafb31f6161663dade9763182de65b1bcb5ce938441b95a3",
+    "offset": 131072
+  },
+  "installation": {
+    "status": "installed_verified",
+    "fullBackupVerified": true,
+    "applicationOnlyWriteAndReadback": true,
+    "audioSettingsPreserved": true,
+    "pairingPreserved": true,
+    "previousApplicationSha256": "642242fb8fe8f00664f8bfe6cb98e21dcc1343cbafbd3c0ca6ceb440a023ea92",
+    "macModulesChanged": false
+  },
+  "humanAcceptance": {
+    "nativeVoiceAfterWarmBOOT": "pending_current_b2b8_image",
+    "listenWaitSpeakReturnTransitions": "listening_feedback_recorded_other_stages_pending",
+    "warmthDuringDialogue": "pending_current_b2b8_image",
+    "captionAndReadingAfterSettle": "pending_current_b2b8_image",
+    "interruption": "pending_current_b2b8_image",
+    "roundFaceDuringSpeech": "passed_on_5270_current_regression_passed",
+    "listeningEyeSize": "passed_on_100b_current_opening_bound_preserved",
+    "boundary": "User chose the4200ms active preview. b2b8 application installation/readback and setting retention passed, and user reported richer, natural gestures. The read-only post-feedback snapshot still has0 turns and0 replies; no new completed BOOT voice turn was independently observed. Qualitative motion feedback does not establish voice, warmth wording or full transition acceptance. Earlier round-face and normal-eye confirmations remain attributed to5270 and100b.",
+    "listeningCadence": "user_reported_more_actions_and_natural_on_b2b8"
+  },
+  "measurements": {
+    "nativeFirstAudioAtMacMs": null,
+    "acousticFirstAudioMs": null,
+    "acousticInterruptionMs": null
+  },
+  "publication": {
+    "kind": "development branch and existing draft PR",
+    "formalRelease": false
+  },
+  "humanObservations": [
+    {
+      "firmwareSha256": "aece17351270fe755056f1a21bb7f61b909efaf08c1007d6718e226a53cdc699",
+      "voice": "clear_original_voice_confirmed",
+      "motion": "too_subtle_almost_imperceptible",
+      "deviceSubmittedMood": "warm",
+      "deviceTurns": 1,
+      "recognizedInputs": 1,
+      "nativeReplies": 1,
+      "deviceReconnects": 0,
+      "fault": null,
+      "nativeFirstAudioAtMacMs": 979,
+      "outputSamplesAt16kHz": 20320,
+      "outputRmsDbfs": -21.15,
+      "outputPeakDbfs": -6.29,
+      "playbackCreditsAtRead": 20,
+      "queuedPacketsAtRead": 0,
+      "physicalAcousticLatencyMeasured": false
+    },
+    {
+      "firmwareSha256": "3f405ef1631140c3b7b0e58da8eb4e13645071dbffdaef013bc11fa1741175c9",
+      "voice": "not_separately_confirmed",
+      "motion": "still_too_subtle",
+      "deviceSubmittedMood": "neutral",
+      "deviceTurns": 1,
+      "recognizedInputs": 1,
+      "nativeReplies": 1,
+      "deviceReconnects": 0,
+      "fault": null,
+      "nativeFirstAudioAtMacMs": 1081,
+      "outputSamplesAt16kHz": 35680,
+      "outputRmsDbfs": -21.78,
+      "outputPeakDbfs": -5.92,
+      "physicalAcousticLatencyMeasured": false
+    },
+    {
+      "firmwareSha256": "afa9d2ce1663626662090598e4ae2780bdc52b245cab12a72cf294dd63d88355",
+      "motion": "visible_but_exaggerated",
+      "voice": "not_separately_confirmed",
+      "turns": 1,
+      "replies": 1,
+      "recognizedInputs": 1,
+      "reconnects": 0,
+      "fault": null,
+      "lastCompanionMood": "neutral",
+      "firstAudioMs": 1299
+    },
+    {
+      "firmwareSha256": "a95712f208c33ee96a95ac6c5aa2ab895746a957261277f27c4511250322932b",
+      "motion": "still_exaggerated",
+      "specificFeedback": "round_face_stretch_and_squash",
+      "voice": "not_separately_confirmed",
+      "turns": 1,
+      "replies": 1,
+      "recognizedInputs": 1,
+      "reconnects": 1,
+      "fault": null,
+      "lastCompanionMood": "neutral",
+      "firstAudioMs": 1115
+    },
+    {
+      "firmwareSha256": "5270fec9c7e1b6e0a15e0db3b4932c8225b43e154bde5623419b6b7b03c69ad4",
+      "roundFace": "normal_user_confirmed",
+      "motion": "other_motion_needs_adjustment",
+      "specificFeedback": "listening_eyes_too_wide",
+      "voice": "not_separately_confirmed",
+      "turns": 1,
+      "replies": 1,
+      "recognizedInputs": 1,
+      "reconnects": 0,
+      "fault": null,
+      "lastCompanionMood": "warm",
+      "firstAudioMs": 1151
+    },
+    {
+      "firmwareSha256": "100bee30be8dbba17dfa2a32fd6fe245af483eac57299c9884c9ead621949ce7",
+      "listeningEyeSize": "natural_user_confirmed",
+      "motion": "too_few_actions",
+      "voice": "not_separately_confirmed",
+      "turns": 1,
+      "replies": 1,
+      "recognizedInputs": 1,
+      "reconnects": 0,
+      "fault": null,
+      "lastCompanionMood": "neutral",
+      "firstAudioMs": 803
+    },
+    {
+      "firmwareSha256": "642242fb8fe8f00664f8bfe6cb98e21dcc1343cbafbd3c0ca6ceb440a023ea92",
+      "motion": "gestures_present_but_still_too_sparse",
+      "userFeedback": "有动作，但还是偏少",
+      "voice": "not_separately_confirmed",
+      "turns": 1,
+      "replies": 1,
+      "recognizedInputs": 1,
+      "reconnects": 0,
+      "fault": null,
+      "lastCompanionMood": "neutral",
+      "firstAudioMs": 990,
+      "physicalAcousticLatencyMeasured": false
+    },
+    {
+      "firmwareSha256": "b2b8ec2a1e36e03d01e3a9a9fc6ed0f2f74427127a76c890d7c109d81a870808",
+      "selectedListeningCycleMs": 4200,
+      "motion": "more_actions_and_natural_user_reported",
+      "userFeedback": "动作更丰富，也自然",
+      "voice": "not_separately_confirmed",
+      "completedVoiceTurnIndependentlyObserved": false,
+      "state": "ready",
+      "turns": 0,
+      "replies": 0,
+      "recognizedInputs": 0,
+      "reconnects": 0,
+      "fault": null,
+      "lastCompanionMood": null,
+      "firstAudioMs": null,
+      "physicalAcousticLatencyMeasured": false
+    }
+  ],
+  "diagnosis": {
+    "latestNeutralMoodCause": "not_attributed_to_a_specific_touch_path",
+    "knownTouchEdges": "Movement can show stroking before release classification recognizes it; queued petting can be applied after a same-loop physical BOOT. Reproduced in host probes, not proven to explain the live neutral trial. These pre-existing input edges were not changed in this presentation-only follow-up."
+  },
+  "readyAfterInstallation": {
+    "deviceReady": true,
+    "nativeReady": true,
+    "taskReturnAvailable": true,
+    "fault": null,
+    "turns": 0,
+    "audioFault": false,
+    "eventDrops": 0,
+    "playbackQueuedPackets": 0
+  },
+  "cadencePreview": {
+    "page": "preview/companion/activity.html",
+    "generator": "scripts/export-activity.mjs",
+    "sourceSha256": "a4384bda47064b03446ea983ecd45e3885c06d350039c7695358a1a003308d63",
+    "cycleMs": [
+      6200,
+      4200,
+      3000
+    ],
+    "productionGeometryAndSmoothing": true,
+    "neutralWarmthSteadyLoopsOnly": true,
+    "sameShapeAndTargetAmplitudes": true,
+    "productionFirmwareChanged": true,
+    "deviceFlashed": true,
+    "microphoneOrAudioUsed": false,
+    "selectedProfile": "active",
+    "independentCppReview": "passed",
+    "independentJavascriptAndGeneralReview": "passed_after_first_frame_clock_fix",
+    "actualIABChecks": [
+      "renders_and_animates_three_profiles",
+      "pause_play_restart",
+      "mutually_exclusive_selection",
+      "enlarge_and_narrow_window_layout"
+    ],
+    "boundary": "Selected4200ms cadence installed and user motion feedback recorded. Browser itself never operates the device or voice. Full dialogue/voice acceptance is tracked separately.",
+    "selectedCycleMs": 4200,
+    "selectedFramesEqualInstalledProductionCandidate": true
+  }
+}

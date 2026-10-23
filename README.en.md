@@ -6,7 +6,21 @@ A standalone companion-pet firmware for the **Waveshare ESP32-S3-Touch-AMOLED-1.
 
 ![Actual device screen](docs/pet-device-screen.png)
 
-This independent community prototype is not affiliated with xAI, Grok Bot, Meta or Waveshare. It uses the desktop App's internal native-voice contract, tested against version 0.71.2. Normal App login and account permissions are required; compatibility with future versions is not guaranteed. No App, account or cloud service is distributed.
+This independent community prototype is not affiliated with xAI, Grok Bot, Meta or Waveshare. It uses the desktop App's internal native-voice contract, tested against versions 0.71.2 and 0.72.1. Normal App login and account permissions are required; compatibility with future versions is not guaranteed. No App, account or cloud service is distributed.
+
+The `codex/v0.2.0-roadmap` development branch adds livelier expressions, caption modes, grayscale Noto Sans SC fonts, a 28px home summary, a 30px reading page and larger settings targets. The reference-device user subsequently confirmed ten clear same-session Chinese rounds, long paged reading and active BOOT interruption. These results belong to their respective tested images; earlier failures remain recorded in [validation](docs/VALIDATION.md). This is not a new release or precompiled firmware package.
+
+The same branch now implements bounded turn feedback and safe route renewal, a quiet one-minute petting afterglow, device-only concise reply advice, and paged native reply reading. Tap a real caption, use large Previous/Next buttons, and scroll within each page. Each reader freezes one answer version; new BOOT turns, cancellation and disconnect invalidate it. The initial expanded suite passes 143 local checks, including real LVGL and target dependencies; see the [current evidence record](docs/companion-evolution-validation.json) for final review, installation and human acceptance status. These changes are not a new release.
+
+The latest polish adds immediate touch gaze, stroke reactions, a gentle three-tap dodge, waking stretches and time-based motion smoothing. A connection that recovers while BOOT is held requires release and a fresh press, preventing partial recordings. Speech motion settles when actual playback-level updates stop. See the [interaction guide](docs/COMPANION_POLISH.md) and [separate evidence record](docs/companion-polish-validation.json); prior device acceptance does not certify this new image. The user confirmed natural touch reactions and one clear BOOT reply on that image. Wake stretches and speech-motion transitions remain separately unverified.
+
+The development branch now handles a reproduced native idle disconnect after roughly 15 minutes. Only fully settled calls with drained device playback and negotiated `native_resume` firmware may attempt one fresh-credential reconnection; configuration and the original conversation ID must both be confirmed before ready. Old firmware keeps its existing failure path. 192 local checks, independent reviews, full backup and application-only readback passed. After a retained failed first live attempt, the second natural-idle trial resumed the original conversation in 2.42 seconds without device TLS reconnect. The user then confirmed one clear first physical reply after nearly five hours of bridge uptime and 19 native resumptions on the same device TLS connection. Exact one-hour scheduling, full overnight use and repeated long-idle reliability remain separately tracked in the [current record](docs/idle-first-use-validation.json).
+
+The current dialogue polish adds staged quiet waiting,900ms settling after actual playback, and per-BOOT petting warmth carried through the reply. Optional negotiated mood metadata and per-response style preserve the native persona, voice and tools.A silent three-cadence comparison led to a4.2-second listening loop with unchanged shape and amplitudes; the user reports richer, natural gestures.202 local checks, independent reviews and the target build pass; individual physical acceptance limits are recorded separately in the [current record](docs/dialogue-mood-validation.json).
+
+![Fixed public reading example rendered by the production LVGL UI on the host](docs/paged-reader-preview.png)
+
+To inspect this development work, switch to that branch after cloning. Run `npm run preview` for the silent interactive preview; device installation still requires the documented backup and build steps.
 
 ## Architecture and features
 
@@ -45,10 +59,10 @@ The proactive-behavior clock is currently fixed to Shanghai time (UTC+8), with n
 
 Full acoustic interruption/reconnection, physical touch feel, authenticated BLE provisioning and battery behavior still require acceptance. Public packaging changes were host-tested; a second-device clean install has not been tested. See [validation and limitations](docs/VALIDATION.md) for precise boundaries.
 
-`npm test` uses mocks and local compiler checks, with no account access, flashing or acoustic playback. Three target-dependent tests are explicitly skipped until the firmware is built. Optional hardware benches are separate and can make sound.
+`npm test` uses mocks and local compiler checks, with no account access, flashing or acoustic playback. On this development branch, five target-dependent tests, including real LVGL rendering, are explicitly skipped until the firmware dependencies are resolved. All 202 tests passed locally without skips. Optional hardware benches are separate and can make sound.
 
 ## Contributing and licensing
 
 Read [CONTRIBUTING](CONTRIBUTING.md), [SECURITY](SECURITY.md), [architecture](docs/宠物固件架构.md), [protocol](docs/PROTOCOL.md) and [roadmap](docs/ROADMAP.md). Never submit credentials, Wi-Fi passwords, paired device configuration, full-flash backups, recordings or personal transcripts.
 
-Original code is Apache-2.0; retained Muse sources remain Apache-2.0 with their original notices. The Unifont-derived font is distributed separately under OFL-1.1. See [third-party notices](THIRD_PARTY_NOTICES.md). Trademarks are not licensed by this project.
+Original code is Apache-2.0; retained Muse sources remain Apache-2.0 with their original notices. The Unifont-derived and Noto Sans SC font assets are distributed separately under OFL-1.1. See [third-party notices](THIRD_PARTY_NOTICES.md). Trademarks are not licensed by this project.

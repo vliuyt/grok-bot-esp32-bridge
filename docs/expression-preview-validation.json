@@ -1,0 +1,50 @@
+{
+  "stage": "expression-preview",
+  "implementedStates": 9,
+  "firmwareBuild": {
+    "passed": true,
+    "sha256": "61eba135afe0c98d6023d293045c8eb4954131038af29f28f99034b09456bb70",
+    "bytes": 2288912
+  },
+  "hostTests": {
+    "passed": 90,
+    "failed": 0,
+    "skipped": 0
+  },
+  "browser": {
+    "viewportWidth": 502,
+    "allNineStateSelectors": true,
+    "tapCurious": true,
+    "strokeHappy": true,
+    "swipeSettingsAndReturn": true,
+    "bootSpaceHoldRelease": true,
+    "offlineInteraction": true,
+    "screenshot": "docs/companion-preview.png",
+    "nativeStateButtonSpace": true,
+    "keyboardSettingsAndReturn": true
+  },
+  "deviceFlashed": false,
+  "audibleTestsRun": false,
+  "deviceLatencyMeasured": false,
+  "deviceAudioDropMeasured": false,
+  "deviceScreenMeasured": false,
+  "remaining": [
+    "physical-device interaction and audio regression",
+    "three caption modes",
+    "installable release packaging"
+  ],
+  "interactionStyle": "livelier per user feedback: stronger curious tilt, happy bounce and greeting",
+  "independentReview": {
+    "critical": 0,
+    "importantFound": 5,
+    "importantFixedWithRedGreenTests": 5,
+    "deferredMinor": 0,
+    "details": [
+      "same-turn enqueue after cancellation now requires a pre-gate audio epoch checked under the queue lock",
+      "Space release no longer consumes unrelated controls",
+      "BOOT/canvas blur cancels held keys without submission",
+      "cached-page return restores one animation loop",
+      "focused canvas ArrowUp opens settings"
+    ]
+  }
+}
