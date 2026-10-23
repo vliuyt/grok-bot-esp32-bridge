@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-23",
+  "scope": [
+    "dialogue visual rhythm",
+    "petting warmth carried through the real BOOT turn"
+  ],
+  "status": "installed_awaiting_physical_acceptance",
+  "baseCommit": "91e02df",
+  "checks": {
+    "localTests": 201,
+    "passed": 201,
+    "failed": 0,
+    "skipped": 0,
+    "realLVGLDialogueAndReader": true,
+    "realPairedTLS": true,
+    "productionCWithSanitizers": true,
+    "independentReview": {
+      "cppChecks": 22,
+      "typescriptChecks": 90,
+      "typescriptTelemetryChecks": 7,
+      "generalChecks": 22,
+      "remainingImportantFindings": 0
+    }
+  },
+  "behavior": {
+    "waitPhasesSeconds": [
+      0,
+      3,
+      8
+    ],
+    "waitClockIndependentOfProgressDeadline": true,
+    "successfulPlaybackSettleMs": 900,
+    "logicalBOOTBlockedDuringSettle": false,
+    "warmthSnapshot": "Actual recording start, current decayed local warmth; no extension of original60s idle warmth.",
+    "moodWireValues": [
+      "neutral",
+      "warm"
+    ],
+    "moodRequiresNegotiatedCapability": "companion_mood",
+    "moodTransmittedOnlyWithRealBOOT": true,
+    "rawTouchCoordinatesTransmitted": false,
+    "perResponseOverridePreservesOriginalInstructions": true,
+    "newHistoryItemsFromMood": false,
+    "nativeVoiceOrToolsChanged": false
+  },
+  "firmware": {
+    "bytes": 3708736,
+    "sha256": "aece17351270fe755056f1a21bb7f61b909efaf08c1007d6718e226a53cdc699",
+    "sourceSha256": "85bde1481878ed7683861257bb177abff3a8851a91fc24fb0557f922c5e119b7",
+    "dependenciesSha256": "0133de3853f8ce1dd8ef3937b73bf0bb357782c96e83423b14e4ab7cbd8f6499",
+    "sdkconfigSha256": "32e2986dca5293a5eafb31f6161663dade9763182de65b1bcb5ce938441b95a3",
+    "offset": 131072
+  },
+  "installation": {
+    "status": "guarded_application_only_install_and_readback_verified",
+    "fullBackupVerified": true,
+    "fullBackupBytes": 8388608,
+    "previousApplicationVerified": true,
+    "olderBackupPreserved": true,
+    "applicationOnlyWriteAndReadback": true,
+    "audioSettingsPreserved": true,
+    "pairingPreserved": true,
+    "nativeVoiceReady": true,
+    "companionMoodNegotiated": true,
+    "nativeResumeNegotiated": true,
+    "audioFault": false,
+    "eventDrops": 0,
+    "automatedAudioOrTaskInitiated": false,
+    "taskReturnAvailableAtRead": true
+  },
+  "humanAcceptance": {
+    "nativeVoiceAfterWarmBOOT": "pending",
+    "listenWaitSpeakReturnTransitions": "pending",
+    "warmthDuringDialogue": "pending",
+    "captionAndReadingAfterSettle": "pending",
+    "interruption": "pending",
+    "boundary": "Local C/LVGL/TLS and official API support do not prove physical appearance, tone, sound or actual model compatibility."
+  },
+  "measurements": {
+    "nativeFirstAudioAtMacMs": null,
+    "acousticFirstAudioMs": null,
+    "acousticInterruptionMs": null
+  },
+  "publication": {
+    "kind": "development branch and existing draft PR",
+    "formalRelease": false
+  }
+}

@@ -24,6 +24,10 @@ export function petMessage(payload,{generation,turn}={}){
   if(generation!=null&&m.generation!==generation)return null;
   const common={op:m.op,generation:m.generation};
   switch(m.op){
+    case 'press':
+      if(!uint(m.turn)||!m.turn||!['neutral','warm'].includes(m.mood))throw new Error('PET_PROTOCOL');
+      if(turn!=null&&m.turn!==turn)return null;
+      return {...common,turn:m.turn,mood:m.mood};
     case 'hello':
       if(m.v!==2||(m.bridgeId!=null&&!/^[a-f0-9]{32}$/.test(m.bridgeId)))throw new Error('PET_PROTOCOL');
       if(m.capabilities!=null&&(!Array.isArray(m.capabilities)||m.capabilities.length>8||m.capabilities.some(c=>typeof c!=='string'||!/^[a-z_]{1,32}$/.test(c))||new Set(m.capabilities).size!==m.capabilities.length))throw new Error('PET_PROTOCOL');

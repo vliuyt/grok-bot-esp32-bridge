@@ -161,6 +161,32 @@ static void ergonomics(pet_ui_view_t *v,const char *mode){
         point(130,180,true);show_page(PET_PAGE_MORE);frame(v);point(280,183,false);only_page(PET_PAGE_MORE);
         show_page(PET_PAGE_HOME);frame(v);point(180,190,true);point(300,192,true);point(320,193,false);
         only_page(PET_PAGE_HOME);assert(last_action.kind==PET_UI_PET);
+    }else if(!strcmp(mode,"dialogue")){
+        pet_state_t s;pet_init(&s,0);
+        pet_step(&s,(pet_event_t){.kind=PET_EV_LINK,.now_ms=1,.generation=1,.value=PET_CONN_READY});
+        pet_step(&s,(pet_event_t){.kind=PET_EV_PET,.now_ms=100});
+        pet_step(&s,(pet_event_t){.kind=PET_EV_PRESS,.now_ms=200});
+        assert(s.dialogue==PET_DIALOGUE_LISTEN&&s.turn_warmth>0);
+        v->dialogue=s.dialogue;v->pose=pet_pose(&s,200);lv_tick_inc(600);frame(v);
+        assert(find(pages[page],"我在听"));
+        pet_step(&s,(pet_event_t){.kind=PET_EV_RELEASE,.now_ms=500});
+        v->dialogue=s.dialogue;v->pose=pet_pose(&s,1000);lv_tick_inc(33);frame(v);
+        int focused=lv_obj_get_style_transform_rotation(body,0);
+        v->pose=pet_pose(&s,9500);for(unsigned i=0;i<20;i++){lv_tick_inc(33);frame(v);}
+        assert(lv_obj_get_style_transform_rotation(body,0)!=focused);
+        pet_step(&s,(pet_event_t){.kind=PET_EV_BUFFERED,.now_ms=9600,.generation=s.generation,.turn=s.turn});
+        pet_step(&s,(pet_event_t){.kind=PET_EV_PLAYING,.now_ms=9700,.generation=s.generation,.turn=s.turn,.value=600});
+        pet_step(&s,(pet_event_t){.kind=PET_EV_RESPONSE_DONE,.now_ms=9800,.generation=s.generation,.turn=s.turn});
+        pet_step(&s,(pet_event_t){.kind=PET_EV_DRAIN,.now_ms=9900,.generation=s.generation,.turn=s.turn});
+        assert(s.dialogue==PET_DIALOGUE_IDLE);
+        v->dialogue=s.dialogue;v->pose=pet_pose(&s,9950);frame(v);
+        assert(v->pose.expression==PET_EXPR_IDLE&&lv_obj_has_flag(caption_box,LV_OBJ_FLAG_CLICKABLE));
+        assert(strncmp(lv_label_get_text(caption),"今天也想和你一起",strlen("今天也想和你一起"))==0);
+        lv_obj_send_event(caption_box,LV_EVENT_CLICKED,NULL);frame(v);only_page(PET_PAGE_READING);
+        assert(strcmp(lv_label_get_text(reader_text),v->caption)==0);
+        pet_step(&s,(pet_event_t){.kind=PET_EV_TICK,.now_ms=10800});
+        v->pose=pet_pose(&s,10800);frame(v);only_page(PET_PAGE_READING);
+        pet_ui_home();frame(v);
     }else if(!strcmp(mode,"motion")){
         lv_tick_inc(600);v->pose=(pet_pose_t){.scale_x=1,.scale_y=1,.eye_open=1,.screen_on=true};frame(v);
         assert(lv_obj_get_style_transform_rotation(body,0)==0);

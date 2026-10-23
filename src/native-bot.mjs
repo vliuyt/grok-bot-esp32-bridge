@@ -103,7 +103,7 @@ export class NativeBotSession extends EventEmitter {
     this.schedulePoll(0);
   }
   assertOpen() { if (this.closed) throw new Error('Voice session closed'); }
-  beginTurn() { if(this.recovering)throw new Error('Voice session reconnecting');this.voice.beginTurn(); }
+  beginTurn({mood='neutral'}={}) { if(this.recovering)throw new Error('Voice session reconnecting');this.voice.beginTurn({mood:this.replyStyle==='companion'?mood:'neutral'}); }
   sendAudio(bytes) { if(!this.recovering)this.voice.sendAudio(bytes); }
   endTurn() { if(!this.recovering)this.voice.endTurn(); }
   stopPlayback() { if(!this.recovering)this.voice.stopPlayback(); }

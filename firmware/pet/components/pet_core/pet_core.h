@@ -4,6 +4,7 @@
 #define PET_EXPRESSION_INPUT_VERSION 1
 #define PET_CONTACT_INPUT_VERSION 1
 #define PET_MOTION_INPUT_VERSION 1
+#define PET_DIALOGUE_PRESENTATION_VERSION 1
 
 typedef enum { PET_LIFE_AWAKE, PET_LIFE_DROWSY, PET_LIFE_SLEEP } pet_life_t;
 typedef enum { PET_DIALOGUE_IDLE, PET_DIALOGUE_LISTEN, PET_DIALOGUE_WAIT, PET_DIALOGUE_SPEAK } pet_dialogue_t;
@@ -37,17 +38,18 @@ typedef struct {
     pet_dialogue_t dialogue;
     pet_connection_t connection;
     pet_notice_t notice;
-    float warmth;
+    float warmth, turn_warmth;
     pet_contact_t contact;
     uint64_t warmth_at_ms;
     uint64_t now_ms, last_input_ms, started_ms, pet_until_ms, greet_until_ms;
     uint64_t curious_until_ms, confused_until_ms;
+    uint64_t wait_started_ms, settle_until_ms;
     uint64_t next_greet_ms, last_greet_ms, entered_ms, clock_ms;
     uint32_t generation, turn, seed, day;
     unsigned greetings_today;
     int minute, level;
     bool usb, quiet, muted, setup, held, expired, clock_valid, response_done, playback_empty;
-    bool task_channel, connection_problem_seen, response_cancelled;
+    bool task_channel, connection_problem_seen, response_cancelled, response_played;
 } pet_state_t;
 typedef struct {
     pet_expression_t expression;

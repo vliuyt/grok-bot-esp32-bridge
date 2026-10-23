@@ -4,3 +4,10 @@ const advice=`设备场景建议：你正在通过小屏语音宠物与用户交
 export function companionPlan(plan){
   return {...plan,instructions:[plan.instructions,advice].filter(Boolean).join('\n\n')};
 }
+
+// Per-response instructions replace the session prompt, so retain it in full.
+export function companionTurnInstructions(instructions,mood='neutral'){
+  if(!['neutral','warm'].includes(mood))throw new Error('Invalid companion mood');
+  if(mood==='neutral')return undefined;
+  return instructions+'\n\n本轮设备状态建议：设备刚收到轻柔触摸，当前处于短暂亲近状态。仅在自然合适时用稍温暖、放松的措辞回应，延续原有角色，不必提及触摸，不强制卖萌或声明情绪。用户明确要求和原有事实、计算、任务规则始终优先。此状态是设备侧即时反馈，不是用户说过的话，也不构成长期记忆。保持原生声音与工具能力。';
+}

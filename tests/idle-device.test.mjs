@@ -107,12 +107,12 @@ async function fixture(t, { capabilities = ['native_resume'], mint } = {}) {
   send(2, 0, JSON.stringify({ op: 'hello', v: 2, generation: 7, capabilities }));
   await until(() => metadata().some(message => message.op === 'hello'));
   await until(() => calls.some(call => call.method === 'getAgentTranscriptTail'));
-  const capture = (turn, value) => {
-    send(2, turn, 'press'); for (let i = 0; i < 4; i++) send(3, turn, pcm(640, value)); send(2, turn, 'release'); send(2, turn, 'release');
+  const capture = (turn, value, mood) => {
+    send(2, turn, mood?JSON.stringify({op:'press',generation:7,turn,mood}):'press'); for (let i = 0; i < 4; i++) send(3, turn, pcm(640, value)); send(2, turn, 'release'); send(2, turn, 'release');
   };
-  const reply = async (turn, { samples = 2400, value = 4000 } = {}) => {
+  const reply = async (turn, { samples = 2400, value = 4000, mood } = {}) => {
     const socket = sockets.at(-1), voice = voices.at(-1), before = nativeFrames(socket, 'input_audio_buffer.commit').length;
-    capture(turn, turn === 1 ? 2000 : -2000);
+    capture(turn, turn === 1 ? 2000 : -2000, mood);
     await until(() => nativeFrames(socket, 'input_audio_buffer.commit').length === before + 1);
     const response = `reply-${turn}`;
     socket.receive({ type: 'input_audio_buffer.committed', item_id: `input-${turn}` });
@@ -138,6 +138,22 @@ async function fixture(t, { capabilities = ['native_resume'], mint } = {}) {
   return { server, close, device, calls, sessions, voices, sockets, frames, recoveries, send, controls, links, nativeFrames, audioFrames, barrier, reply, drain,
     expire() { now += 900000; idle += 900000; sockets.at(-1).receive(idleError); } };
 }
+
+test('idle resumption and a BOOT during recovery cannot carry stale petting into the next turn',{timeout:10000},async t=>{
+  const mint=deferred(),f=await fixture(t,{capabilities:['native_resume','companion_mood'],mint:()=>mint.promise});
+  t.after(()=>mint.resolve(credential(2)));
+  await f.reply(1,{mood:'warm'});await f.drain(1,5);
+  assert.ok(f.nativeFrames(f.sockets[0],'response.create')[0].response.instructions.startsWith('fixture persona'));
+  f.expire();await until(()=>f.links().at(-1)==='connecting');
+  f.send(2,2,JSON.stringify({op:'press',generation:7,turn:2,mood:'warm'}));f.send(2,2,'release');await f.barrier();
+  assert.equal(f.server.snapshot().turns,1);
+  mint.resolve(credential(2));await until(()=>f.sockets.length===2);
+  const next=f.sockets[1];next.receive({type:'session.created'});next.receive({type:'session.updated'});next.receive({type:'conversation.created',conversation:{id:conversationId}});
+  await until(()=>f.links().at(-1)==='ready');assert.equal(f.nativeFrames(next,'response.create').length,0);
+  await f.reply(2);await f.drain(2,5);
+  assert.equal(f.nativeFrames(next,'response.create')[0].response.instructions,undefined);
+  assert.equal(f.server.snapshot().reconnects,0);
+});
 
 test('idle recovery resumes one native call over the same TLS connection and accepts only the next complete BOOT', { timeout: 10000 }, async t => {
   const mint = deferred(), f = await fixture(t, { mint: () => mint.promise });

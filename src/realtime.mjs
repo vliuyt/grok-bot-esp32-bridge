@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 import { validatePcm } from './audio.mjs';
 import {createTurnMonitor} from './voice-turn.mjs';
 import {VoiceTrace} from './voice-trace.mjs';
+import {companionTurnInstructions} from './companion-style.mjs';
 
 function idleSessionError(error) {
   if(error?.type!=='server_error')return false;
@@ -164,11 +165,12 @@ export class RealtimeSession extends EventEmitter {
       !this.responseActive&&!this.responseRequested&&!this.pendingResponse&&!this.pendingTools.size&&
       !this.updates.length&&!this.unscopedAsync&&!this.inputTurns.length&&!this.inputPending.size&&!this.inputStateUncertain;
   }
-  beginTurn() {
+  beginTurn({mood='neutral'}={}) {
+    const instructions=companionTurnInstructions(this.plan?.instructions,mood);
     if (!['ready', 'recording'].includes(this.state)) throw new Error('Voice session not ready');
     this.stopPlayback();
     if(this.state==='closed')throw new Error('Voice session closed; reconnect before recording');
-    this.turn++; this.inputBytes = 0; this.state = 'recording';
+    this.turn++; this.inputBytes = 0; this.state = 'recording';this.responseInstructions=instructions;
     this.send({ type: 'input_audio_buffer.clear' }); this.emit('state', 'recording');
   }
   sendAudio(bytes) {
@@ -181,6 +183,7 @@ export class RealtimeSession extends EventEmitter {
     if (this.state !== 'recording') return;
     this.state = 'ready';
     if (this.inputBytes < 4800) {
+      this.responseInstructions=undefined;
       this.send({ type: 'input_audio_buffer.clear' });this.emit('turnStatus',{turn:this.turn,code:'short_input'});this.emit('state', 'ready');
     }
     else {
@@ -205,10 +208,11 @@ export class RealtimeSession extends EventEmitter {
     this.monitor.start(this.turn);
     this.responseId=undefined;
     this.responseRequested = true;
-    this.send({ type: 'response.create', response: { metadata: { bridge_turn: String(this.turn) } } });
+    this.send({ type: 'response.create', response: { metadata: { bridge_turn: String(this.turn) },...(this.responseInstructions?{instructions:this.responseInstructions}:{}) } });
   }
   ownsResponse(id) { return Boolean(id) && id === this.responseId && !this.cancelled.has(id) && !['recording', 'closed'].includes(this.state); }
   stopPlayback() {
+    this.responseInstructions=undefined;
     const ambiguous=(!!this.responseRequested&&!this.responseId)||!!this.unscopedAsync;
     this.monitor.clear(this.turn);
     this.pendingTools.clear(); this.pendingResponse = false; this.responseRequested = false;
@@ -244,7 +248,7 @@ export class RealtimeSession extends EventEmitter {
   }
   close() {
     if (this.state === 'closed') return;
-    this.state = 'closed'; clearTimeout(this.openTimer);this.monitor.close();this.inputTurns=[];this.inputItems.clear();this.inputPending.clear(); this.emit('clearAudio');
+    this.state = 'closed';this.responseInstructions=undefined; clearTimeout(this.openTimer);this.monitor.close();this.inputTurns=[];this.inputItems.clear();this.inputPending.clear(); this.emit('clearAudio');
     this.openReject?.(new Error('Voice session closed')); this.socket?.close(); this.emit('closed');
   }
 }

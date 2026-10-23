@@ -43,3 +43,11 @@ v2 hello可带`capabilities`，双方取交集，最多8个短字符串。`turn_
 旧`caption`继续用于主屏与旧固件。普通快照隐藏主屏正文、阅读正文／段号／导航及配对码；公开画面只用固定例文。
 
 原生`async_update.add`没有已证实的响应关联标识；发送后将会话视为存在无标签异步响应的可能。跨越到下一次BOOT前安全重建，可能需要显式重试。不能把迟到正文或音频归给新问题。
+
+## 可选当轮情绪（v0.2开发分支）
+
+双方协商`companion_mood`后，固件将实际BOOT的type2纯文本`press`替换为单条JSON：`{"op":"press","generation":7,"turn":3,"mood":"warm"}`。`generation/turn`均为非零uint32，JSON turn必须等于外层帧turn，generation必须属于当前连接；ready且turn递增时才开始录音。mood仅允许`neutral/warm`，其他字段不参与指令。未协商此能力的旧端继续纯文本press；release/cancel/credit不变。
+
+固件在实际录音开始时冻结衰减后的暖意，随后以同代同轮LISTEN快照编码，不传触点、历史、文本或任意提示。Mac只为当前有效真人轮次的response.create附加完整原instructions与固定风格建议，不修改session工具/声音，不写入用户或系统历史。工具后同轮续答保留该建议，新BOOT、短输入、取消、关闭与新idle socket清除。异步结果仍遵守现有不确定响应隔离，不据情绪解除任何门禁。
+
+只读诊断的`companionMoodCapable`为布尔值，`lastCompanionMood`仅保留最后一个已成功开始轮次的有限值；它表示设备提交状态，不代表模型实际表达了相应情绪。

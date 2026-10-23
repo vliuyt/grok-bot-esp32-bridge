@@ -16,6 +16,8 @@ The latest polish adds immediate touch gaze, stroke reactions, a gentle three-ta
 
 The development branch now handles a reproduced native idle disconnect after roughly 15 minutes. Only fully settled calls with drained device playback and negotiated `native_resume` firmware may attempt one fresh-credential reconnection; configuration and the original conversation ID must both be confirmed before ready. Old firmware keeps its existing failure path. 192 local checks, independent reviews, full backup and application-only readback passed. After a retained failed first live attempt, the second natural-idle trial resumed the original conversation in 2.42 seconds without device TLS reconnect. The user then confirmed one clear first physical reply after nearly five hours of bridge uptime and 19 native resumptions on the same device TLS connection. Exact one-hour scheduling, full overnight use and repeated long-idle reliability remain separately tracked in the [current record](docs/idle-first-use-validation.json).
 
+The current dialogue polish adds staged quiet waiting,900ms settling after actual playback, and per-BOOT petting warmth carried through the reply. Optional negotiated mood metadata and per-response style preserve the native persona, voice and tools.201 local checks, independent reviews and the target build pass; physical acceptance is recorded separately in the [current record](docs/dialogue-mood-validation.json).
+
 ![Fixed public reading example rendered by the production LVGL UI on the host](docs/paged-reader-preview.png)
 
 To inspect this development work, switch to that branch after cloning. Run `npm run preview` for the silent interactive preview; device installation still requires the documented backup and build steps.
@@ -57,7 +59,7 @@ The proactive-behavior clock is currently fixed to Shanghai time (UTC+8), with n
 
 Full acoustic interruption/reconnection, physical touch feel, authenticated BLE provisioning and battery behavior still require acceptance. Public packaging changes were host-tested; a second-device clean install has not been tested. See [validation and limitations](docs/VALIDATION.md) for precise boundaries.
 
-`npm test` uses mocks and local compiler checks, with no account access, flashing or acoustic playback. On this development branch, five target-dependent tests, including real LVGL rendering, are explicitly skipped until the firmware dependencies are resolved. All 192 tests passed locally without skips. Optional hardware benches are separate and can make sound.
+`npm test` uses mocks and local compiler checks, with no account access, flashing or acoustic playback. On this development branch, five target-dependent tests, including real LVGL rendering, are explicitly skipped until the firmware dependencies are resolved. All 201 tests passed locally without skips. Optional hardware benches are separate and can make sound.
 
 ## Contributing and licensing
 

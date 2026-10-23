@@ -141,7 +141,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
         for (let i = 0; i < payload.length; i += 2) { const sample = payload.readInt16LE(i); call.energy = (call.energy ?? 0) + sample * sample; call.samples = (call.samples ?? 0) + 1; }
         sendInput(call.up.push(payload)); return;
       }
-      const action = payload.toString('utf8');
+      let action = payload.toString('utf8'),mood='neutral';
       if(action.startsWith('{')){
         const message=petMessage(payload);
         if(message?.op==='caption_read'){
@@ -158,14 +158,20 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
           }catch(error){metadata({...identity,error:error.message==='CAPTION_STALE'?'stale':'unavailable'});}
           return;
         }
+        if(message?.op==='press'){
+          if(!call.capabilities?.has('companion_mood'))throw new Error('PET_PROTOCOL');
+          if(message.generation!==call.petGeneration||message.turn!==turn)return;
+          action='press';mood=message.mood;
+        }else{
         if(message?.op!=='hello'||!bridgeId||call.petGeneration)throw new Error('PET_PROTOCOL');
-        call.petGeneration=message.generation;call.capabilities=new Set((message.capabilities??[]).filter(c=>['turn_status','turn_progress','caption_pages','native_resume'].includes(c)));stats.petProtocol=2;diagnostic("PET_HELLO");
+        call.petGeneration=message.generation;call.capabilities=new Set((message.capabilities??[]).filter(c=>['turn_status','turn_progress','caption_pages','native_resume','companion_mood'].includes(c)));stats.petProtocol=2;diagnostic("PET_HELLO");
         metadata({op:'hello',v:2,bridgeId,...(message.capabilities?{capabilities:[...call.capabilities]}:{})});metadata({op:'link',state:call.ready?'ready':'connecting'});
         metadata({op:'clock',epochMs:Date.now()});
         call.clockTimer=setInterval(()=>{try{metadata({op:'clock',epochMs:Date.now()});}catch(error){fail(error.message);}},30000);call.clockTimer.unref();
         catalog();
         if(typeof stats.taskReturnAvailable==='boolean')metadata({op:'task_channel',available:stats.taskReturnAvailable});
         return;
+        }
       }
       if (action === 'ping') { control('pong'); return; }
       stats.lastControl={action:['press','release','cancel','credit'].includes(action)?action:'other',turn};
@@ -178,7 +184,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
         call.outputMeter = new PcmMeter();
         call.inputGain = new DeviceInputGain();call.inputMeter = new PcmMeter();
         call.energy = 0; call.samples = 0;
-        call.session.beginTurn();call.voiceTurn=call.session.voice?.turn;call.book.start(call.petGeneration,turn);call.captionItems.clear();catalog(); stats.state = 'recording'; stats.turns++;
+        call.session.beginTurn({mood});stats.lastCompanionMood=mood;call.voiceTurn=call.session.voice?.turn;call.book.start(call.petGeneration,turn);call.captionItems.clear();catalog(); stats.state = 'recording'; stats.turns++;
         clearTimeout(call.timer); call.timer = setTimeout(() => fail('RECORDING_LIMIT'), 60000); call.timer.unref();
       } else if (action === 'release' && turn === call.turn && call.recording) {
         clearTimeout(call.timer); sendInput(call.up.finish()); call.recording = false; stats.state = 'waiting';
@@ -229,7 +235,7 @@ export async function startDeviceServer({ backend, bot, key, host = '0.0.0.0', p
   });
   server.on('tlsClientError', () => {});
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(port, host, resolve); });
-  return { port: server.address().port, snapshot: () => ({ ...stats, nativeResumeCapable:!!active?.capabilities?.has('native_resume'),nativeResumable:typeof active?.session.voice?.conversationId==='string', inputAudio:active?{turn:active.turn,...active.inputMeter.snapshot()}:null, outputAudio:active?{turn:active.turn,...active.outputMeter.snapshot()}:null, voiceTrace:active?.session.voice?.trace?.snapshot()??null, firstAudioMs: [...stats.firstAudioMs], playback:active?{credits:active.playback.available,packets:active.playback.queue.length,bytes:active.playback.bytes,responseActive:!!active.session.voice?.responseActive,recording:active.recording}:null }),
+  return { port: server.address().port, snapshot: () => ({ ...stats, nativeResumeCapable:!!active?.capabilities?.has('native_resume'),companionMoodCapable:!!active?.capabilities?.has('companion_mood'),nativeResumable:typeof active?.session.voice?.conversationId==='string', inputAudio:active?{turn:active.turn,...active.inputMeter.snapshot()}:null, outputAudio:active?{turn:active.turn,...active.outputMeter.snapshot()}:null, voiceTrace:active?.session.voice?.trace?.snapshot()??null, firstAudioMs: [...stats.firstAudioMs], playback:active?{credits:active.playback.available,packets:active.playback.queue.length,bytes:active.playback.bytes,responseActive:!!active.session.voice?.responseActive,recording:active.recording}:null }),
     disconnect: () => active?.socket.destroy(),
     pause: () => { paused = true; active?.socket.destroy(); }, resume: () => { paused = false; },
     close: async () => {
