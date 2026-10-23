@@ -272,17 +272,33 @@ uint32_t pet_step(pet_state_t *s,pet_event_t e) {
     }
     return fx;
 }
+static float pose_pulse(uint64_t age,unsigned start,unsigned duration){
+    if(age<start||age-start>=duration)return 0;
+    float wave=sinf((float)(age-start)*3.14159265f/duration);
+    return wave*wave;
+}
 pet_pose_t pet_pose(const pet_state_t *s,uint64_t now) {
     float t=(float)(now%60000)/1000.0f;
     pet_pose_t p={.expression=PET_EXPR_IDLE,.scale_x=1,.scale_y=1,.eye_open=1,
                   .screen_on=s->life!=PET_LIFE_SLEEP};
     p.dim=s->life!=PET_LIFE_AWAKE || (s->usb && now>=s->last_input_ms && now-s->last_input_ms>=300000);
     if(s->dialogue==PET_DIALOGUE_LISTEN) {
-        p.expression=PET_EXPR_LISTEN; p.rotation=-6; p.offset_y=-7; p.eye_open=1.1f;
+        p.expression=PET_EXPR_LISTEN;p.rotation=-5;p.offset_y=-7;p.eye_open=1.04f;
+        p.scale_y=.98f;
+        uint64_t age=now>=s->entered_ms?now-s->entered_ms:0,cycle=age%4200;
+        float side=((s->turn+age/4200)&1)?1.f:-1.f;
+        /* Small, separated gestures leave quiet space between them. This
+         * timeline is local to the physical press and never mutates the turn. */
+        p.look_x=side*5*pose_pulse(cycle,150,850);
+        p.rotation+=side*3*pose_pulse(cycle,650,1000);
+        float nod=pose_pulse(cycle,1900,750);
+        p.offset_y+=2.5f*nod;p.look_y=1.8f*nod;
+        p.eye_open-=.82f*pose_pulse(cycle,3050,220);
     } else if(s->dialogue==PET_DIALOGUE_WAIT) {
         p.expression=PET_EXPR_THINK;
         uint64_t age=now>=s->wait_started_ms?now-s->wait_started_ms:0;
-        p.rotation=-3;p.eye_asymmetry=.08f;
+        float thought=sinf((float)age/1000*3.8f);
+        p.rotation=-9+3*thought;p.eye_open=.64f+.04f*thought;p.eye_asymmetry=.18f;
         if(age>=3000){
             float fade=fminf(1,(float)(age-3000)/500);
             p.look_x=sinf((float)(age-3000)/1000*1.3f)*3*fade;
@@ -296,7 +312,11 @@ pet_pose_t pet_pose(const pet_state_t *s,uint64_t now) {
         p.expression=PET_EXPR_SPEAK; p.level=(float)s->level/1000;
         uint64_t age=now>=s->entered_ms?now-s->entered_ms:0;
         if(age>80)p.level*=expf(-(float)(age-80)/120);
-        p.scale_y=1+p.level*.075f; p.scale_x=1-p.level*.04f; p.offset_y=-p.level*7;
+        /* Keep speech round. Only the eyes and gentle lift follow the real
+         * playback level; audio never stretches or compresses the body. */
+        float motion=sqrtf(fmaxf(0,fminf(1,p.level)));
+        p.offset_y=2+motion*2;
+        p.eye_open=1-motion*.35f;
     } else if(s->life!=PET_LIFE_AWAKE) {
         p.expression=PET_EXPR_SLEEP; p.eye_open=.08f; p.scale_y=.94f; p.offset_y=10;
     } else if(now<s->confused_until_ms) {
@@ -324,8 +344,10 @@ pet_pose_t pet_pose(const pet_state_t *s,uint64_t now) {
         p.expression=PET_EXPR_GREET; p.offset_y=-fabsf(sinf(t*5))*28; p.rotation=sinf(t*5)*8;
         p.invitation=!s->quiet;
     } else if(!s->setup&&now<s->settle_until_ms) {
-        float fade=(float)(s->settle_until_ms-now)/900;
-        p.offset_y=-2*fade;p.rotation=-2*fade;p.eye_open=1.03f;
+        float progress=1-(float)(s->settle_until_ms-now)/900;
+        float nod=sinf(progress*3.14159265f);
+        float blink=fmaxf(0,1-fabsf(progress-.35f)/.18f);
+        p.offset_y=8*nod;p.rotation=5*nod;p.eye_open=1-.90f*blink;
     } else {
         p.scale_y=1+sinf(t*1.3f)*.014f; p.offset_y=sinf(t*1.3f)*3;
         float warmth=pet_warmth(s,now)/100;
@@ -335,9 +357,12 @@ pet_pose_t pet_pose(const pet_state_t *s,uint64_t now) {
         if((now+(s->seed%2000))%6200<130) p.eye_open=.08f;
     }
     if(s->dialogue!=PET_DIALOGUE_IDLE||(!s->setup&&s->life==PET_LIFE_AWAKE&&now<s->settle_until_ms)){
-        float warmth=fmaxf(0,fminf(100,s->turn_warmth))/100;
-        p.offset_y-=warmth*1.5f;p.rotation-=warmth*1.5f;
-        p.eye_open-=warmth*.06f;p.scale_y+=warmth*.01f;
+        /* The frozen mood is unchanged; only its visual response is curved so
+         * one stroke survives the 200px face's integer geometry and smoothing. */
+        float warmth=sqrtf(fmaxf(0,fminf(100,s->turn_warmth))/100);
+        p.offset_y-=warmth*5;p.rotation-=warmth*4;
+        p.eye_open-=warmth*.20f;p.scale_y+=warmth*.035f;
+        if(s->dialogue==PET_DIALOGUE_SPEAK)p.scale_x=p.scale_y;
     }
     if(s->dialogue==PET_DIALOGUE_IDLE&&s->life==PET_LIFE_AWAKE&&now>=s->confused_until_ms&&
        s->contact.dodge_at_ms&&now>=s->contact.dodge_at_ms&&now-s->contact.dodge_at_ms<900){

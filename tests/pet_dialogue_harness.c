@@ -43,7 +43,7 @@ static void finish_orders(void){
         assert(s.settle_until_ms==1600);
 #endif
         pet_pose_t settled=pet_pose(&s,850);
-        assert(settled.expression==PET_EXPR_IDLE&&settled.offset_y<-.5f&&fabsf(settled.look_x)<.01f);
+        assert(settled.expression==PET_EXPR_IDLE&&fabsf(settled.offset_y)>.5f&&fabsf(settled.look_x)<.01f);
         event(&s,PET_EV_RESPONSE_DONE,900,0);event(&s,PET_EV_DRAIN,1000,0);
 #ifdef PET_DIALOGUE_PRESENTATION_VERSION
         assert(s.settle_until_ms==1600);
@@ -92,7 +92,9 @@ static void warmth_snapshot(void){
 #endif
 
     ready(&warm);event(&warm,PET_EV_PET,10,0);event(&warm,PET_EV_PRESS,100,0);
-    a=pet_pose(&warm,100);assert(a.expression==PET_EXPR_LISTEN&&a.offset_y< -7&&a.eye_open<1.1f);
+    a=pet_pose(&warm,100);
+    neutral=warm;neutral.turn_warmth=0;b=pet_pose(&neutral,100);
+    assert(a.expression==PET_EXPR_LISTEN&&a.offset_y<b.offset_y&&a.eye_open<b.eye_open);
     event(&warm,PET_EV_RELEASE,300,0);event(&warm,PET_EV_CANCEL,400,0);
     event(&warm,PET_EV_PRESS,30100,0);
 #ifdef PET_DIALOGUE_PRESENTATION_VERSION

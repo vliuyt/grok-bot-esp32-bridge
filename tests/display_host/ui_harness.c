@@ -83,9 +83,75 @@ static uint64_t raw_hash(void){
     for(int y=0;y<466;y++)for(int x=0;x<932;x++){hash^=buf->data[y*buf->header.stride+x];hash*=1099511628211ULL;}
     lv_draw_buf_destroy(buf);return hash;
 }
+static uint64_t title_hash(void){
+    lv_draw_buf_t *buf=lv_snapshot_take(root,LV_COLOR_FORMAT_RGB565);assert(buf);uint64_t hash=1469598103934665603ULL;
+    for(int y=45;y<=71;y++)for(int x=113*2;x<353*2;x++){hash^=buf->data[y*buf->header.stride+x];hash*=1099511628211ULL;}
+    lv_draw_buf_destroy(buf);return hash;
+}
 static void tap_at(int x,int y){point(x,y,true);point(x+4,y+3,false);}
+static void dialogue_event(pet_state_t *s,pet_event_kind_t kind,uint64_t now,int value){
+    pet_step(s,(pet_event_t){.kind=kind,.now_ms=now,.value=value,.generation=s->generation,.turn=s->turn});
+}
+static void dialogue_frame(pet_ui_view_t *v,const pet_state_t *s,uint64_t now){
+    v->dialogue=s->dialogue;v->pose=pet_pose(s,now);lv_tick_inc(33);frame(v);
+}
 static void ergonomics(pet_ui_view_t *v,const char *mode){
-    if(!strcmp(mode,"volume")){
+    if(!strcmp(mode,"expressions")){
+        pet_state_t s;pet_init(&s,0);dialogue_event(&s,PET_EV_LINK,1,PET_CONN_READY);
+        for(uint64_t now=1;now<600;now+=33)dialogue_frame(v,&s,now);
+        artifact("dialogue-idle");uint64_t title=title_hash();
+        dialogue_event(&s,PET_EV_PRESS,600,0);
+        for(uint64_t now=600;now<1200;now+=33)dialogue_frame(v,&s,now);
+        assert(lv_obj_get_height(eyes[0])>=58&&lv_obj_get_height(eyes[0])<=65&&title_hash()==title);artifact("dialogue-listen");
+        dialogue_event(&s,PET_EV_RELEASE,1200,0);
+        for(uint64_t now=1200;now<1900;now+=33)dialogue_frame(v,&s,now);
+        assert(abs(lv_obj_get_height(eyes[0])-lv_obj_get_height(eyes[1]))>=9&&abs(lv_obj_get_height(eyes[0])-lv_obj_get_height(eyes[1]))<=20);
+        assert(title_hash()==title);artifact("dialogue-think");
+        for(uint64_t now=1900;now<2500;now+=33){
+            dialogue_event(&s,PET_EV_PLAYING,now,90);dialogue_frame(v,&s,now);
+        }
+        /* Independent axes can settle one integer pixel apart after WAIT. */
+        assert(abs(lv_obj_get_height(body)-lv_obj_get_width(body))<=1);
+        assert(title_hash()==title);artifact("dialogue-speak-soft");
+        for(uint64_t now=2500;now<2900;now+=33){
+            dialogue_event(&s,PET_EV_PLAYING,now,500);dialogue_frame(v,&s,now);
+        }
+        assert(abs(lv_obj_get_height(body)-lv_obj_get_width(body))<=1);
+        assert(title_hash()==title);artifact("dialogue-speak-loud");
+        dialogue_event(&s,PET_EV_RESPONSE_DONE,2900,0);dialogue_event(&s,PET_EV_DRAIN,2901,0);
+        for(uint64_t now=2901;now<3260;now+=33)dialogue_frame(v,&s,now);
+        assert(lv_obj_get_height(eyes[0])>=15&&lv_obj_get_height(eyes[0])<=42);
+        assert(lv_obj_has_flag(caption_box,LV_OBJ_FLAG_CLICKABLE)&&title_hash()==title);artifact("dialogue-finish-blink");
+        for(uint64_t now=3260;now<4100;now+=33)dialogue_frame(v,&s,now);
+        assert(lv_obj_get_height(eyes[0])>=55&&title_hash()==title);artifact("dialogue-return");
+        s.turn_warmth=100;s.dialogue=PET_DIALOGUE_SPEAK;
+        for(uint64_t now=4100;now<4700;now+=33){
+            dialogue_event(&s,PET_EV_PLAYING,now,1000);dialogue_frame(v,&s,now);
+        }
+        assert(lv_obj_get_width(body)>=180&&lv_obj_get_height(body)<=222);
+        assert(abs(lv_obj_get_height(body)-lv_obj_get_width(body))<=1);
+        assert(title_hash()==title);artifact("dialogue-speak-maximum-warm");
+        pet_init(&s,0);dialogue_event(&s,PET_EV_LINK,1,PET_CONN_READY);dialogue_event(&s,PET_EV_PRESS,100,0);
+        unsigned actions_before=action_count;
+        int min_x=1000,max_x=-1000,min_r=1000,max_r=-1000,min_y=1000,max_y=-1000,min_eye=1000,blinks=0;bool closed=false;
+        for(uint64_t age=0;age<=12600;age+=33){
+            dialogue_frame(v,&s,100+age);assert(title_hash()==title);
+            assert(lv_obj_get_height(eyes[0])<=65);
+            if(age>=500&&!closed&&lv_obj_get_height(eyes[0])<45){blinks++;closed=true;} /* Exclude the previous warm speech pose settling into LISTEN. */
+            if(lv_obj_get_height(eyes[0])>55)closed=false;
+            int x=lv_obj_get_x(eyes[0]),r=lv_obj_get_style_transform_rotation(body,0),y=lv_obj_get_y(body)+lv_obj_get_height(body)/2;
+            if(age>=150&&age<1150){if(x<min_x)min_x=x;if(x>max_x)max_x=x;}
+            if(age>=650&&age<1900){if(r<min_r)min_r=r;if(r>max_r)max_r=r;}
+            if(age>=1850&&age<2900){if(y<min_y)min_y=y;if(y>max_y)max_y=y;}
+            if(age>=3000&&age<3500&&lv_obj_get_height(eyes[0])<min_eye)min_eye=lv_obj_get_height(eyes[0]);
+            if(age>=600&&age<633)artifact("dialogue-listen-glance");
+            if(age>=1150&&age<1183)artifact("dialogue-listen-lean");
+            if(age>=2350&&age<2383)artifact("dialogue-listen-nod");
+        }
+        assert(max_x-min_x>=3&&max_x-min_x<=6&&max_r-min_r>=15&&max_r-min_r<=35);
+        assert(max_y-min_y>=2&&max_y-min_y<=4&&min_eye>=15&&min_eye<=45);
+        assert(blinks==3&&action_count==actions_before&&s.dialogue==PET_DIALOGUE_LISTEN);
+    }else if(!strcmp(mode,"volume")){
         v->volume=65;show_page(PET_PAGE_VOLUME);unsigned before=action_count;frame(v);
         assert(action_count==before&&v->volume==65); /* Rendering never rewrites the saved codec setting. */
         assert(!strcmp(lv_label_get_text(volume_value),"13%"));

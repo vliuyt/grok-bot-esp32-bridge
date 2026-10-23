@@ -40,7 +40,7 @@ test('real LVGL renders readable gray glyphs and preserves the original characte
     execFileSync(cmake,['--build',build,'--parallel','4'],{stdio:'pipe',maxBuffer:8*1024*1024});
     assert.match(execFileSync(join(build,'pet-font-test'),{encoding:'utf8'}),/PET_FONT_RENDER_OK/);
     assert.match(execFileSync(join(build,'pet-ui-test'),[build],{encoding:'utf8',stdio:['ignore','pipe','pipe']}),/PET_UI_RENDER_OK/);
-    for(const mode of ['volume','buttons','swipe','touch','motion','dialogue']){
+    for(const mode of ['volume','buttons','swipe','touch','motion','dialogue','expressions']){
       assert.match(execFileSync(join(build,'pet-ui-test'),[build,mode],{encoding:'utf8',stdio:['ignore','pipe','pipe']}),/PET_UI_ERGONOMICS_OK/);
     }
     const unsafe=mkdtempSync(join(tmpdir(),'pet-unsafe-draw-'));
